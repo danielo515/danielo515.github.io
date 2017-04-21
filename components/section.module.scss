@@ -1,0 +1,28 @@
+@import 'constants';
+
+.container 
+{
+    width: 100%
+}
+
+.wrapper
+{
+
+    padding-left: $marginLeft;
+}
+
+.content
+{
+    padding: 1em;
+}
+
+.even 
+{
+
+    background-color: #f3f3f3;
+}
+
+.odd
+{
+    background-color: $blue;
+}

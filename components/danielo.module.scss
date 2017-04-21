@@ -1,0 +1,86 @@
+@import './constants';
+@import './mixins';
+
+@mixin square($size){
+/*    height: 0;
+    width: $size;
+    padding-bottom: $size;*/
+    height: $size;
+    width: $size;
+}
+
+.face-wrapper 
+{
+    top:2%;
+    left: 2%;
+    @include square(25vw);
+    transition: height 1s ease-in-out, width 1s ease-in-out;
+    position: fixed;
+    img 
+    {
+        border-radius: 50%;
+        height: 100%;
+        width: 100%;
+        padding: 2%;
+    }
+}
+
+.minimized
+{
+    @include square(18vw);
+}
+
+.face-background
+{
+    border-radius: 50%;
+    padding: 2%;
+    background-color: #fff;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    border: 8px solid $blue;
+}
+
+.menu-wrapper 
+{
+    position: fixed;
+    top: 18vw;
+    left: 11vw;
+    z-index: -1;
+}
+
+.menu-body
+{
+    position: relative;
+    left: -50%;
+    background-color: $blue;
+    padding-top: 1em;
+}
+.menu-bottom 
+{
+    position: relative;
+    left: -50%;
+    background-color: $blue;
+    border-bottom-right-radius: 50%;
+    border-bottom-left-radius: 50%;
+    height: 1em;
+    top: -1px;
+    @include respond-to(medium){
+        height: 2em;
+    }
+}
+
+.icon 
+{
+    font-size: .5em;
+    @include respond-to(medium){
+        font-size: 3em;
+    }
+}
+.icon-wrapper
+{
+    padding: .4em;
+    @include respond-to(medium){
+        padding: 1em;
+    }
+}

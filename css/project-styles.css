@@ -1,0 +1,14 @@
+.screenshot {
+  width: 50%;
+  padding: 1em;
+  margin: 0;
+}
+.screenshot img {
+  border: 1px solid grey;
+  border-radius: 10px;
+  padding: 1em;
+  margin: 0;
+}
+.gallery {
+    display: flex;
+}

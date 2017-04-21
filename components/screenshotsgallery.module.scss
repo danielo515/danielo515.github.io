@@ -1,0 +1,24 @@
+@import 'constants';
+@import 'mixins';
+
+.gallery {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    @include respond-to(medium){
+        .screenshot { flex: 1 0 50%; }
+    }
+}
+
+.screenshot {
+  width: 100%;
+  padding: 1em;
+  margin: 0;
+  img 
+  {
+    border: 1px solid $blue;
+    border-radius: 10px;
+    padding: 1em;
+    margin: 0;  
+  }
+}

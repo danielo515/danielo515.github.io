@@ -1,0 +1,34 @@
+@import 'constants';
+@import 'mixins';
+
+
+.wrapper {
+    width: 100%;
+    label { color: $blue; }
+    padding: 2px;
+
+    @include respond-to(medium)
+    { 
+        .table 
+        {
+        
+            display: table;
+
+            .row { display: table-row }
+
+            label { display: table-cell;}
+
+            span 
+            {
+                padding-left: 1em;
+                display: table-cell;
+            }
+        }
+    }
+    
+    hr 
+    {
+        background-color: $blue;
+        width: 100%;
+    }
+}
