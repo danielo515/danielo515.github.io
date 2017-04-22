@@ -6,7 +6,7 @@ import { config } from 'config'
 
 import Presentation from '../components/Presentation'
 import Danielo from '../components/Danielo'
-import SectionWithCards from '../components/SectionWithCards'
+import Section from '../components/Section'
 import {scrollTo, scrollToTop} from '../utils/domUtils'
 import BackToTop from '../components/BackToTop'
 import BreadCumbs from '../components/Breadcums'
@@ -16,7 +16,7 @@ export default class Index extends React.Component {
   constructor(props) {
     super(props);
 
-     this.sections = props.route.pages
+    const sections = props.route.pages
       .reduce(
       (all, p) => {
 
@@ -35,9 +35,10 @@ export default class Index extends React.Component {
       }
       , {});
 
-    console.log(this.sections);
+    console.log(sections);
     this.state = {
       language: 'en',
+      sections,
       windowWidth: 0,
       windowHeight: 0,
     }
@@ -109,11 +110,10 @@ export default class Index extends React.Component {
           }} 
         >
           Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto. Lorem Ipsum ha sido el texto de relleno estándar de las industrias desde el año 1500, cuando un impresor (N. del T. persona que se dedica a la imprenta) desconocido usó una galería de textos y los mezcló de tal manera que logró hacer un libro de textos especimen.</Presentation>
-        
-        <SectionWithCards {...this.state} even={true} sectionInfo={this.sections.webapps}></SectionWithCards>
-        <SectionWithCards {...this.state} sectionInfo={this.sections.videogames}></SectionWithCards>
-        <BreadCumbs sections={[this.sections.webapps, this.sections.videogames]} onClick={scrollTo}/>
+        <Section {...this.state} name='webapps' even={true} bubble={this.state.sections.webapps.bubble.en}></Section>
+        <Section {...this.state} name='videogames' bubble={this.state.sections.videogames.bubble.en}></Section>
         <Danielo ref={(d)=> d ? this.danielo = d : null}/>
+        <BreadCumbs sections={[this.state.sections.webapps, this.state.sections.videogames]} onClick={scrollTo}/>
         <BackToTop {...this.state} onClick={scrollToTop}/>
       </div>
     )

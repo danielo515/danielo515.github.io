@@ -23,7 +23,7 @@ module.exports = React.createClass({
     console.log(this.props.children);
     const post = this.props.children.props.route.page.data;
     return (
-      <Container>
+      <Container style={{padding:'1em'}}>
         <ProjectHeader info={post}/>
 
          { this.props.children }

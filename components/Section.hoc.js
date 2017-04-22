@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {PropTypes} from 'react'
 import ReactDOM from 'react-dom'
 import CSS from './section.module'
 import { rhythm } from '../utils/typography'
@@ -8,19 +8,19 @@ import TextBubble from './TextBubble'
 import ScreenshotCard from './ScreenshotCard'
 import {isActiveSection} from '../utils/domUtils'
 
-export default class Section extends React.Component {
+export default (WrappedComponent) => class Section extends React.Component {
 
     static propTypes() {
         return {
-            children: React.PropTypes.any,
-            windowWidth: React.PropTypes.number
+            windowHeight: React.PropTypes.number,
+            sectionInfo: PropTypes.object
         }
     }
 
     constructor(props){
         super(props)
         this.state = {
-            visible: false
+            active: false
         }
     }
 
@@ -38,25 +38,22 @@ export default class Section extends React.Component {
         // console.log(this.props.name , this.elementBox);
         if ( isActiveSection(this.elementBox, this.elementHeight) ) {
             //   Navigator.setURL(this.props.section_name || this.props.parentName)
-            if( !this.state.visible ) this.setState({visible: true});
+            if( !this.state.active ) this.setState({active: true});
         } else {
-           if( this.state.visible ) this.setState({visible: false})
+           if( this.state.active ) this.setState({active: false})
         }
     }
 
     render() {
 
+        const {sectionInfo, language} = this.props;
         const containerClasses = `${CSS['container']} ${this.props.even ? CSS['even'] : CSS['odd']}`;
-        const sectionInfo = this.props.sections[this.props.name];
-        const bubbleText = sectionInfo.bubble[this.props.language];
-        const cards = sectionInfo.projects.map(i => {
-                return <ScreenshotCard key={i.data.name} cardInfo={i} />
-            });
+        const bubbleText = sectionInfo.bubble[language];
 
         return (
-            <section // container
+            <section // class container
                 ref={(n) => this.node = n}
-                id={this.props.name}
+                id={sectionInfo.name}
                 className={containerClasses} 
                 style={
                     {
@@ -66,14 +63,14 @@ export default class Section extends React.Component {
                 }
             >
                 <div className={CSS['wrapper']}> 
-                    <TextBubble text={bubbleText} visible={this.state.visible}></TextBubble>
+                    <TextBubble text={bubbleText} visible={this.state.active}></TextBubble>
                     <div 
                         className={CSS['content']}
                         style={
                             { paddingBottom: rhythm(1) }
                         }
                     >
-                        {cards}
+                        <WrappedComponent {...this.props} {...this.state}/>
                     </div>
                 </div>
             </section>
