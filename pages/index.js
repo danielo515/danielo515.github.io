@@ -5,11 +5,10 @@ import Helmet from 'react-helmet'
 import { config } from 'config'
 
 import Presentation from '../components/Presentation'
-import Danielo from '../components/Danielo'
 import SectionWithCards from '../components/SectionWithCards'
 import {scrollTo, scrollToTop} from '../utils/domUtils'
 import BackToTop from '../components/BackToTop'
-import BreadCumbs from '../components/Breadcums'
+import Sidebar from '../components/Sidebar'
 
 export default class Index extends React.Component {
 
@@ -101,19 +100,27 @@ export default class Index extends React.Component {
         />
         <Presentation id='presentation' {...this.state} title='Hola' 
           onRead={() =>{
-            this.danielo && this.danielo.minimize(); 
+            this.sidebar && this.sidebar.collapse(); 
             scrollTo('webapps')}
           }
           onUnread={()=>{
-            this.danielo && this.danielo.expand();
+            this.sidebar && this.sidebar.expand();
           }} 
         >
           Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto. Lorem Ipsum ha sido el texto de relleno estándar de las industrias desde el año 1500, cuando un impresor (N. del T. persona que se dedica a la imprenta) desconocido usó una galería de textos y los mezcló de tal manera que logró hacer un libro de textos especimen.</Presentation>
         
         <SectionWithCards {...this.state} even={true} sectionInfo={this.sections.webapps}></SectionWithCards>
         <SectionWithCards {...this.state} sectionInfo={this.sections.videogames}></SectionWithCards>
-        <BreadCumbs sections={[this.sections.webapps, this.sections.videogames]} onClick={scrollTo}/>
-        <Danielo ref={(d)=> d ? this.danielo = d : null}/>
+        {/*<section className={Css['sidebar']}>
+            <Danielo ref={(d)=> d ? this.danielo = d : null}/>
+            <BreadCumbs sections={[
+                this.sections.webapps, 
+                this.sections.videogames, 
+                this.sections.curriculum]} 
+                onClick={scrollTo}/>
+        </section> 
+      */}
+        <Sidebar sections={this.sections} ref={(n)=> n ? this.sidebar = n : null}/>
         <BackToTop {...this.state} onClick={scrollToTop}/>
       </div>
     )

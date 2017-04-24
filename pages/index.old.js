@@ -9,7 +9,7 @@ import Danielo from '../components/Danielo'
 import Section from '../components/Section'
 import {scrollTo, scrollToTop} from '../utils/domUtils'
 import BackToTop from '../components/BackToTop'
-import BreadCumbs from '../components/Breadcums'
+import BreadCumbs from '../components/Breadcumbs'
 
 export default class Index extends React.Component {
 

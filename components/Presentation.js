@@ -2,7 +2,7 @@ import React from 'react'
 import Styles from './presentation.module.scss'
 import { rhythm } from '../utils/typography'
 
-import Icon from './icon'
+import Icon from './Icon'
 
 class Presentation extends React.Component {
   
@@ -29,12 +29,12 @@ class Presentation extends React.Component {
       }
 
       // Reset the read state if we are at top of the page
-      if( this.state.isRead && this.rootNode.getBoundingClientRect().top >= 0){
+      if( this.state.isRead && this.bottomNode.getBoundingClientRect().top > 0){
           this.setState({isRead: false});
           return ( this.props.onUnread && this.props.onUnread() );
       }
       // Set this section as read and call the onRead callback if the latest node is read already
-      if( !this.state.isRead && this.bottomNode.getBoundingClientRect().bottom <= 10){
+      if( !this.state.isRead && this.bottomNode.getBoundingClientRect().top <= 0){
           this.setState({isRead: true});
           return this.props.onRead();
       }

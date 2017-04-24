@@ -1,6 +1,6 @@
 import React, { PropTypes } from 'react'
 import ReactDOM from 'react-dom'
-import Css from './sectionwithcards.module.css'
+import Css from './sectionwithcards.module.scss'
 
 import Section from './Section.hoc'
 import ScreenshotCard from './ScreenshotCard'

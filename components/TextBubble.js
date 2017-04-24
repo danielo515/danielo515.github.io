@@ -2,8 +2,6 @@ import React from 'react'
 import CSS from './textbubble.module'
 import { rhythm } from '../utils/typography'
 
-import Icon from './icon'
-
 export default class TextBubble extends React.Component {
 
     static propTypes() {

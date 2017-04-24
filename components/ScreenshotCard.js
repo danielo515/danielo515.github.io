@@ -1,7 +1,7 @@
 import React from 'react'
 import CSS from './screenshotcard.module.scss'
 import { rhythm } from '../utils/typography'
-import Icon from './icon'
+import Icon from './Icon'
 
 
 export default class ScreenshotCard extends React.Component {

@@ -1,0 +1,17 @@
+@import 'constants';
+
+.wrapper {
+    position: fixed;
+    height: 100%;
+    margin: 2%;
+    top: 0;
+    left: 0;
+}
+
+.expanded {
+    width: $sidebar-expanded;
+}
+
+.collapsed {
+    width: $sidebar-collapsed;
+}
