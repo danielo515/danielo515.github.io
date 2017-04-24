@@ -2,5 +2,5 @@ name: webapps
 type: section-metadata
 icon: html5
 bubble:
-  es: Soy un gran fan de las SPAs
-  en: I really love SPAs
+  es: Suy un afférrimo defensor de las Single Page web Apps. Explorar los límites de lo que se puede hacer sin backend es uno de mis hobbies
+  en: I'm an huge fan of Single Page web Applications. Seen how far you can go client side (less backend as possible) is one of my hobbies
