@@ -1,7 +1,7 @@
 import React from 'react'
-import Css from './backtotop.module.scss'
-import { rhythm } from '../../utils/typography'
+import Css from './backtotop.module'
 
+import Icon from '../Icon'
 
 export default class BackToTop extends React.Component {
 
@@ -22,7 +22,7 @@ export default class BackToTop extends React.Component {
        const classes = [Css.wrapper, this.state.required ? Css.visible : ''].join(' ');
         return (
             <div className={classes}>
-                <button className={Css.caret} onClick={this.props.onClick}>TOP</button>
+                <Icon name='chevron-up' onClick={this.props.onClick}/>
             </div>
         )
     }
