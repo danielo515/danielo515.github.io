@@ -7,5 +7,12 @@ screenshots:
     - octowiki-2017-03-26_2.png
 ---
 
-# Mola!
+# OctoWiki
 
+## Motivation
+
+Having a wiki hosted on github is cool, but editing plain text files is not.
+
+## Technologies used
+
+Tyddlywiki and github.js bla bla bla 

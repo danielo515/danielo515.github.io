@@ -8,5 +8,12 @@ screenshots:
     - octowiki-2017-03-26_1.png
 ---
 
-# Mola!
+# NoteSelf
 
+## Motivation
+
+The lack of customization that Evernote has.
+
+## Technologies used
+
+Tiddlywiki and bla bla bla 
