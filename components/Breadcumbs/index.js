@@ -1,6 +1,6 @@
 import React, {PropTypes} from 'react'
 import Css from './styles.module'
-import Icon from '../Icon.js'
+import Icon from '../Icon'
 
 
 export default class BreadCumbs extends React.Component {

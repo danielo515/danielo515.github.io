@@ -1,6 +1,6 @@
 import React from 'react'
 import Css from './backtotop.module.scss'
-import { rhythm } from '../utils/typography'
+import { rhythm } from '../../utils/typography'
 
 
 export default class BackToTop extends React.Component {

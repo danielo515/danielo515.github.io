@@ -1,6 +1,6 @@
 import React , {PropTypes} from 'react'
 import Styles from './icon.module.scss'
-import { rhythm } from '../utils/typography'
+import { rhythm } from '../../utils/typography'
 
 import { Link } from 'react-router'
 import { prefixLink } from 'gatsby-helpers'

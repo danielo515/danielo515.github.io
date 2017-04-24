@@ -1,12 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import CSS from './section.module'
-import { rhythm } from '../utils/typography'
+import { rhythm } from '../../utils/typography'
 
 
-import TextBubble from './TextBubble'
-import ScreenshotCard from './ScreenshotCard'
-import { isActiveSection } from '../utils/domUtils'
+import TextBubble from '../TextBubble'
+import ScreenshotCard from '../ScreenshotCard'
+import { isActiveSection } from '../../utils/domUtils'
 
 export default class Section extends React.Component {
 

@@ -2,8 +2,8 @@ import React, { PropTypes } from 'react'
 import ReactDOM from 'react-dom'
 import Css from './sectionwithcards.module.scss'
 
-import Section from './Section.hoc'
-import ScreenshotCard from './ScreenshotCard'
+import Section from '../Section.hoc'
+import ScreenshotCard from '../ScreenshotCard'
 
 export default Section((props) => {
 

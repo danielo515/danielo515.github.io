@@ -1,6 +1,6 @@
 import React from 'react'
 import CSS from './screenshotsgallery.module.scss'
-import { rhythm } from '../utils/typography'
+import { rhythm } from '../../utils/typography'
 
 
 export default class ScreenshotsGallery extends React.Component {
@@ -13,7 +13,14 @@ export default class ScreenshotsGallery extends React.Component {
     render(){
         const {info} = this.props
 
-        const screenshots = info.screenshots ? info.screenshots.map(s => <span className={`screenshot ${CSS['screenshot']}`}><img src={s}/></span>) : null;
+        const screenshots = info.screenshots ? info.screenshots
+                .map(s => 
+                    <span key={s} className={`screenshot ${CSS['screenshot']}`}>
+                        <img src={s}/>
+                    </span>
+                ) 
+                : 
+                null;
 
 
         return (

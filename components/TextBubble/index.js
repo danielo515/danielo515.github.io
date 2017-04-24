@@ -1,6 +1,6 @@
 import React from 'react'
 import CSS from './textbubble.module'
-import { rhythm } from '../utils/typography'
+import { rhythm } from '../../utils/typography'
 
 export default class TextBubble extends React.Component {
 

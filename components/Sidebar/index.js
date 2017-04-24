@@ -2,9 +2,9 @@ import React, {PropTypes} from 'react'
 import Css from './sidebar.module'
 
 
-import Danielo from './Danielo';
-import BreadCumbs from './Breadcumbs'
-import {scrollTo} from '../utils/domUtils'
+import Danielo from '../Danielo';
+import BreadCumbs from '../Breadcumbs'
+import {scrollTo} from '../../utils/domUtils'
 
 
 export default class Sidebar extends React.Component {

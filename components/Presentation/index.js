@@ -1,8 +1,8 @@
 import React from 'react'
 import Styles from './presentation.module.scss'
-import { rhythm } from '../utils/typography'
+import { rhythm } from '../../utils/typography'
 
-import Icon from './Icon'
+import Icon from '../Icon'
 
 class Presentation extends React.Component {
   

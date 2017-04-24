@@ -6,7 +6,7 @@ import { config } from 'config'
 
 import Presentation from '../components/Presentation'
 import Danielo from '../components/Danielo'
-import Section from '../components/Section'
+import Section from '../components/Section.hoc/old'
 import {scrollTo, scrollToTop} from '../utils/domUtils'
 import BackToTop from '../components/BackToTop'
 import BreadCumbs from '../components/Breadcumbs'
