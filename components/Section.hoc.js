@@ -10,11 +10,11 @@ import {isActiveSection} from '../utils/domUtils'
 
 export default (WrappedComponent) => class Section extends React.Component {
 
-    static propTypes() {
-        return {
+    static propTypes = {
+        
             windowHeight: React.PropTypes.number,
             sectionInfo: PropTypes.object
-        }
+        
     }
 
     constructor(props){

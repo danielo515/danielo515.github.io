@@ -5,12 +5,10 @@ import Icon from '../Icon.js'
 
 export default class BreadCumbs extends React.Component {
 
-    static propTypes() {
-        return {
+    static propTypes = {
             sections: PropTypes.array,
             onClick: PropTypes.func, // This function will be called with the name of the section clicked,
-            classNames: PropTypes.array
-        }
+            classNames: PropTypes.object
     }
 
     constructor (props) {

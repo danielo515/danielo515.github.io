@@ -29,3 +29,4 @@ node_modules
 .sass-cache/
 public/
 *.zip
+.vscode/settings.json

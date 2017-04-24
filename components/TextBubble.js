@@ -4,11 +4,9 @@ import { rhythm } from '../utils/typography'
 
 export default class TextBubble extends React.Component {
 
-    static propTypes() {
-        return {
+    static propTypes = {
             children: React.PropTypes.any,
             text: React.PropTypes.string
-        }
     }
 
     styles(name) {

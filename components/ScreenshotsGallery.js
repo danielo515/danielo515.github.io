@@ -5,10 +5,9 @@ import { rhythm } from '../utils/typography'
 
 export default class ProjectHeader extends React.Component {
 
-    static propTypes() {
-        return {
+    static propTypes = {
             info: React.PropTypes.object,
-        }
+    
     }
 
     render(){

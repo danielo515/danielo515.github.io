@@ -7,13 +7,11 @@ import { prefixLink } from 'gatsby-helpers'
 
 export default class Icon extends React.Component {
 
-    static propTypes() {
-        return {
+    static propTypes = {
             size: React.PropTypes.number,
             padding: React.PropTypes.string,
             classes: React.PropTypes.array,
             wrapperClasses: React.PropTypes.array
-        }
     }
 
     render(){

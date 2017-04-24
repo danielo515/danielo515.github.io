@@ -6,10 +6,9 @@ import Icon from './Icon'
 
 export default class ScreenshotCard extends React.Component {
 
-    static propTypes() {
-        return {
-            cardInfo: React.PropTypes.object,
-        }
+    static propTypes = {
+                    cardInfo: React.PropTypes.object,
+        
     }
 
     constructor (props) {
