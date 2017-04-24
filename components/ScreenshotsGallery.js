@@ -3,7 +3,7 @@ import CSS from './screenshotsgallery.module.scss'
 import { rhythm } from '../utils/typography'
 
 
-export default class ProjectHeader extends React.Component {
+export default class ScreenshotsGallery extends React.Component {
 
     static propTypes = {
             info: React.PropTypes.object,
@@ -13,7 +13,7 @@ export default class ProjectHeader extends React.Component {
     render(){
         const {info} = this.props
 
-        const screenshots = info.screenshots.map(s => <span className={`screenshot ${CSS['screenshot']}`}><img src={s}/></span>);
+        const screenshots = info.screenshots ? info.screenshots.map(s => <span className={`screenshot ${CSS['screenshot']}`}><img src={s}/></span>) : null;
 
 
         return (

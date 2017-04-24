@@ -8,8 +8,8 @@ import { prefixLink } from 'gatsby-helpers'
 export default class Icon extends React.Component {
 
     static propTypes = {
-            size: PropTypes.oneOf([PropTypes.number,PropTypes.string]), 
-            padding: PropTypes.number,
+            size: PropTypes.oneOfType([PropTypes.number,PropTypes.string]), 
+            padding: PropTypes.oneOfType([PropTypes.number,PropTypes.string]),
             classes: PropTypes.array,
             wrapperClasses: PropTypes.array
     }

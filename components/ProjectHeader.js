@@ -1,7 +1,5 @@
 import React from 'react'
 import CSS from './projectheader.module.scss'
-import { rhythm } from '../utils/typography'
-
 
 export default class ProjectHeader extends React.Component {
 
@@ -11,7 +9,7 @@ export default class ProjectHeader extends React.Component {
     }
 
     render(){
-        console.log(CSS);
+
         const {info} = this.props
         return (
             <div className={CSS['wrapper']}>

@@ -6,7 +6,6 @@ screenshots:
     - columnator_1.png
     - columnator_2.png
     - columnator_3.png
-    - octowiki-2017-03-26_2.png
 ---
 
 # Columnator
