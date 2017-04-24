@@ -18,9 +18,12 @@ export default class NpmPkgCard extends React.Component {
     return (
       <div className={Css.card}>
         <h3>{name}</h3>
-        <div dangerouslySetInnerHTML={{ __html: badge }}></div>
+        { badge ? 
+          <div dangerouslySetInnerHTML={{ __html: badge }}></div>
+          :
+          <div> <Icon name='npm' linkTo={url} classes={[Css.npmIcon]}/></div>
+        }
         <div> {desc} </div>
-        <div> <Icon name='npm' linkTo={url}/></div>
       </div>
     );
   }

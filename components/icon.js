@@ -1,4 +1,4 @@
-import React from 'react'
+import React , {PropTypes} from 'react'
 import Styles from './icon.module.scss'
 import { rhythm } from '../utils/typography'
 
@@ -8,10 +8,10 @@ import { prefixLink } from 'gatsby-helpers'
 export default class Icon extends React.Component {
 
     static propTypes = {
-            size: React.PropTypes.number,
-            padding: React.PropTypes.string,
-            classes: React.PropTypes.array,
-            wrapperClasses: React.PropTypes.array
+            size: PropTypes.oneOf([PropTypes.number,PropTypes.string]), 
+            padding: PropTypes.number,
+            classes: PropTypes.array,
+            wrapperClasses: PropTypes.array
     }
 
     render(){
