@@ -1,15 +1,17 @@
 import React from 'react';
-import styles from './styles';
+import Css from './styles.module';
 
-export default class NpmSection extends React.Component {
-  
-  static propTypes = {
+import Section from '../../Section.hoc';
 
+import NpmPkgCard from '../npmPkgCard';
+
+export default Section((props) => {
+
+  const cards = props.sectionInfo.projects.map( ({data}) => <NpmPkgCard {...data} key={data.name}></NpmPkgCard> );
+    return (
+      <div>
+        {cards}
+      </div>
+    )
   }
-
-  render = () => (
-    <div>
-      NpmSection 
-    </div>
-  )
-}
+);

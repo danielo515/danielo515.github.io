@@ -6,6 +6,7 @@ import { config } from 'config'
 
 import Presentation from '../components/Presentation'
 import SectionWithCards from '../components/SectionWithCards'
+import NpmSection from '../components/npm/NpmSection'
 import {scrollTo, scrollToTop} from '../utils/domUtils'
 import BackToTop from '../components/BackToTop'
 import Sidebar from '../components/Sidebar'
@@ -109,8 +110,9 @@ export default class Index extends React.Component {
         >
           Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto. Lorem Ipsum ha sido el texto de relleno estándar de las industrias desde el año 1500, cuando un impresor (N. del T. persona que se dedica a la imprenta) desconocido usó una galería de textos y los mezcló de tal manera que logró hacer un libro de textos especimen.</Presentation>
         
-        <SectionWithCards {...this.state} even={true} sectionInfo={this.sections.webapps}></SectionWithCards>
-        <SectionWithCards {...this.state} sectionInfo={this.sections.videogames}></SectionWithCards>
+        <SectionWithCards {...this.state} sectionInfo={this.sections.webapps} even={true}/>
+        <SectionWithCards {...this.state} sectionInfo={this.sections.videogames}/>
+        <NpmSection {...this.state} sectionInfo={this.sections.npm} even={true}/>
         {/*<section className={Css['sidebar']}>
             <Danielo ref={(d)=> d ? this.danielo = d : null}/>
             <BreadCumbs sections={[

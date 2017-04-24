@@ -1,0 +1,12 @@
+{
+  "url": "https://www.npmjs.com/package/add-jsdocs-here",
+  "name": "add-jsdocs-here",
+  "badge": null,
+  "description": [
+    "Simple npm package that adds the required files and configurations to generate\ndocumentation using jsdoc3.",
+    "Just run it on the root folder of the project that you want to be patched for jsdoc3.",
+    "A wizzard will guide you across all the configurations. Most of the defaults are fine for many projects,\nbut you want to put special attention to the following:",
+    "The documentation generation require gulp to be installed globally and locally and gulp-jsdoc3.\nThis is not required by the module to work, but they will be required for generate the documentation.\nThe module will ask you if you want to install the required dependencies and will install them for you,\nexcept for the global gulp which has to be installed manually..",
+    "I recommend you to install it globally.\nYou are not going to use it twice for the same project, but it may be useful for several projects.\nThat's why I recommend to install it globally."
+  ]
+}

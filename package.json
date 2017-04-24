@@ -25,7 +25,8 @@
     "typography-plugin-code": "^0.15.0"
   },
   "devDependencies": {
-    "gh-pages": "^0.12.0"
+    "gh-pages": "^0.12.0",
+    "npm-user-pkgs-scrapper": "^1.0.1"
   },
   "keywords": [
     "gatsby"
@@ -33,6 +34,7 @@
   "license": "MIT",
   "main": "n/a",
   "scripts": {
+    "scrap": "node utils/scrap_packages",
     "build": "gatsby build",
     "deploy": "gatsby build --prefix-links && gh-pages -d public",
     "develop": "gatsby develop",

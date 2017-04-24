@@ -1,0 +1,6 @@
+name: npm
+icon: npm
+type: section-metadata
+bubble:
+  es: Como buen desarollador node también tengo varios paquetes disponibles en npm
+  en: As any good node developer I have several npm packages published

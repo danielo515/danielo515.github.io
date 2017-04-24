@@ -48,7 +48,9 @@ export default class Sidebar extends React.Component {
                     sections={[
                         sections.webapps, 
                         sections.videogames, 
-                        sections.curriculum]} 
+                        sections.npm,
+                        sections.curriculum,
+                        ]} 
                     onClick={scrollTo}
                  />
             </div>

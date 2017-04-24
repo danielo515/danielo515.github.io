@@ -1,6 +1,5 @@
 import React from 'react'
 import Css from './danielo.module.scss'
-import { rhythm } from '../utils/typography'
 
 export default class Danielo extends React.Component {
 

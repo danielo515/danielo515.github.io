@@ -1,0 +1,11 @@
+{
+  "url": "https://www.npmjs.com/package/npm-user-pkgs-scrapper",
+  "name": "npm-user-pkgs-scrapper",
+  "badge": "<img src=\"https://img.shields.io/node/v/npm-user-pkgs-scrapper.svg?style=flat-square\" alt=\"Node\" class=\"badge\">\n<a href=\"https://www.npmjs.com/package/npm-user-pkgs-scrapper\"><img src=\"https://img.shields.io/npm/v/npm-user-pkgs-scrapper.svg?style=flat-square\" alt=\"NPM\" class=\"badge\"></a>\n<a href=\"https://travis-ci.org/danielo515/npm-user-pkgs-scrapper\"><img src=\"https://img.shields.io/travis/danielo515/npm-user-pkgs-scrapper/master.svg?style=flat-square\" alt=\"Travis\" class=\"badge\"></a>\n<a href=\"https://david-dm.org/danielo515/npm-user-pkgs-scrapper\"><img src=\"https://img.shields.io/david/danielo515/npm-user-pkgs-scrapper.svg?style=flat-square\" alt=\"David\" class=\"badge\"></a>\n<a href=\"https://coveralls.io/github/danielo515/npm-user-pkgs-scrapper\"><img src=\"https://img.shields.io/coveralls/danielo515/npm-user-pkgs-scrapper.svg?style=flat-square\" alt=\"Coverage Status\" class=\"badge\"></a>\n<a href=\"https://www.npmjs.com/package/npm-user-pkgs-scrapper\"><img src=\"https://img.shields.io/npm/dt/npm-user-pkgs-scrapper.svg?style=flat-square\" alt=\"npm\" class=\"badge\"></a>",
+  "description": [
+    "Small utility that scraps the packages of certain npm user. This means, packages publicly available created by the target user.\nIt was built specifically as a helper library for my port-folio. Funnily it scraps itself as part of the portfolio generation.",
+    "The scrapped information includes",
+    "It only exports one function, that accepts an npm username as first parameter.\nThe second optional parameter is a destination file where the scrapped information will be saved as a JSON file.",
+    "The function returns a promise that fulfills when scrap completes, with one of the following results:"
+  ]
+}

@@ -1,3 +1,3 @@
-import npmPkgCard from './npmPkgCard';
+import NpmPkgCard from './npmPkgCard';
 
-export default npmPkgCard;
+export default NpmPkgCard;

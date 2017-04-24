@@ -1,0 +1,27 @@
+{
+  "url": "https://www.npmjs.com/package/object-translate",
+  "name": "object-translate",
+  "badge": "<img src=\"https://img.shields.io/node/v/object-translate.svg?style=flat-square\" alt=\"Node\" class=\"badge\">\n<a href=\"https://www.npmjs.com/package/object-translate\"><img src=\"https://img.shields.io/npm/v/object-translate.svg?style=flat-square\" alt=\"NPM\" class=\"badge\"></a>\n<a href=\"https://travis-ci.org/danielo515/object-translate\"><img src=\"https://img.shields.io/travis/danielo515/object-translate/master.svg?style=flat-square\" alt=\"Travis\" class=\"badge\"></a>\n<a href=\"https://david-dm.org/danielo515/object-translate\"><img src=\"https://img.shields.io/david/danielo515/object-translate.svg?style=flat-square\" alt=\"David\" class=\"badge\"></a>\n<a href=\"https://coveralls.io/github/danielo515/object-translate\"><img src=\"https://img.shields.io/coveralls/danielo515/object-translate.svg?style=flat-square\" alt=\"Coverage Status\" class=\"badge\"></a>",
+  "description": [
+    "Easily turn objects into other objects.",
+    "Object-translate is a small utility to reshape objects intuitively.",
+    "You just have to describe the shape that you want to obtain with a simple (or complex mapping) object and create a converter.\nA converter is a function that will take any object as input and will try to generate another object that matches your description.\nThe converter is created once and can be used it as many times as you want, pass it around as parammeter,\nuse it on functional programming and so on.",
+    "Install via yarn",
+    "or npm",
+    "You could pass two configuration objects when instantiating a converter (➕ required, ➖ optional, ✏️ default) .",
+    "➕  mappings ( Object )\n 📝 Description: The map describing the transformation\n 💡 Example: {userName: 'user.name', surname: 'user.surname' }",
+    "➖ defaults ( Object ) ✏️ {}\n 📝 Description: An object containing default values for the missing properties\n ❗️ Warning: The default values should be on the same path as they would be on the object being transformed\n ℹ️ Info: Defaults to an empty object\n 💡 Example: {user: { surname:'not provided'}}",
+    "Mappings are objects describing the final shape you want to obtain from an object when the converter is applied to it.\nThe values on a map description can be of three types:",
+    "This is the most basic mapping method. It is just a string in dot notation describing the path were you expect\nthe value to be located at.",
+    "When you are not sure of the path that you should use ( was it address or just addr? was it camelCase or snake-case? )\nyou can provide an array of alternative paths.\nAlternatives should be inside an object with a property called alternatives.",
+    "If the value that you want to extract requires a special treatement (for example, convert it to lower case),\nyou can specify a function to process such value. This function is called a processor\nThe processor is executed with the original value as the first parammeter and the full object\nbeing converted as the second argument.",
+    "This is a very basic example",
+    "See example folder or the runkit example.",
+    "If you don't use a package manager, you can access object-translate via unpkg (CDN), download the source, or point your package manager to the url.",
+    "object-translate is compiled as a collection of CommonJS modules & [ES2015 modules](http://www.2ality.com/2014/0\n-9/es6-modules-final.html) for bundlers that support the jsnext:main or module field in package.json (Rollup, Webpack 2)",
+    "The object-translate package includes precompiled production and development UMD builds in the dist folder. They can be used directly without a bundler and are thus compatible with many popular JavaScript module loaders and environments. You can drop a UMD build as a <script> tag on your page. The UMD builds make object-translate available as a window.objectTranslate global variable.",
+    "The code is available under the MIT license.",
+    "We are open to contributions, see CONTRIBUTING.md for more info.",
+    "This module was created using generator-module-boilerplate."
+  ]
+}

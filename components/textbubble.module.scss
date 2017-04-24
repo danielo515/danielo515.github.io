@@ -4,13 +4,13 @@
 .hidden {
     opacity: 0;
     top: -10em;
-    transition: top 1.5s, opacity 1s, ease-out
+    transition: top 1.5s, opacity 1s;
 }
 
 .visible {
     top: 1em;
     opacity: 1;
-    transition: top 1s, opacity 1.5s, ease-in
+    transition: top 1s, opacity 1.5s;
     }
 
 .wrapper {
