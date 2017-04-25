@@ -14,7 +14,7 @@ module.exports = React.createClass({
   },
   render () {
     return (
-        <Curriculum>
+        <Curriculum history={this.props.history}>
          { this.props.children }
         </Curriculum>
     )

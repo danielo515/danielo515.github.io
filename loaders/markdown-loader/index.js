@@ -35,7 +35,10 @@ var md = markdownIt({
 module.exports = function (content) {
   this.cacheable()
   const sections = [];
-  md = md.use(require('markdown-it-anchor'), {level: 2, callback: (token, info) => sections.push(info)})
+  md = md.use(require('markdown-it-anchor'), {level: 2, callback: (token, {slug,title}) => sections.push({
+    level: parseInt(token.tag.replace('h','')),
+    slug,title
+  })})
   const meta = frontMatter(content)
   const body = md.render(meta.body)
   const result = objectAssign({}, meta.attributes, {

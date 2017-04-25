@@ -16,7 +16,7 @@ export default class Curriculum extends React.Component {
 
     return (
       <div className={Css['wrapper']}>
-        <SideNav sections={sections}></SideNav>
+        <SideNav sections={sections} history={this.props.history}></SideNav>
         <div className={Css['content']}>
           {this.props.children}
         </div>
