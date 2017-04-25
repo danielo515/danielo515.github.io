@@ -3,12 +3,13 @@
 
 .wrapper {
     width: 100%;
+    background-color: $blue;
 }
 
 .content {
     height: 100%;
     width: 100%;
-    background-color: $blue;
+    @include container;
     padding: .5em;
     overflow: hidden;
     line-height: 1;
