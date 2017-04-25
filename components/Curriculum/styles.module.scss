@@ -1,0 +1,17 @@
+@import '../_constants';
+@import '../_mixins';
+
+.wrapper {
+    @include container;
+    @include respond-to(x-large){
+        margin-left: 4%;
+    }
+}
+
+.content {
+    img{
+        max-height: 80px;
+        margin: 0;
+        margin-left: 20px;
+    }
+}

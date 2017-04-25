@@ -17,9 +17,11 @@
     "markdown-it-footnote": "^3.0.1",
     "markdown-it-sub": "^1.0.0",
     "object-assign": "^4.1.1",
+    "prop-types": "^15.5.8",
     "react-headroom": "^2.1.2",
     "react-helmet": "^3.2.2",
     "react-responsive-grid": "^0.3.3",
+    "react-sidenav": "^2.1.1",
     "react-typography": "^0.15.0",
     "toml-js": "0.0.8",
     "typography": "^0.15.8",
@@ -30,7 +32,8 @@
     "npm-user-pkgs-scrapper": "^1.0.1"
   },
   "keywords": [
-    "danielo515","portfolio"
+    "danielo515",
+    "portfolio"
   ],
   "license": "MIT",
   "main": "n/a",

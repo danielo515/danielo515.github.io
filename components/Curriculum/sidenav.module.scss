@@ -1,0 +1,27 @@
+@import '../_mixins';
+@import '../_constants';
+
+.wrapper{
+    position: fixed;
+    top: 0;
+    height: 100%;
+    right: -100%;
+    transition: right 1s;
+    @include respond-to(x-large){
+        right: 0;
+    }
+}
+.content {
+    padding-top: 1em;
+    background-color: $blue;
+    height: 100%;
+    color: $white-text;
+}
+
+.avatar {
+    text-align: center;
+    img{
+        border-radius: 50%;
+        width: 50%;
+    }
+}

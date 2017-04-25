@@ -11,7 +11,7 @@ export default class __ComponentName__ extends React.Component {
     return (
       <div>
         __ComponentName__
-    </div>
+      </div>
     )
   }
 }
