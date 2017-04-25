@@ -10,6 +10,7 @@ import { rhythm } from '../../utils/typography'
 
 import ProjectHeader from '../../components/ProjectHeader'
 import ScreenshotsGallery from '../../components/ScreenshotsGallery'
+import MdSidebar from '../../components/MdSidebar'
 
 
 module.exports = React.createClass({
@@ -23,6 +24,10 @@ module.exports = React.createClass({
     console.log(this.props.children);
     const post = this.props.children.props.route.page.data;
     return (
+      <section>
+      <Headroom>
+        <MdSidebar sections={post.sections} extraSections={{slug: 'gallery', title:'Gallery'}}/>
+      </Headroom>
       <Container style={{padding:'1em'}}>
         <ProjectHeader info={post}/>
 
@@ -30,6 +35,7 @@ module.exports = React.createClass({
          
          <ScreenshotsGallery  info={post}/>
       </Container>
+      </section>
     )
   },
 })

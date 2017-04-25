@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'devicons';
-  src:  url('../fonts/devicons.eot?zdvnp7');
-  src:  url('../fonts/devicons.eot?zdvnp7#iefix') format('embedded-opentype'),
-    url('../fonts/devicons.ttf?zdvnp7') format('truetype'),
-    /*url('../fonts/devicons.woff?zdvnp7') format('woff'),*/
-    url('../fonts/devicons.svg?zdvnp7#devicons') format('svg');
+  src:  url('../fonts/devicons.eot?oszb0o');
+  src:  url('../fonts/devicons.eot?oszb0o#iefix') format('embedded-opentype'),
+    url('../fonts/devicons.ttf?oszb0o') format('truetype'),
+    /*url('../fonts/devicons.woff?oszb0o') format('woff'),*/
+    url('../fonts/devicons.svg?oszb0o#devicons') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -24,6 +24,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-backspace:before {
+  content: "\e900";
+}
 .icon-git:before {
   content: "\e602";
 }
@@ -63,7 +66,7 @@
 .icon-chevron-up:before {
   content: "\f077";
 }
-.icon-envelope-square:before {
+.icon-email-square:before {
   content: "\f199";
 }
 .icon-share-square:before {
@@ -95,5 +98,11 @@
 }
 .icon-id-card:before {
   content: "\f2c2";
+}
+.icon-travis:before {
+  content: "\e67e";
+}
+.icon-download:before {
+  content: "\f019";
 }
 

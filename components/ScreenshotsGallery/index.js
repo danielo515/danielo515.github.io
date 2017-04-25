@@ -25,7 +25,7 @@ export default class ScreenshotsGallery extends React.Component {
 
         return (
             <div>
-                <h2>Screenshots</h2>
+                <h2 id='gallery'>Gallery</h2>
                 <div className={`gallery ${CSS['gallery']}`}>
                     {screenshots}
                 </div>

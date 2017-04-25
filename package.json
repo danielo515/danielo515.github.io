@@ -1,8 +1,8 @@
 {
-  "name": "gatsby-starter-default",
-  "description": "Gatsby default starter",
+  "name": "danielo-portfolio",
+  "description": "My personal developer portfolio",
   "version": "1.0.0",
-  "author": "Kyle Mathews <mathews.kyle@gmail.com>",
+  "author": "Danielo Rodríguez Rivero",
   "dependencies": {
     "front-matter": "^2.1.2",
     "gatsby": "^0.12.36",
@@ -30,7 +30,7 @@
     "npm-user-pkgs-scrapper": "^1.0.1"
   },
   "keywords": [
-    "gatsby"
+    "danielo515","portfolio"
   ],
   "license": "MIT",
   "main": "n/a",
