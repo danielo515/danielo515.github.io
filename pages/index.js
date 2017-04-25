@@ -21,7 +21,7 @@ export default class Index extends React.Component {
       .reduce(
       (all, p) => {
 
-        const dirname = p.file.dirname;
+        const dirname = p.file.dirname.replace(/.*\//,'');
         const type = p.data.type;
         if(type === 'section-metadata'){
           all[p.data.name] = all[p.data.name] || {projects:[]};

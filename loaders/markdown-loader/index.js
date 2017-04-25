@@ -19,6 +19,7 @@ var highlight = function (str, lang) {
   return ''
 }
 
+
 var md = markdownIt({
   html: true,
   linkify: true,
@@ -33,10 +34,13 @@ var md = markdownIt({
 
 module.exports = function (content) {
   this.cacheable()
+  const sections = [];
+  md = md.use(require('markdown-it-anchor'), {level: 2, callback: (token, info) => sections.push(info)})
   const meta = frontMatter(content)
   const body = md.render(meta.body)
   const result = objectAssign({}, meta.attributes, {
     body,
+    sections
   })
   this.value = result
   return `module.exports = ${JSON.stringify(result)}`
