@@ -1,6 +1,7 @@
 @import '../constants';
 @import '../mixins';
 
+$maximun-height: 200px;
 
 .wrapper {
     position: relative;
@@ -12,9 +13,12 @@
         border: none;
         background-color: transparent;
         color: $white;
-        font-size: .8em;
+        font-size: 1em;
         @include respond-to(medium){
             font-size: 1.5em;
+        }
+        @include respond-to(large){
+            font-size: 2em;
         }
     }
 }
@@ -23,7 +27,7 @@
 @keyframes expand {
     0%   { max-height: 2em; }
     50%  { max-height: 2em; }
-    100% { max-height: 200px; }
+    100% { max-height: $maximun-height; }
 }
 @keyframes drop {
     from { top: -18vw;}
@@ -44,7 +48,7 @@
 }
 
 @keyframes collapse {
-    from { max-height: 200px; }
+    from { max-height: $maximun-height; }
     to   { max-height: 2em; }
 }
 
@@ -64,7 +68,7 @@
     top: 0;
     animation: drop 1s;
     .controls {
-        max-height: 200px;        
+        max-height: $maximun-height;        
         animation: expand 2s;
         div {
             opacity: 1;

@@ -1,6 +1,28 @@
 name: curriculum
 icon: drivers-license
 type: section-metadata
-bubble:
-  es: Si quieres más detalles sobre mí visita mi currículum
-  en: If you want more details about me...
+skills:
+  - javascript_badge
+  - npm
+  - git
+  - linux
+  - terminal
+  - mongodb
+  - nodejs_small
+  - css3_full
+  - html5
+  - gulp
+  - yeoman
+text: 
+  es:
+    bubble: Vaya! esa es una buena collección de skills. Aún así, apuesto a que hay una lista aún mayor en algún lugar
+    gotoText: Ver mi CV
+    description: >
+      Para conocer más detalles sobre mi formación, trayectoria profesional u otros detalles relacionados hay una sección dedicada a mi currículum vítae.
+      Además de la información anteriormente citada también hay un enlace para su descarga en formato PDF
+  en:
+    bubble: Wow! Look at that skills set. I bet those are not all of them. There should be some more at some place
+    gotoText: Got to my CV
+    description: > 
+        If you are interested on knowing more about me in a professionall level there is a section dedicated to my 
+        Curriculum Vitae. There you can see my formation, career and other RRHH like details. On such section there is also a download link on PDF format.

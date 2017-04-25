@@ -1,5 +1,5 @@
-import React from 'react';
-import Css from './styles';
+import React, {PropTypes} from 'react';
+import Css from './styles.module';
 
 export default class __ComponentName__ extends React.Component {
 

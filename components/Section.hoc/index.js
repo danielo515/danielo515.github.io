@@ -13,8 +13,15 @@ export default (WrappedComponent) => class Section extends React.Component {
     static propTypes = {
         
             windowHeight: React.PropTypes.number,
-            sectionInfo: PropTypes.object
+            sectionInfo: PropTypes.object,
+            even: PropTypes.bool,
+            className: PropTypes.string,
+            suppressBubble: PropTypes.bool
         
+    }
+
+    static defaultProps = {
+        suppressBubble: false
     }
 
     constructor(props){
@@ -47,8 +54,8 @@ export default (WrappedComponent) => class Section extends React.Component {
     render() {
 
         const {sectionInfo, language} = this.props;
-        const containerClasses = `${CSS['container']} ${this.props.even ? CSS['even'] : CSS['odd']}`;
-        const bubbleText = sectionInfo.bubble[language];
+        const containerClasses = `${CSS['container']} ${this.props.even ? CSS['even'] : CSS['odd']} ${this.props.className}`;
+        const bubbleText = sectionInfo.text ? sectionInfo.text[language].bubble : sectionInfo.bubble[language];
 
         return (
             <section // class container
@@ -63,7 +70,7 @@ export default (WrappedComponent) => class Section extends React.Component {
                 }
             >
                 <div className={CSS['wrapper']}> 
-                    <TextBubble text={bubbleText} visible={this.state.active}></TextBubble>
+                    { this.props.suppressBubble ? null : <TextBubble text={bubbleText} visible={this.state.active}></TextBubble> }
                     <div 
                         className={CSS['content']}
                         style={

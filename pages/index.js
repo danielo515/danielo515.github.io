@@ -6,6 +6,7 @@ import { config } from 'config'
 
 import Presentation from '../components/Presentation'
 import SectionWithCards from '../components/SectionWithCards'
+import SectionCV from '../components/SectionCV'
 import NpmSection from '../components/npm/NpmSection'
 import {scrollTo, scrollToTop} from '../utils/domUtils'
 import BackToTop from '../components/BackToTop'
@@ -113,6 +114,7 @@ export default class Index extends React.Component {
         <SectionWithCards {...this.state} sectionInfo={this.sections.webapps} even={true}/>
         <SectionWithCards {...this.state} sectionInfo={this.sections.videogames}/>
         <NpmSection {...this.state} sectionInfo={this.sections.npm} even={true}/>
+        <SectionCV {...this.state} sectionInfo={this.sections.curriculum}/>
         {/*<section className={Css['sidebar']}>
             <Danielo ref={(d)=> d ? this.danielo = d : null}/>
             <BreadCumbs sections={[
