@@ -40,8 +40,9 @@
   "scripts": {
     "scrap": "node utils/scrap_packages",
     "build": "gatsby build",
-    "deploy": "gatsby build --prefix-links && gh-pages -d public",
+    "deploy": "gatsby build --prefix-links && gh-pages -d public -b master",
     "develop": "gatsby develop",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "gh-pages": "gh-pages"
   }
 }
