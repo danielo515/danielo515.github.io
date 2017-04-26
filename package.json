@@ -39,7 +39,7 @@
   "main": "n/a",
   "scripts": {
     "scrap": "node utils/scrap_packages",
-    "build": "gatsby build",
+    "build": "gatsby build --prefix-links",
     "deploy": "gatsby build --prefix-links && gh-pages -d public -b master",
     "develop": "gatsby develop",
     "test": "echo \"Error: no test specified\" && exit 1",
