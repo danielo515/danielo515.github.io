@@ -1,12 +1,8 @@
 import React from 'react'
-import { Link } from 'react-router'
-import { prefixLink } from 'gatsby-helpers'
 import Headroom from 'react-headroom'
 import { Container } from 'react-responsive-grid' 
 import '../../css/project-styles.css'
 import '../../css/fonts.css'
-import { rhythm } from '../../utils/typography'
-
 
 import ProjectHeader from '../../components/ProjectHeader'
 import ScreenshotsGallery from '../../components/ScreenshotsGallery'

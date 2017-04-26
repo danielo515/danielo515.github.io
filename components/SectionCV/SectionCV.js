@@ -21,7 +21,7 @@ const Content = Section((props)=>{
       <p>
         {gotoText}
       </p>
-      <Icon name='drivers-license' linkTo='curriculum' wrapperClasses={[Css.cvLink]}/>
+      <Icon name='drivers-license' linkTo='curriculum/' wrapperClasses={[Css.cvLink]}/>
     </div>
 )
 });

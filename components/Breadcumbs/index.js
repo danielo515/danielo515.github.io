@@ -29,11 +29,11 @@ export default class BreadCumbs extends React.Component {
         const controls = this.props.sections.map(
             (section) => (
                 <Item  key={section.name} >
-                    <button
+                    <Icon
+                        name={section.icon}
                         onClick={() => { this.activateSection(section.name); this.props.onClick(section.name)}}
                     >
-                        <span className={`icon-${section.icon}`}></span>
-                    </button>
+                    </Icon>
                 </Item>
                 )
         );

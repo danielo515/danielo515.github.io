@@ -28,7 +28,7 @@ $break-large: 1200px;
 }
 
 @mixin container {
-    max-width: 1020px;
+    max-width: 960px;
     margin: 0 auto;
 }
 
@@ -36,7 +36,8 @@ $break-large: 1200px;
 $breakpoints: (
   'small'  : 767px,
   'medium' : 992px,
-  'large'  : 1200px
+  'large'  : 1200px,
+  'x-large': 1411px
 );
 
 @mixin respond-to($breakpoint) {
