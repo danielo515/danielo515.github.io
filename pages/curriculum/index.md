@@ -113,24 +113,20 @@ Technical Skills
 - RedHat Linux, Debian, HP-UX, Clonezilla
 - Logical Volume Manager (LVM)
 - Network File System (NFS)
-- JavaScript: web apps, widgets, phone development (Sencha Touch,)
-- HTML+CSS
-- Sell script 
-- Visual Basic Script (VBS)
-- Google Apps Script
-- Express.js
-- Other programming languages: Visual Basic, bash, java, PHP, python
-- Network monitoring/management: Cacti, SecureCrt,
+- JavaScript: web apps( HTML5 SPA), widgets, phone development (Sencha Touch, Cordova)
+- Scripting languages: Bash, Visual Basic Script, Google Apps Script
+- REST frameworks: Express.js, Hapi.js
+- Other programming languages: Visual Basic, PHP, python
+- Network monitoring/management: Cacti, SecureCrt
 - HP Service Manager
 - Remedy
-- HP:  Integrated Lights-Out (ILO), System Insight Manager, Operation Orchestration (HPOO), Smart Array Controllers 
+- HP: Integrated Lights-Out (ILO), System Insight Manager, Operation Orchestration (HPOO), Smart Array Controllers 
 - VMWare Vsphere
 - Symantec: Netbackup, OpsCenter Analytics
 - NetIQ: AppManager Control Center
 - Microsoft: SCCM (System Center Configuration)
 - BlueCat: Proteus Enterprise Ipam
-- Oracle Database
-- MySQL database
+- Databases: Oracle , MySQL
 
 
 ## OTHER

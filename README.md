@@ -1,10 +1,6 @@
-# gatsby-starter-default
-The default Gatsby starter
+# Danielo personal site
 
-Install this starter (assuming Gatsby is installed) by running from your CLI:
-```
-gatsby new gatsby-example-site
-```
-## Deploy
+This repository is where my personal website lives.
+It is a REACT app that uses Gatsby to generate an static website.
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/gatsbyjs/gatsby-starter-default)
+You can see the compiled running site at: www.danielorodriguez.com
