@@ -4,6 +4,7 @@ technology: Vue + Quasar
 description: Curated set of tools for working with JSON collections
 screenshots:
     - jsontools-01.png
+    - jsontools-02.png
 ---
 
 # JSON Tools
