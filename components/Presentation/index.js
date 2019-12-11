@@ -65,8 +65,8 @@ class Presentation extends React.Component {
                 </div>
                 <div className={Styles['presentation-icons']} ref={ node => this.bottomNode = node}>
                     <Icon size={4} padding={rhythm(1)} name="github-square" linkTo="https://github.com/danielo515"></Icon>
-                    <Icon size={4} padding={rhythm(1)} name="linkedin-square"></Icon>
-                    <Icon size={4} padding={rhythm(1)} name="email-square"></Icon>
+                    <Icon size={4} padding={rhythm(1)} name="linkedin-square" linkTo="https://linkedin.com/in/danielorodriguez"></Icon>
+                    <Icon size={4} padding={rhythm(1)} name="stack-overflow" linkTo="https://stackoverflow.com/users/1734815/danielo515"></Icon>
                 </div>
             </div>
             )
