@@ -31,7 +31,12 @@ If you want to take advantage of a dynamic person, passionate of his work contin
 	
 ## EMPLOYMENT
 
-### June 2016 – Currently NodeJs Developer – Case on it
+### January 2019 - January 2020 – Aula
+Aula is a social learning platform focused on make it easy for all educators to engage all students.
+As a full-stack engineer my role is to make sure that the platform we built is not only technically correct and
+reliable (99.9%), but that also meets the requirement of helping people reach each other. It is an humans first platform
+
+### June 2016 – Jan 2019 – Case on it
 On Case we use stunning cutting edge technologies as MongoDB and NodeJS to deliver the best services to our customers. We are always open to innovation and we are not afraid of doing things that no one did before, for example, we started using MongoDB even before it reached it's version 1.0.
 
 ### April 2016 – June 2016 Level 3 software support – Gemalto 
