@@ -8,7 +8,6 @@ If you want to take advantage of a dynamic person, passionate of his work contin
 ## BADGES
 
 ![linux](LinuxCert.png)
-![microsoft](MicrosoftCert.png)
 ![suse](SuseCert.png)
 
 ## CERTIFICATES & MEMBERSHIPS
@@ -31,10 +30,15 @@ If you want to take advantage of a dynamic person, passionate of his work contin
 	
 ## EMPLOYMENT
 
+### February 2020 – Pento
+Pento is the first one click payroll solution. We are demonstrating that managing your employees salaries doesn't need to be hard, expensive or tedious.
+Payroll is a traditionally obscure process that takes out ressources from companies that may limit their success. 
+Thanks to Pento handling payrolls isn't harder than using other modern tools like google docs.
+
 ### January 2019 - January 2020 – Aula
 Aula is a social learning platform focused on make it easy for all educators to engage all students.
 As a full-stack engineer my role is to make sure that the platform we built is not only technically correct and
-reliable (99.9%), but that also meets the requirement of helping people reach each other. It is an humans first platform
+reliable (99.9%), but that also meets the requirement of helping people reach each other. It is an humans first platform.
 
 ### June 2016 – Jan 2019 – Case on it
 On Case we use stunning cutting edge technologies as MongoDB and NodeJS to deliver the best services to our customers. We are always open to innovation and we are not afraid of doing things that no one did before, for example, we started using MongoDB even before it reached it's version 1.0.
