@@ -14,8 +14,30 @@ import { getCollection } from "astro:content";
 const config = {
   linkedinUrl: "https://www.linkedin.com/in/danielorodriguez",
   footerLinks: [
-    { label: "About me", href: "#sobre-mi" },
-    { label: "Projects", href: "#projects" },
+    { label: "About me", href: "/#sobre-mi" },
+    { label: "Projects", href: "/#projects" },
+  ],
+  navItems: [
+    {
+      title: "Experience",
+      label: "experience",
+      url: "/#experience",
+    },
+    {
+      title: "Projects",
+      label: "projects",
+      url: "/#projects",
+    },
+    {
+      title: "About me",
+      label: "about-me",
+      url: "/#about-me",
+    },
+    {
+      title: "Contact",
+      label: "contact",
+      url: "mailto:miduga@gmail.com",
+    },
   ],
 };
 
@@ -26,6 +48,7 @@ const projects = await getCollection("projects");
   title="Danielo Rodriguez"
   description="Full-stack developer"
   links={config.footerLinks}
+  navItems={config.navItems}
 >
   <main class="px-4">
     <SectionContainer class="py-16 md:py-36">
@@ -33,26 +56,26 @@ const projects = await getCollection("projects");
     </SectionContainer>
   </main>
   <div class="space-y-24">
-    <SectionContainer id="experiencia">
+    <SectionContainer id="experience">
       <TitleSection>
         <Briefcase class="size-8" />
-        Experiencia laboral
+        Experience
       </TitleSection>
       <Experience />
     </SectionContainer>
 
-    <SectionContainer id="proyectos">
+    <SectionContainer id="projects">
       <TitleSection>
         <CodeIcon class="size-7" />
-        Proyectos
+        Projects
       </TitleSection>
       <Projects {projects} />
     </SectionContainer>
 
-    <SectionContainer id="sobre-mi">
+    <SectionContainer id="about-me">
       <TitleSection>
         <ProfileCheck class="size-8" />
-        Sobre mí
+        About me
       </TitleSection>
       <AboutMe />
     </SectionContainer>

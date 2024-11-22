@@ -1,13 +1,15 @@
 ---
 title: Obsidian modal form
 description: bla
-image: ./nabo.png
+image: ./image.png
 technologies: 
 - Typescript
 - Svelte
 - FP-ts
 category: plugins
 tags: ['obsidian', 'typescript']
+url: https://danielorodriguez.com/obsidian-modal-form/
+github: https://github.com/danielo515/obsidian-modal-form
 ---
 
 Obsidian is an awesome note taking platform: local, private, flexible and extensible.

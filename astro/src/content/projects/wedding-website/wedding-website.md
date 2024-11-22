@@ -1,13 +1,14 @@
 ---
 title: Wedding website
 description: A portal for the guests to my wedding
-image: ./nabo.png
+image: ./mobile-public.png
 technologies: 
 - Typescript
 - Astro
 - Svelte
 - Effect-ts
 category: web-app
+url: https://boda.aliydani.es
 tags: ['svelte','astro']
 ---
 
