@@ -1,10 +1,14 @@
 import { defineCollection, z } from "astro:content";
 
-const tag = z.object({
-  name: z.string(),
-  class: z.string(),
-  icon: z.enum(["nextjs", "tailwind", "react", "svelte", "astro", "obsidian"]),
-});
+const tag = z.enum([
+  "nextjs",
+  "tailwind",
+  "react",
+  "svelte",
+  "astro",
+  "obsidian",
+  "typescript",
+]);
 
 export const collections = {
   projects: defineCollection({

@@ -7,10 +7,7 @@ technologies:
 - Svelte
 - FP-ts
 category: plugins
-tags:
-    - name: Obsidian
-      icon: obsidian
-      class: bg-black
+tags: ['obsidian', 'typescript']
 ---
 
 Obsidian is an awesome note taking platform: local, private, flexible and extensible.

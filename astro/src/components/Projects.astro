@@ -6,11 +6,24 @@ import AstroIcon from "./icons/AstroIcon.astro";
 import GitHub from "./icons/GitHub.astro";
 import Link from "./icons/Link.astro";
 import Obsidian from "./icons/Obsidian.astro";
+import Svelte from "./icons/Svelte.astro";
+import Typescript from "./icons/Typescript.astro";
 import LinkButton from "./LinkButton.astro";
 
 interface Props {
   projects: Array<CollectionEntry<"projects">>;
 }
+
+type Tag = CollectionEntry<"projects">["data"]["tags"][0];
+
+const tagAppearance: Record<Tag, { class: string; name: string }> = {
+  nextjs: { class: "bg-nextjs", name: "Next.js" },
+  tailwind: { class: "bg-[#003159] text-white", name: "Tailwind" },
+  astro: { class: "border-blue-700", name: "Astro" },
+  obsidian: { class: "border-purple-700 text-white", name: "Obsidian" },
+  svelte: { class: "border-orange-500 text-white", name: "Svelte" },
+  typescript: { class: "border-blue-700 text-blue-300", name: "TypeScript" },
+};
 
 const projects = Astro.props.projects;
 ---
@@ -18,60 +31,100 @@ const projects = Astro.props.projects;
 <div class="flex flex-col gap-y-16">
   {
     projects.map(
-      ({ data: { image, title, description, tags, url: link, github } }) => (
-        <article class="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">
-          <div class="w-full md:w-1/2">
-            <div class="relative flex flex-col items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50">
-              <img
-                class="object-cover object-top w-full h-56 transition duration-500 sm:h-full md:scale-110 md:group-hover:scale-105"
-                loading="lazy"
-                src={image}
-              />
-            </div>
-          </div>
-
-          <div class="w-full md:w-1/2 md:max-w-lg">
-            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              {title}
-            </h3>
-            <div class="flex flex-wrap mt-2">
-              <ul class="flex flex-row mb-2 gap-x-2">
-                {tags.map((tag) => (
-                  <li>
-                    <span
-                      class={`flex gap-x-2 rounded-full text-xs ${tag.class} py-1 px-2 `}
-                    >
-                      {tag.icon === "nextjs" && <NextJS class="size-4" />}
-                      {tag.icon === "tailwind" && <Tailwind class="size-4" />}
-                      {tag.icon === "astro" && <AstroIcon class="size-4" />}
-                      {tag.icon === "obsidian" && <Obsidian class="size-4" />}
-                      {tag.name}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              <div class="mt-2 text-gray-700 dark:text-gray-400">
-                {description}
+      async ({
+        data: { image, title, description, tags, url: link, github },
+        render,
+      }) => {
+        const { Content } = await render();
+        return (
+          <Fragment>
+            <article class="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">
+              <div class="w-full md:w-1/2">
+                <div class="relative flex flex-col items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50">
+                  <img
+                    class="object-cover object-top w-full h-56 transition duration-500 sm:h-full md:scale-110 md:group-hover:scale-105"
+                    loading="lazy"
+                    src={image}
+                  />
+                </div>
               </div>
-              <footer class="flex items-end justify-start mt-4 gap-x-4">
-                {github && (
-                  <LinkButton href={github}>
-                    <GitHub class="size-6" />
-                    Code
-                  </LinkButton>
-                )}
-                {link && (
-                  <LinkButton href={link}>
-                    <Link class="size-4" />
-                    Preview
-                  </LinkButton>
-                )}
-              </footer>
-            </div>
-          </div>
-        </article>
-      )
+
+              <div class="w-full md:w-1/2 md:max-w-lg">
+                <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                  {title}
+                </h3>
+                <div class="flex flex-wrap mt-2">
+                  <ul class="flex flex-row mb-2 gap-x-2">
+                    {tags.map((tag) => (
+                      <Fragment>
+                        <li>
+                          <span
+                            class={`flex gap-x-2 rounded-full text-xs border ${tagAppearance[tag].class} py-1 px-2 `}
+                          >
+                            {tag === "nextjs" && (
+                              <Fragment>
+                                <NextJS class="size-4" />
+                              </Fragment>
+                            )}
+                            {tag === "tailwind" && (
+                              <Fragment>
+                                <Tailwind class="size-4" />
+                              </Fragment>
+                            )}
+                            {tag === "astro" && (
+                              <Fragment>
+                                <AstroIcon class="size-4 " />
+                              </Fragment>
+                            )}
+                            {tag === "obsidian" && (
+                              <Fragment>
+                                <Obsidian class="size-4" />
+                              </Fragment>
+                            )}
+                            {tag === "svelte" && (
+                              <Fragment>
+                                <Svelte class="size-4" />
+                              </Fragment>
+                            )}
+                            {tag === "typescript" && (
+                              <Fragment>
+                                <Typescript class="size-4" />
+                              </Fragment>
+                            )}
+                            {tagAppearance[tag].name}
+                          </span>
+                        </li>
+                      </Fragment>
+                    ))}
+                  </ul>
+
+                  <div class="mt-2 text-gray-700 dark:text-gray-400">
+                    {<Content />}
+                  </div>
+                  <footer class="flex items-end justify-start mt-4 gap-x-4">
+                    {github && (
+                      <Fragment>
+                        <LinkButton href={github}>
+                          <GitHub class="size-6" />
+                          Code
+                        </LinkButton>
+                      </Fragment>
+                    )}
+                    {link && (
+                      <Fragment>
+                        <LinkButton href={link}>
+                          <Link class="size-4" />
+                          Preview
+                        </LinkButton>
+                      </Fragment>
+                    )}
+                  </footer>
+                </div>
+              </div>
+            </article>
+          </Fragment>
+        );
+      }
     )
   }
 </div>
