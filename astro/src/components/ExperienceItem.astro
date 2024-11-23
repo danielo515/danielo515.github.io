@@ -5,11 +5,15 @@ interface Props {
   title: string;
   companyName: string;
   link?: string;
-  startDate: string;
+  startDate: Date;
   endDate?: string;
 }
 
-const { title, companyName: company, link, date } = Astro.props;
+const { title, companyName: company, link, startDate: date } = Astro.props;
+const format = new Intl.DateTimeFormat("en", {
+  year: "numeric",
+  month: "long",
+});
 ---
 
 <div
@@ -26,7 +30,7 @@ const { title, companyName: company, link, date } = Astro.props;
         {company}
       </h4>
       <time class="p-0 m-0 text-sm text-gray-600/80 dark:text-white/80"
-        >{date}</time
+        >{format.format(date)}</time
       >
     </div>
   </div>
