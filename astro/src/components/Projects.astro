@@ -1,30 +1,14 @@
 ---
-import NextJS from "@/icons/NextJS.astro";
-import Tailwind from "@/icons/Tailwind.astro";
 import { Image } from "astro:assets";
 import type { CollectionEntry } from "astro:content";
-import AstroIcon from "./icons/AstroIcon.astro";
 import GitHub from "./icons/GitHub.astro";
 import Link from "./icons/Link.astro";
-import Obsidian from "./icons/Obsidian.astro";
-import Svelte from "./icons/Svelte.astro";
-import Typescript from "./icons/Typescript.astro";
 import LinkButton from "./LinkButton.astro";
+import TechTag from "./TechTag.astro";
 
 interface Props {
   projects: Array<CollectionEntry<"projects">>;
 }
-
-type Tag = CollectionEntry<"projects">["data"]["tags"][0];
-
-const tagAppearance: Record<Tag, { class: string; name: string }> = {
-  nextjs: { class: "bg-nextjs", name: "Next.js" },
-  tailwind: { class: "bg-[#003159] text-white", name: "Tailwind" },
-  astro: { class: "border-blue-700", name: "Astro" },
-  obsidian: { class: "border-purple-700 text-white", name: "Obsidian" },
-  svelte: { class: "border-orange-500 text-white", name: "Svelte" },
-  typescript: { class: "border-blue-700 text-blue-300", name: "TypeScript" },
-};
 
 const projects = Astro.props.projects;
 ---
@@ -55,45 +39,9 @@ const projects = Astro.props.projects;
                 <div class="flex flex-wrap mt-2">
                   <ul class="flex flex-row mb-2 gap-x-2">
                     {tags.map((tag) => (
-                      <Fragment>
-                        <li>
-                          <span
-                            class={`flex gap-x-2 rounded-full text-xs border ${tagAppearance[tag].class} py-1 px-2 `}
-                          >
-                            {tag === "nextjs" && (
-                              <Fragment>
-                                <NextJS class="size-4" />
-                              </Fragment>
-                            )}
-                            {tag === "tailwind" && (
-                              <Fragment>
-                                <Tailwind class="size-4" />
-                              </Fragment>
-                            )}
-                            {tag === "astro" && (
-                              <Fragment>
-                                <AstroIcon class="size-4 " />
-                              </Fragment>
-                            )}
-                            {tag === "obsidian" && (
-                              <Fragment>
-                                <Obsidian class="size-4" />
-                              </Fragment>
-                            )}
-                            {tag === "svelte" && (
-                              <Fragment>
-                                <Svelte class="size-4" />
-                              </Fragment>
-                            )}
-                            {tag === "typescript" && (
-                              <Fragment>
-                                <Typescript class="size-4" />
-                              </Fragment>
-                            )}
-                            {tagAppearance[tag].name}
-                          </span>
-                        </li>
-                      </Fragment>
+                      <li>
+                        <TechTag tag={tag} />
+                      </li>
                     ))}
                   </ul>
 

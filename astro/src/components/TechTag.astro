@@ -1,0 +1,55 @@
+---
+import NextJS from "@/icons/NextJS.astro";
+import Tailwind from "@/icons/Tailwind.astro";
+import type { CollectionEntry } from "astro:content";
+import AstroIcon from "./icons/AstroIcon.astro";
+import GitHub from "./icons/GitHub.astro";
+import Obsidian from "./icons/Obsidian.astro";
+import Svelte from "./icons/Svelte.astro";
+import Typescript from "./icons/Typescript.astro";
+
+type Tag = CollectionEntry<"projects">["data"]["tags"][0];
+
+interface Props {
+  tag: Tag;
+}
+
+const tagAppearance: Record<Tag, { class: string; name: string; icon: any }> = {
+  nextjs: { class: "bg-nextjs", name: "Next.js", icon: NextJS },
+  tailwind: {
+    class: "bg-[#003159] text-white",
+    name: "Tailwind",
+    icon: Tailwind,
+  },
+  astro: { class: "border-blue-700", name: "Astro", icon: AstroIcon },
+  obsidian: {
+    class: "border-purple-700 text-white",
+    name: "Obsidian",
+    icon: Obsidian,
+  },
+  svelte: {
+    class: "border-orange-500 text-white",
+    name: "Svelte",
+    icon: Svelte,
+  },
+  typescript: {
+    class: "border-blue-700 text-blue-300",
+    name: "TypeScript",
+    icon: Typescript,
+  },
+  react: {
+    class: "border-blue-700 text-blue-300",
+    name: "React",
+    icon: GitHub,
+  },
+};
+
+const tag = tagAppearance[Astro.props.tag];
+---
+
+<span
+  class={`flex gap-x-2 rounded-full text-xs border ${tag.class} py-1 px-2 `}
+>
+  <tag.icon class="size-4" />
+  {tag.name}
+</span>
