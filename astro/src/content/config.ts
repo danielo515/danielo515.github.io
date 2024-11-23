@@ -25,4 +25,13 @@ export const collections = {
         tags: z.array(tag),
       }),
   }),
+  experience: defineCollection({
+    type: "content",
+    schema: z.object({
+      title: z.string(),
+      companyName: z.string(),
+      startDate: z.date(),
+      endDate: z.date().optional(),
+    }),
+  }),
 };
