@@ -34,4 +34,13 @@ export const collections = {
       endDate: z.date().optional(),
     }),
   }),
+  about: defineCollection({
+    type: "content",
+    schema: z.object({
+      name: z.string(),
+      fullName: z.string(),
+      linkedin: z.string(),
+      github: z.string(),
+    }),
+  }),
 };

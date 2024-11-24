@@ -1,6 +1,4 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-
 import AboutMe from "@/components/AboutMe.astro";
 import Experience from "@/components/Experience.astro";
 import Hero from "@/components/Hero.astro";
@@ -10,9 +8,9 @@ import ProfileCheck from "@/components/icons/ProfileCheck.astro";
 import Projects from "@/components/Projects.astro";
 import SectionContainer from "@/components/SectionContainer.astro";
 import TitleSection from "@/components/TitleSection.astro";
-import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import { getCollection, getEntry } from "astro:content";
 const config = {
-  linkedinUrl: "https://www.linkedin.com/in/danielorodriguez",
   footerLinks: [
     { label: "About me", href: "/#about-me" },
     { label: "Projects", href: "/#projects" },
@@ -41,8 +39,11 @@ const config = {
   ],
 };
 
+const about = await getEntry("about", "about");
 const projects = await getCollection("projects");
 const experience = await getCollection("experience");
+const { Content: Headline } = await about.render();
+const info = about.data;
 ---
 
 <Layout
@@ -53,7 +54,9 @@ const experience = await getCollection("experience");
 >
   <main class="px-4">
     <SectionContainer class="py-16 md:py-36">
-      <Hero linkedinUrl={config.linkedinUrl} />
+      <Hero linkedinUrl={info.linkedin} github={info.github} name={info.name}>
+        <Headline />
+      </Hero>
     </SectionContainer>
   </main>
   <div class="space-y-24">
