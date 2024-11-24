@@ -6,10 +6,16 @@ interface Props {
   companyName: string;
   link?: string;
   startDate: Date;
-  endDate?: string;
+  endDate?: Date;
 }
 
-const { title, companyName: company, link, startDate: date } = Astro.props;
+const {
+  title,
+  companyName: company,
+  link,
+  startDate: date,
+  endDate,
+} = Astro.props;
 const format = new Intl.DateTimeFormat("en", {
   year: "numeric",
   month: "long",
@@ -32,6 +38,13 @@ const format = new Intl.DateTimeFormat("en", {
       <time class="p-0 m-0 text-sm text-gray-600/80 dark:text-white/80"
         >{format.format(date)}</time
       >
+      {
+        endDate && (
+          <time class="p-0 m-0 text-sm text-gray-600/80 dark:text-white/80">
+            - {format.format(endDate)}
+          </time>
+        )
+      }
     </div>
   </div>
   <div
