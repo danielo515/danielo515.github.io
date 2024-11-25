@@ -8,7 +8,7 @@ import Header from "../components/Header.astro";
 interface Props {
   title: string;
   description: string;
-  links: Array<{ label: string; href: string }>;
+  footerLinks: Array<{ label: string; href: string }>;
   navItems: Array<{ label: string; title: string; url: string }>;
 }
 
@@ -36,7 +36,7 @@ const { description, title } = Astro.props;
     </div>
     <Header navItems={Astro.props.navItems} />
     <slot />
-    <Footer links={Astro.props.links} />
+    <Footer links={Astro.props.footerLinks} />
     <style is:global>
       :root {
         color-scheme: light dark;

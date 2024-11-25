@@ -1,5 +1,5 @@
 export const config = {
-  links: [
+  footerLinks: [
     { label: "Home", href: "/" },
     { label: "Blog", href: "/blog" },
   ],

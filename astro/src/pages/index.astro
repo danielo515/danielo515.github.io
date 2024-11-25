@@ -12,7 +12,7 @@ import Layout from "@/layouts/Layout.astro";
 import { getCollection, getEntry } from "astro:content";
 const config = {
   footerLinks: [
-    { label: "About me", href: "/#about-me" },
+    { label: "Blog", href: "/blog" },
     { label: "Projects", href: "/#projects" },
   ],
   navItems: [
@@ -31,11 +31,6 @@ const config = {
       label: "about-me",
       url: "/#about-me",
     },
-    {
-      title: "Contact",
-      label: "contact",
-      url: "mailto:miduga@gmail.com",
-    },
   ],
 };
 
@@ -49,7 +44,7 @@ const info = about.data;
 <Layout
   title="Danielo Rodriguez"
   description="Full-stack developer"
-  links={config.footerLinks}
+  footerLinks={config.footerLinks}
   navItems={config.navItems}
 >
   <main class="px-4">
