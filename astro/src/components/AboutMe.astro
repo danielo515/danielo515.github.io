@@ -8,7 +8,7 @@ import * as aboutMe from "@/about-me.md";
 >
   <div
     id="about-me"
-    class="[&>p]:mb-4 [&>p>strong]:text-yellow-500 dark:[&>p>strong]:text-yellow-100 [&>p>strong]:font-normal [&>p>strong]:font-mono text-pretty order-2 md:order-1 [&>p>em]:text-blue-500 dark:[&>p>em]:text-blue-400"
+    class="[&>p]:mb-4 [&>p>strong]:text-yellow-500 dark:[&>p>strong]:text-yellow-100 [&>p>strong]:font-normal [&>p>strong]:font-mono text-pretty order-2 md:order-1 [&>p>em]:text-blue-500 dark:[&>p>em]:text-blue-400 visible-links"
   >
     <aboutMe.Content />
   </div>
@@ -22,9 +22,3 @@ import * as aboutMe from "@/about-me.md";
     style="object-position: 50% 50%"
   />
 </article>
-
-<style>
-  #about-me a {
-    @apply text-blue-500 dark:text-blue-400 underline;
-  }
-</style>

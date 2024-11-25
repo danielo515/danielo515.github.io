@@ -5,5 +5,13 @@ export default {
   theme: {
     extend: {},
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities, theme }) {
+      addUtilities({
+        ".visible-links a": {
+          color: theme("colors.blue.500"),
+        },
+      });
+    },
+  ],
 };
