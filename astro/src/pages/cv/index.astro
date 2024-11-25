@@ -1,0 +1,76 @@
+---
+import Footer from "@/components/Footer.astro";
+import { config } from "../blog/config";
+import * as cv from "./cv.md";
+const { Content } = cv;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Danielo CV - full stack developer" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>CV of Danielo</title>
+  </head>
+  <body class="container mx-auto flex flex-col h-screen p-6 prose prose-xl">
+    <Content />
+    <div class="mt-auto flex justify-center space-x-4 print:hidden">
+      <Footer links={config.footerLinks} />
+    </div>
+    <style is:global>
+      h1,
+      h2,
+      h3,
+      h4,
+      h5 {
+        font-weight: 700;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      h2 {
+        font-size: 1.25rem;
+      }
+
+      h3 {
+        font-size: 1.1rem;
+      }
+
+      h4 {
+        font-size: 1rem;
+      }
+
+      h5 {
+        font-size: 0.9rem;
+      }
+
+      ul {
+        list-style: disc;
+        margin-left: 1.5rem;
+      }
+
+      li {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      img {
+        display: inline-block;
+        width: 200px;
+      }
+
+      @media print {
+        img {
+          width: 100px;
+        }
+      }
+    </style>
+  </body>
+</html>
