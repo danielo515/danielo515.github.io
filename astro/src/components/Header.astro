@@ -1,8 +1,9 @@
 ---
+import type { links } from "@/links";
 import ThemeToggle from "./ThemeToggle.astro";
 
 interface Props {
-  navItems: Array<{ label: string; title: string; url: string }>;
+  navItems: links["navItems"];
 }
 ---
 
@@ -17,7 +18,7 @@ interface Props {
         <a
           class="relative block px-2 py-2 transition hover:text-blue-500 dark:hover:text-blue-500"
           aria-label={link.label}
-          href={link.url}
+          href={link.href}
         >
           {link.title}
         </a>

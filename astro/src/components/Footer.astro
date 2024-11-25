@@ -1,7 +1,9 @@
 ---
+import type { links } from "@/links";
+
 const currentYear = new Date().getFullYear();
 interface Props {
-  links: Array<{ label: string; href: string }>;
+  links: links["footerLinks"];
 }
 ---
 
@@ -19,7 +21,7 @@ interface Props {
     >
       {
         Astro.props.links.map((link) => (
-          <li>
+          <li class="list-none">
             <a href={link.href} class="hover:underline me-4 md:me-6">
               {link.label}
             </a>

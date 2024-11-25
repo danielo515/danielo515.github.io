@@ -1,6 +1,7 @@
 ---
 import "@fontsource-variable/onest";
 
+import type { links } from "@/links";
 import { ViewTransitions } from "astro:transitions";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
@@ -8,15 +9,15 @@ import Header from "../components/Header.astro";
 interface Props {
   title: string;
   description: string;
-  footerLinks: Array<{ label: string; href: string }>;
-  navItems: Array<{ label: string; title: string; url: string }>;
+  footerLinks: links["footerLinks"];
+  navItems: links["navItems"];
 }
 
 const { description, title } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
