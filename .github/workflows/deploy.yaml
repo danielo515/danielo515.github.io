@@ -43,8 +43,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
-      - name: Install ensure sharp is installed
-        run: pnpm add -g sharp
       - name: Build with Astro
         run: pnpm run build
       - name: Upload artifact
