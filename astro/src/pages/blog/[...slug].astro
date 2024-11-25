@@ -1,0 +1,34 @@
+---
+import SectionContainer from "@/components/SectionContainer.astro";
+import Layout from "@/layouts/Layout.astro";
+import type { GetStaticPaths } from "astro";
+import { getCollection, getEntry } from "astro:content";
+import { config } from "./config";
+const { slug } = Astro.params;
+
+export const getStaticPaths = (async () => {
+  const posts = await getCollection("blog");
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+  }));
+}) satisfies GetStaticPaths;
+
+const content = await getEntry("blog", slug);
+const { Content } = await content.render();
+---
+
+<Layout
+  title={content.data.title}
+  description={content.data.description}
+  links={config.links}
+  navItems={config.navItems}
+>
+  <main class="px-4">
+    <SectionContainer class="py-16 md:py-36">
+      <h1 class="text-3xl font-bold pb-4">{content.data.title}</h1>
+      <div class="prose">
+        <Content />
+      </div>
+    </SectionContainer>
+  </main>
+</Layout>

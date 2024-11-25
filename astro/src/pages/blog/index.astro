@@ -1,0 +1,29 @@
+---
+import SectionContainer from "@/components/SectionContainer.astro";
+import Layout from "@/layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import { config } from "./config";
+const posts = await getCollection("blog");
+---
+
+<Layout
+  title="Blog"
+  description=""
+  links={config.links}
+  navItems={config.navItems}
+>
+  <main class="px-4">
+    <SectionContainer class="py-16 md:py-36 text-gray-800 dark:text-gray-200">
+      <h1 class="text-3xl font-bold pb-8">Blog</h1>
+      <ul class="list-disc [&>li>a]:text-blue-600">
+        {
+          posts.map((post) => (
+            <li>
+              <a href={`/blog/${post.slug}/`}>{post.data.title}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </SectionContainer>
+  </main>
+</Layout>
