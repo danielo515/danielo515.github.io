@@ -1,4 +1,3 @@
-
 ## PERSONAL STATEMENT
 
 Experience has taught me every day can be different. Being a versatile person has being very important in my career, facing several kind of problems in different languages. I strongly trust in open source and most of my projects have open licenses.
@@ -64,7 +63,7 @@ On Case we use stunning cutting edge technologies as MongoDB and NodeJS to deliv
 
 Apart from support task we also develop some minor enhancements to the products and generate production builds. Our solutions were developed in `C#` and Java EE.
 
-### 2014 June – April 2016  - Support Specialist L.2 – Netsize (a Gemalto company)
+### 2014 June – April 2016 - Support Specialist L.2 – Netsize (a Gemalto company)
 
 Netsize is one of the biggest messaging and mobile services providers. Mobile world moves fast and we are always working to provide new and stunning services as the market demands it.
 
@@ -142,7 +141,7 @@ Personal Skills
 
 - Active personality which usually motivates the whole team.
 - Technical English. Also good for worldwide communication.
-- High self learning capability.
+- Autonomous self learner.
 - Always learning and looking for growing personal and professionally.
 - Good communication and flexibility.
 
