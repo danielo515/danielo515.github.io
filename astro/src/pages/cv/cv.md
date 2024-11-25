@@ -1,8 +1,6 @@
 ## PERSONAL STATEMENT
 
-Experience has taught me every day can be different. Being a versatile person has being very important in my career, facing several kind of problems in different languages. I strongly trust in open source and most of my projects have open licenses.
-
-I never accept something as it is if I think I can improve it.
+Throughout my career, I've learned that each day brings new challenges and opportunities. Being adaptable and versatile has been crucial to my success. I am a strong advocate for open-source, and many of my projects has open licenses. I never settle for the status quo — if I see an opportunity for improvement, I take it.
 
 ## BADGES
 
@@ -24,7 +22,7 @@ I never accept something as it is if I think I can improve it.
 
 ## EMPLOYMENT
 
-### November 2023 - November 2024 - Lead dev engineer at Dharma
+### Nov 2023 - Nov 2024 - Lead dev engineer at Dharma
 
 I lead the creation of the in-house booking engine and inventory system.
 I owned the entire process, from understanding and requirements and help product to collect them, to plan the required tasks and assign them to the available developers, myself included.
@@ -110,9 +108,9 @@ As the first level of customer support I took take care of Telefonica’s global
 ### Technical Skills
 
 - GIT
-- Databases: Oracle , MySQL
-- Typescript: web apps, widgets, phone development (Sencha Touch, Cordova)
-- Scripting languages: Bash, Visual Basic Script, Python, Lua, Google Apps Script
-- Other programming languages: Visual Basic, PHP, Python
-- Medium linux server management (NFS, CRON, file permissions, etc)
-- Network monitoring/management: Cacti, SecureCrt
+- Frontend: React and its ecosystem, Svelte, Astro, SolidJS, Leaflet
+- Backend: Next.js, Supabase, Bun/Deno/Node, AWS (Lambdas, EC2), Cloudflare (Workers, Image, CDN)
+- Databases: PostgreSQL, DynamoDB, CouchDB, Redis, MongoDB
+- Languages: Typescript, Rust, Ocaml
+- Scripting languages: Bash, Python, Lua, Google Apps Script
+- Medium linux server management (NFS, CRON, file/user permissions, etc)
