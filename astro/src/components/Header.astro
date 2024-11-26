@@ -1,6 +1,7 @@
 ---
 import type { links } from "@/links";
 import ThemeToggle from "./ThemeToggle.astro";
+import HomeIcon from "./icons/HomeIcon.astro";
 
 interface Props {
   navItems: links["navItems"];
@@ -13,6 +14,13 @@ interface Props {
   <nav
     class="flex px-3 text-sm font-medium rounded-full text-gray-600 dark:text-gray-200 justify-center items-center"
   >
+    <a
+      class="relative block px-2 py-2 transition hover:text-blue-500 dark:hover:text-blue-500"
+      aria-label="home"
+      href="/#home"
+    >
+      <HomeIcon />
+    </a>
     {
       Astro.props.navItems.map((link) => (
         <a
@@ -33,7 +41,7 @@ interface Props {
     const sections = document.querySelectorAll("section");
     const navItems = document.querySelectorAll("header nav a");
 
-    const callback = (entries: any[]) => {
+    const callback: IntersectionObserverCallback = (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           navItems.forEach((item) => {
@@ -72,7 +80,7 @@ interface Props {
 
 <style>
   nav {
-    animation: nav-shadown 1s linear both;
+    animation: nav-shadow 1s linear both;
     animation-timeline: scroll();
     animation-range: 0 100px;
   }
@@ -81,7 +89,7 @@ interface Props {
     @apply dark:bg-gray-800/90 bg-white/50;
   }
 
-  @keyframes nav-shadown {
+  @keyframes nav-shadow {
     0% {
       @apply dark:bg-gray-800/0 bg-white/0;
     }
