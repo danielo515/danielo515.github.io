@@ -9,7 +9,7 @@ interface Props {
 ---
 
 <header
-  class="fixed top-0 z-10 flex items-center justify-center w-full mx-auto py-2"
+  class="fixed top-0 z-10 flex items-center justify-center w-full mx-auto py-1 md:py-2"
 >
   <nav
     class="flex px-3 text-sm font-medium text-gray-600 dark:text-gray-200 justify-center items-center"
@@ -83,6 +83,12 @@ interface Props {
     animation: nav-shadow 1s linear both;
     animation-timeline: scroll();
     animation-range: 0 200px;
+  }
+
+  @media (max-width: 768px) {
+    header {
+      animation-range: 0 50px;
+    }
   }
 
   @keyframes nav-shadow {
