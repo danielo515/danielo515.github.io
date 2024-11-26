@@ -99,11 +99,11 @@ As the first level of customer support I took take care of Telefonica’s global
 
 ### Personal Skills
 
-- Active personality which usually motivates the whole team.
-- Technical English. Also good for worldwide communication.
-- Autonomous self learner.
-- Always learning and looking for growing personal and professionally.
-- Good communication and flexibility.
+- Strong emphasis on clear and friendly communication
+- Passionate about sharing knowledge and mentoring
+- Experienced in managing projects successfully as a lead developer
+- Deep interest in Domain Driven Design
+- Autonomous self learner committed to continuous personal and professional development
 
 ### Technical Skills
 
