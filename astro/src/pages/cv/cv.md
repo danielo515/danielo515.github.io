@@ -95,9 +95,7 @@ As the first level of customer support I took take care of Telefonica’s global
 - Hard-Disk clone / restoration over SSH / whole disk encryption
 - Backup and restoration of User data.
 
-## KEY SKILLS
-
-### Personal Skills
+## Professional Strengths
 
 - Strong emphasis on clear and friendly communication
 - Passionate about sharing knowledge and mentoring
@@ -105,12 +103,12 @@ As the first level of customer support I took take care of Telefonica’s global
 - Deep interest in Domain Driven Design
 - Autonomous self learner committed to continuous personal and professional development
 
-### Technical Skills
+## Technical Expertise
 
-- GIT
-- Frontend: React and its ecosystem, Svelte, Astro, SolidJS, Leaflet
-- Backend: Next.js, Supabase, Bun/Deno/Node, AWS (Lambdas, EC2), Cloudflare (Workers, Image, CDN)
-- Databases: PostgreSQL, DynamoDB, CouchDB, Redis, MongoDB
-- Languages: Typescript, Rust, Ocaml
-- Scripting languages: Bash, Python, Lua, Google Apps Script
-- Medium linux server management (NFS, CRON, file/user permissions, etc)
+- Frontend: **React**, Svelte, Astro, SolidJS, Leaflet
+- Backend: Next.js, Supabase, Bun/Deno/Node, **AWS**, Cloudflare
+- Programming Languages: **TypeScript**, Rust, OCaml
+- Scripting Languages: Python, Bash, Lua, Google Apps Script
+- Databases: **PostgreSQL**, **DynamoDB**, CouchDB, Redis, MongoDB
+- Version Control: **Git**
+- Linux Management: NFS, CRON, file/user permissions
