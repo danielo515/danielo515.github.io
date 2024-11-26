@@ -51,7 +51,12 @@ const info = about.data;
 >
   <main class="px-4">
     <SectionContainer class="py-16 md:py-36">
-      <Hero linkedinUrl={info.linkedin} github={info.github} name={info.name}>
+      <Hero
+        linkedinUrl={info.linkedin}
+        github={info.github}
+        name={info.name}
+        personalImageAlt={info.fullName}
+      >
         <Headline />
       </Hero>
     </SectionContainer>
