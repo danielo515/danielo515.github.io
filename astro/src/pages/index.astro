@@ -2,6 +2,7 @@
 import AboutMe from "@/components/AboutMe.astro";
 import Experience from "@/components/Experience.astro";
 import Hero from "@/components/Hero.astro";
+import ArrowRightIcon from "@/components/icons/ArrowRightIcon.astro";
 import Briefcase from "@/components/icons/Briefcase.astro";
 import CodeIcon from "@/components/icons/Code.astro";
 import ProfileCheck from "@/components/icons/ProfileCheck.astro";
@@ -68,7 +69,15 @@ const info = about.data;
         <Briefcase class="size-8" />
         Experience
       </TitleSection>
-      <Experience experience={experience.reverse()} />
+      <Experience experience={experience.slice(0, 5).reverse()} />
+      <div
+        class="group flex gap-2 items-center justify-center text-orange-500 dark:text-orange-200 transition"
+      >
+        <a href="/cv#employment">See full list</a>
+        <ArrowRightIcon
+          class="size-4 transition group-hover:animate-bounce-right"
+        />
+      </div>
     </SectionContainer>
 
     <SectionContainer id="projects">
