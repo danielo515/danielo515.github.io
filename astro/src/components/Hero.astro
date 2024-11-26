@@ -2,16 +2,19 @@
 import Badge from "@/components/Badge.astro";
 import LinkedInIcon from "@/components/icons/LinkedIn.astro";
 import SocialPill from "@/components/SocialPill.astro";
-import GitHub from "./icons/GitHub.astro";
+import GitHub from "@/icons/GitHub.astro";
+import StackOverflow from "@/icons/Stackoverflow.astro";
 
 type Props = {
   linkedinUrl: string;
   github: string;
+  stackOverflow: string;
   name: string;
   personalImageAlt: string;
 };
 
-const { linkedinUrl, github, name, personalImageAlt } = Astro.props;
+const { linkedinUrl, github, name, personalImageAlt, stackOverflow } =
+  Astro.props;
 ---
 
 <div class="max-w-xl">
@@ -27,7 +30,7 @@ const { linkedinUrl, github, name, personalImageAlt } = Astro.props;
       rel="noopener"
       class="flex items-center transition md:justify-center md:hover:scale-105"
     >
-      <Badge>Disponible para trabajar</Badge>
+      <Badge>Available for work</Badge>
     </a>
   </div>
   <h1
@@ -40,7 +43,7 @@ const { linkedinUrl, github, name, personalImageAlt } = Astro.props;
   >
     <slot />
   </p>
-  <nav class="flex flex-wrap gap-4 mt-8">
+  <nav class="flex flex-wrap gap-4 mt-8 max-sm:justify-center">
     <SocialPill href={github}>
       <GitHub class="size-4" />
       Github
@@ -48,6 +51,10 @@ const { linkedinUrl, github, name, personalImageAlt } = Astro.props;
     <SocialPill href={linkedinUrl}>
       <LinkedInIcon class="size-4" />
       LinkedIn
+    </SocialPill>
+    <SocialPill href={stackOverflow}>
+      <StackOverflow class="size-4" />
+      StackOverflow
     </SocialPill>
   </nav>
 </div>

@@ -40,6 +40,7 @@ export const collections = {
       name: z.string(),
       fullName: z.string(),
       linkedin: z.string(),
+      stackOverflow: z.string(),
       github: z.string(),
     }),
   }),
