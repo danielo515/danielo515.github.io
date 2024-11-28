@@ -1,10 +1,10 @@
 ---
 import "@fontsource-variable/onest";
 
+import Header from "@/components/Header.astro";
 import type { links } from "@/links";
 import { ViewTransitions } from "astro:transitions";
 import Footer from "../components/Footer.astro";
-import Header from "../components/Header.astro";
 
 interface Props {
   title: string;
@@ -35,7 +35,9 @@ const { description, title } = Astro.props;
       dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"
     >
     </div>
-    <Header navItems={Astro.props.navItems} />
+    <slot name="header">
+      <Header navItems={Astro.props.navItems} />
+    </slot>
     <slot />
     <Footer links={Astro.props.footerLinks} />
     <style is:global>

@@ -9,33 +9,9 @@ import ProfileCheck from "@/components/icons/ProfileCheck.astro";
 import Projects from "@/components/Projects.astro";
 import SectionContainer from "@/components/SectionContainer.astro";
 import TitleSection from "@/components/TitleSection.astro";
+import { config } from "@/config";
 import Layout from "@/layouts/Layout.astro";
-import type { links } from "@/links";
 import { getCollection, getEntry } from "astro:content";
-const config: links = {
-  footerLinks: [
-    { label: "Blog", href: "/blog" },
-    { label: "CV", href: "/cv" },
-    { label: "Projects", href: "/#projects" },
-  ],
-  navItems: [
-    {
-      title: "Experience",
-      label: "experience",
-      href: "/#experience",
-    },
-    {
-      title: "Projects",
-      label: "projects",
-      href: "/#projects",
-    },
-    {
-      title: "About me",
-      label: "about-me",
-      href: "/#about-me",
-    },
-  ],
-};
 
 const about = await getEntry("about", "about");
 const projects = await getCollection("projects");
@@ -62,38 +38,38 @@ const info = about.data;
         <Headline />
       </Hero>
     </SectionContainer>
+    <div class="space-y-24">
+      <SectionContainer id="experience">
+        <TitleSection>
+          <Briefcase class="size-8" />
+          Experience
+        </TitleSection>
+        <Experience experience={experience.slice(0, 5).reverse()} />
+        <div
+          class="group flex gap-2 items-center justify-center text-orange-500 dark:text-orange-200 transition"
+        >
+          <a href="/cv#employment">See full list</a>
+          <ArrowRightIcon
+            class="size-4 transition group-hover:animate-bounce-right"
+          />
+        </div>
+      </SectionContainer>
+
+      <SectionContainer id="projects">
+        <TitleSection>
+          <CodeIcon class="size-7" />
+          Projects
+        </TitleSection>
+        <Projects {projects} />
+      </SectionContainer>
+
+      <SectionContainer id="about-me">
+        <TitleSection>
+          <ProfileCheck class="size-8" />
+          About me
+        </TitleSection>
+        <AboutMe />
+      </SectionContainer>
+    </div>
   </main>
-  <div class="space-y-24">
-    <SectionContainer id="experience">
-      <TitleSection>
-        <Briefcase class="size-8" />
-        Experience
-      </TitleSection>
-      <Experience experience={experience.slice(0, 5).reverse()} />
-      <div
-        class="group flex gap-2 items-center justify-center text-orange-500 dark:text-orange-200 transition"
-      >
-        <a href="/cv#employment">See full list</a>
-        <ArrowRightIcon
-          class="size-4 transition group-hover:animate-bounce-right"
-        />
-      </div>
-    </SectionContainer>
-
-    <SectionContainer id="projects">
-      <TitleSection>
-        <CodeIcon class="size-7" />
-        Projects
-      </TitleSection>
-      <Projects {projects} />
-    </SectionContainer>
-
-    <SectionContainer id="about-me">
-      <TitleSection>
-        <ProfileCheck class="size-8" />
-        About me
-      </TitleSection>
-      <AboutMe />
-    </SectionContainer>
-  </div>
 </Layout>
