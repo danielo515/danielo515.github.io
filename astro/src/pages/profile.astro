@@ -1,0 +1,43 @@
+---
+import Header from "@/components/Header.astro";
+import SectionContainer from "@/components/SectionContainer.astro";
+import { config } from "@/config";
+import Layout from "@/layouts/Layout.astro";
+const profileInfo = [
+  { label: "Hobbies", value: "Mechanical Keyboards, 3D printing" },
+  { label: "Languages", value: "Spanish, English" },
+  { label: "Location", value: "Spain" },
+  { label: "Timezone", value: "UTC+1" },
+];
+---
+
+<Layout
+  title="Danielo Rodriguez"
+  description="Full-stack developer"
+  footerLinks={config.footerLinks}
+  navItems={config.navItems}
+>
+  <Header navItems={[]} slot="header" />
+  <main class="px-4">
+    <SectionContainer class="py-16 md:py-36 flex gap-8">
+      <img
+        class="rounded-full shadow-lg size-32 lg:size-48"
+        src="/danielo-1.webp"
+        alt="danielo"
+        transition:name="avatar"
+      />
+      <div>
+        {
+          profileInfo.map(({ label, value }) => (
+            <div class="flex flex-col md:flex-row gap-2">
+              <span class="strong">
+                <strong>{label}:</strong>
+              </span>
+              <span>{value}</span>
+            </div>
+          ))
+        }
+      </div>
+    </SectionContainer>
+  </main>
+</Layout>

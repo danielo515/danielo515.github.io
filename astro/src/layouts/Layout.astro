@@ -58,6 +58,10 @@ const { description, title } = Astro.props;
         overscroll-behavior: none;
       }
 
+      .strong {
+        @apply dark:text-yellow-200 text-yellow-500 font-semibold;
+      }
+
       @media (prefers-reduced-motion: reduce) {
         html {
           scroll-behavior: auto;

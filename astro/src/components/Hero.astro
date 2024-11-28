@@ -19,11 +19,14 @@ const { linkedinUrl, github, name, personalImageAlt, stackOverflow } =
 
 <div class="max-w-xl">
   <div class="flex gap-4 mb-4">
-    <img
-      class="rounded-full shadow-lg size-16"
-      src="/danielo-1.webp"
-      alt={personalImageAlt}
-    />
+    <a href="/profile">
+      <img
+        class="rounded-full shadow-lg size-16"
+        src="/danielo-1.webp"
+        transition:name="avatar"
+        alt={personalImageAlt}
+      />
+    </a>
     <a
       href={linkedinUrl}
       target="_blank"
