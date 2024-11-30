@@ -26,18 +26,41 @@ const profileInfo = [
         alt="danielo"
         id="avatar"
       />
-      <div>
+      <ul>
         {
           profileInfo.map(({ label, value }) => (
-            <div class="flex flex-col md:flex-row gap-2">
+            <li class="flex flex-col md:flex-row gap-2 info">
               <span class="strong">
                 <strong>{label}:</strong>
               </span>
               <span>{value}</span>
-            </div>
+            </li>
           ))
         }
-      </div>
+      </ul>
     </SectionContainer>
   </main>
 </Layout>
+
+<script>
+  import { animate, stagger } from "motion";
+  document.addEventListener("astro:page-load", () => {
+    const elements = document.querySelectorAll<HTMLElement>("li.info");
+    // I'm setting the opacity with JS to ensure visibility in case any problem prevents the execution of javascript
+    elements.forEach((li) => {
+      li.style.opacity = "0";
+    });
+    if (elements.length === 0) return;
+    setTimeout(() => {
+      animate(
+        elements,
+        { x: [-100, 0], opacity: 1 },
+        {
+          duration: 0.8,
+          delay: stagger(0.2),
+          type: "spring",
+        }
+      );
+    }, 600);
+  });
+</script>
