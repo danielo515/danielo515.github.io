@@ -1,21 +1,10 @@
 function getInvertDetails(from: DOMRect, to: DOMRect) {
   const diffX = from.left - to.left;
   const diffY = from.top - to.top;
-  const widthCompensation = (from.width - to.width) / 2;
-  const heightCompensation = (from.height - to.height) / 2;
-
-  console.log({
-    diffX,
-    diffY,
-    widthCompensation,
-    heightCompensation,
-    from,
-    to,
-  });
 
   return {
-    x: diffX, //+ widthCompensation,
-    y: diffY, //+ heightCompensation,
+    x: diffX,
+    y: diffY,
   };
 }
 
@@ -35,7 +24,6 @@ export const flipAvatar = (
   return (to: HTMLElement) => {
     const targetRect = to.getBoundingClientRect();
     const { x, y } = getInvertDetails(originalRect, targetRect);
-    console.log(`translate(${x}px, ${y}px) `);
     const animation = to.animate(
       [
         {
