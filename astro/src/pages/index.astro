@@ -73,3 +73,20 @@ const info = about.data;
     </div>
   </main>
 </Layout>
+
+<script>
+  import { flipAvatar } from "@/lib/flipAvatar";
+
+  document.addEventListener("astro:before-swap", (ev) => {
+    const originalAvatar = document.getElementById("avatar");
+    const targetAvatar = ev.newDocument.getElementById("avatar");
+    if (!originalAvatar || !targetAvatar) return;
+    const animate = flipAvatar(originalAvatar, {
+      duration: 500,
+      delay: 0,
+    });
+    document.addEventListener("astro:after-swap", () => {
+      animate(targetAvatar);
+    });
+  });
+</script>
