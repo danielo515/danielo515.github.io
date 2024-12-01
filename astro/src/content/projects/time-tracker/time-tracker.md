@@ -9,6 +9,7 @@ technologies:
 - Typescript
 category: web-app
 url: https://time.danielo.es
+github: https://github.com/danielo515/session-tracker
 tags: ['react', 'redux', 'firebase']
 ---
 
