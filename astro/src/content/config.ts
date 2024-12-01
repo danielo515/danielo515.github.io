@@ -9,6 +9,7 @@ const tag = z.enum([
   "astro",
   "obsidian",
   "typescript",
+  "firebase",
 ]);
 
 export type TechTag = z.infer<typeof tag>;

@@ -1,5 +1,6 @@
 ---
 import type { TechTag } from "@/content/config";
+import Firebase from "@/icons/Firebase.astro";
 import NextJS from "@/icons/NextJS.astro";
 import Tailwind from "@/icons/Tailwind.astro";
 import AstroIcon from "./icons/AstroIcon.astro";
@@ -56,6 +57,11 @@ const tagAppearance: Record<
     class: "border-purple-700 text-gray-900 dark:text-white",
     name: "Redux",
     icon: Redux,
+  },
+  firebase: {
+    class: "border-yellow-500 text-gray-900 dark:text-white",
+    name: "Firebase",
+    icon: Firebase,
   },
 } as const;
 
