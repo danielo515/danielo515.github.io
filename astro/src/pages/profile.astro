@@ -4,9 +4,16 @@ import SectionContainer from "@/components/SectionContainer.astro";
 import { config } from "@/config";
 import Layout from "@/layouts/Layout.astro";
 const profileInfo = [
-  { label: "Hobbies", value: "Mechanical Keyboards, 3D printing" },
+  {
+    label: "Hobbies",
+    value: "Split Mechanical Keyboards, 3D printing, Ant Keeping",
+  },
   { label: "Languages", value: "Spanish, English" },
-  { label: "Location", value: "Spain" },
+  {
+    label: "Favorite programming paradigm",
+    value: "Functional (but pragmatic 😉)",
+  },
+  { label: "Location", value: "Spain 🇪🇸" },
   { label: "Timezone", value: "UTC+1" },
 ];
 ---
@@ -29,11 +36,11 @@ const profileInfo = [
       <ul>
         {
           profileInfo.map(({ label, value }) => (
-            <li class="flex flex-col md:flex-row gap-2 info">
+            <li class="flex flex-col gap-2 info">
               <span class="strong">
                 <strong>{label}:</strong>
               </span>
-              <span>{value}</span>
+              <span class="pl-1">{value}</span>
             </li>
           ))
         }
