@@ -1,7 +1,7 @@
 ---
 title: Time tracker
 description: An app to track the usage of my ti
-image: ./list.png
+image: ./shot-1.png
 technologies: 
 - React
 - Redux
@@ -9,7 +9,7 @@ technologies:
 - Typescript
 category: web-app
 url: https://time.danielo.es
-tags: ['react']
+tags: ['react', 'redux', 'firebase']
 ---
 
 Not a very impressive app, but unlike many other toy projects, this is a great
