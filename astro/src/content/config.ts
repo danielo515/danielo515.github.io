@@ -4,11 +4,14 @@ const tag = z.enum([
   "nextjs",
   "tailwind",
   "react",
+  "redux",
   "svelte",
   "astro",
   "obsidian",
   "typescript",
 ]);
+
+export type TechTag = z.infer<typeof tag>;
 
 export const collections = {
   projects: defineCollection({
