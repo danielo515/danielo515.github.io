@@ -12,7 +12,7 @@ interface Props {
   class="fixed top-0 z-10 flex items-center justify-center w-full mx-auto py-1 md:py-2"
 >
   <nav
-    class="flex px-3 text-sm font-medium text-gray-600 dark:text-gray-200 justify-center items-center"
+    class="flex flex-1 px-3 text-sm font-medium text-gray-600 dark:text-gray-200 justify-between md:justify-center items-center"
   >
     <a
       class="relative block px-2 py-2 transition hover:text-blue-500 dark:hover:text-blue-500"
@@ -44,10 +44,13 @@ interface Props {
     const callback: IntersectionObserverCallback = (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
+          console.log("Intersecting", entry);
           navItems.forEach((item) => {
             if (item.getAttribute("aria-label") == entry.target.id) {
               item.classList.add("text-blue-500");
+              console.log("adding to", item);
             } else {
+              console.log("removing to", item);
               item.classList.remove("text-blue-500");
             }
           });
@@ -58,7 +61,7 @@ interface Props {
     const observer = new IntersectionObserver(callback, {
       root: null,
       rootMargin: "0px",
-      threshold: 0.3,
+      threshold: 0.5,
     });
 
     sections.forEach((section) => {

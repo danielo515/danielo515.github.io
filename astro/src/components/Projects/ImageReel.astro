@@ -1,0 +1,35 @@
+---
+import { Image } from "astro:assets";
+
+interface Props {
+  images: Array<ImageMetadata>;
+  projectName: string;
+}
+
+const { images, projectName } = Astro.props;
+---
+
+<div class=`flex overflow-hidden gap-x-28 ${projectName} `>
+  {
+    images.map((image) => (
+      <Image src={image} class="object-cover" alt="project image" />
+    ))
+  }
+</div>
+
+<script>
+  import { spring, stagger } from "motion";
+  import { animate } from "motion/mini";
+
+  animate(
+    `img`,
+    {
+      x: [-100, 0],
+      opacity: 1,
+    },
+    {
+      delay: stagger(0.2),
+      type: spring,
+    }
+  );
+</script>

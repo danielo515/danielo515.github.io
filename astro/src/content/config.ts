@@ -22,6 +22,7 @@ export const collections = {
         title: z.string(),
         description: z.string(),
         image: image(),
+        gallery: z.array(image()),
         category: z.string(),
         technologies: z.array(z.string()),
         url: z.string().optional(),

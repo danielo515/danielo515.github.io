@@ -2,6 +2,9 @@
 title: Wedding website
 description: A portal for the guests to my wedding
 image: ./mobile-public.png
+gallery:
+- ./mobile-public.png
+- ./profile.png
 technologies: 
 - Typescript
 - Astro

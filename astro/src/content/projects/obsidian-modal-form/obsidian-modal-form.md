@@ -2,6 +2,8 @@
 title: Obsidian modal form
 description: bla
 image: ./image.png
+gallery:
+- ./image.png
 technologies: 
 - Typescript
 - Svelte

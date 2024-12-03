@@ -1,0 +1,28 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import ImageReel from "../components/Projects/ImageReel.astro";
+const project = await getCollection("projects");
+console.log({ project });
+---
+
+<Layout
+  title="Components"
+  description="Components"
+  footerLinks={[]}
+  navItems={[]}
+>
+  {
+    project.map((project) => {
+      return (
+        <div class="flex flex-col">
+          <span>{project.data.title}</span>
+          <ImageReel
+            images={project.data.gallery}
+            projectName={project.data.title}
+          />
+        </div>
+      );
+    })
+  }
+</Layout>
