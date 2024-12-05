@@ -3,7 +3,7 @@ title: FullStack developer
 companyName: Tella
 startDate: 2022-09-01
 endDate: 2023-11-01
-technologies: react, reasonml, rust
+technologies: [react, reasonml, rust]
 ---
 
 Tella is an innovative screen recording platform with a web based editor that requires no installation at all.

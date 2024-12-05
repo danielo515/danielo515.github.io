@@ -3,7 +3,8 @@ title: System Administrator Specialist
 companyName: Roche
 startDate: 2013-03-01
 endDate: 2014-06-01
-technologies: red-hat, linux
+# technologies: 
+# - red-hat linux
 ---
 
 One of the biggest pharmaceuticals companies all over the world.

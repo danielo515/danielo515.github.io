@@ -1,5 +1,7 @@
 ---
+import type { TechTag as TT } from "@/content/config";
 import LinkInline from "./LinkInline.astro";
+import TechTag from "./TechTag.astro";
 
 interface Props {
   title: string;
@@ -7,6 +9,7 @@ interface Props {
   link?: string;
   startDate: Date;
   endDate?: Date | undefined;
+  technologies?: TT[] | undefined;
 }
 
 const {
@@ -15,6 +18,7 @@ const {
   link,
   startDate: date,
   endDate,
+  technologies,
 } = Astro.props;
 const format = new Intl.DateTimeFormat("en", {
   year: "numeric",
@@ -45,6 +49,17 @@ const format = new Intl.DateTimeFormat("en", {
           </time>
         )
       }
+      <div>
+        {technologies && (
+          <ul class="flex flex-wrap gap-2 mt-2">
+            {technologies.map((tag) => (
+              <li>
+                <TechTag tag={tag} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   </div>
   <div
@@ -54,7 +69,7 @@ const format = new Intl.DateTimeFormat("en", {
     {
       link && (
         <LinkInline href={link}>
-          Saber más{" "}
+          More{" "}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="w-5 icon icon-tabler icon-tabler-chevron-right"

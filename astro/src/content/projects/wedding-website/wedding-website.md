@@ -9,7 +9,7 @@ technologies:
 - Effect-ts
 category: web-app
 url: https://boda.aliydani.es
-tags: ['svelte','astro']
+tags: ['svelte','astro', 'tailwind']
 ---
 
 This was the perfect opportunity to over-engineer a wedding invitation. The publicly available part only shows you the when, the where and a little form to confirm assistance.  That public part already has some interesting easter eggs like the background "sky" changing depending on the time of the day you visit, and even some fireworks. Everything is fully responsive.

@@ -3,6 +3,9 @@ title: Senior FullStack lead developer
 companyName: Dharma
 startDate: 2023-11-01
 endDate: 2024-11-01
+technologies:
+- svelte
+- typescript
 ---
 
 I lead the creation of the in-house booking engine and inventory system.

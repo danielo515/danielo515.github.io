@@ -3,7 +3,10 @@ title: Backend Developer
 companyName: Medux
 startDate: 2016-04-01
 endDate: 2019-01-01
-technologies: nodejs, docker, MongoDB
+_technologies: 
+- nodejs 
+- docker
+- MongoDB
 ---
 
 MedUX has been revolutionizing networks and services testing from the customer perspective.

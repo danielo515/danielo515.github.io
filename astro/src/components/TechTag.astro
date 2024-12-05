@@ -7,6 +7,7 @@ import AstroIcon from "./icons/AstroIcon.astro";
 import Obsidian from "./icons/Obsidian.astro";
 import React from "./icons/React.astro";
 import Redux from "./icons/Redux.astro";
+import Rust from "./icons/Rust.astro";
 import Svelte from "./icons/Svelte.astro";
 import Typescript from "./icons/Typescript.astro";
 
@@ -14,17 +15,20 @@ interface Props {
   tag: TechTag;
 }
 
+const defaultTagStyles = "border-gray-600 text-gray-900 bg-gray-200 dark:text-white dark:border-white dark:bg-transparent"
+
+
 const tagAppearance: Record<
   TechTag,
   { class: string; name: string; icon: any }
 > = {
   nextjs: {
-    class: "bg-nextjs text-gray-900 dark:text-white",
+    class: "text-gray-900 dark:text-white",
     name: "Next.js",
     icon: NextJS,
   },
   tailwind: {
-    class: "bg-[#003159] text-gray-900 dark:text-white",
+    class: "bg-[#003159] text-gray-200 dark:border-transparent dark:text-white",
     name: "Tailwind",
     icon: Tailwind,
   },
@@ -44,12 +48,12 @@ const tagAppearance: Record<
     icon: Svelte,
   },
   typescript: {
-    class: "border-blue-700 text-gray-900 dark:text-blue-300",
+    class: "border-blue-700 text-gray-700 bg-blue-200 dark:border-blue-600 bg-transparent dark:text-blue-300",
     name: "TypeScript",
     icon: Typescript,
   },
   react: {
-    class: "border-blue-700 text-gray-900 dark:text-blue-300",
+    class: "border-blue-400 text-gray-100 bg-blue-500 dark:bg-transparent dark:text-blue-300 dark:border-blue-600",
     name: "React",
     icon: React,
   },
@@ -63,6 +67,21 @@ const tagAppearance: Record<
     name: "Firebase",
     icon: Firebase,
   },
+  rust: {
+    class:"border-red-800 text-red-900 dark:text-red-500 dark:border-red-600",
+    name: "Rust",
+    icon: Rust,
+  },
+  reasonml: {
+    class:defaultTagStyles,
+    name: "ReasonML",
+    icon: null,
+  },
+golang: {
+    class: "border-blue-700 text-gray-700 bg-blue-200 dark:text-blue-300 dark:bg-transparent dark:border-blue-600",
+  name: "Go",
+  icon: null,
+}
 } as const;
 
 const tag = tagAppearance[Astro.props.tag];
@@ -71,6 +90,6 @@ const tag = tagAppearance[Astro.props.tag];
 <span
   class={`flex gap-x-2 rounded-full text-xs border ${tag.class} py-1 px-2 `}
 >
-  <tag.icon class="size-4" />
+  {tag.icon && <tag.icon class="size-4" /> }
   {tag.name}
 </span>

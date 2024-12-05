@@ -10,6 +10,8 @@ const tag = z.enum([
   "obsidian",
   "typescript",
   "firebase",
+  "golang",
+  "reasonml","rust"
 ]);
 
 export type TechTag = z.infer<typeof tag>;
@@ -36,6 +38,7 @@ export const collections = {
       companyName: z.string(),
       startDate: z.date(),
       endDate: z.date().optional(),
+      technologies: z.array(tag).optional(),
     }),
   }),
   about: defineCollection({
