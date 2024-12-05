@@ -18,6 +18,7 @@ const projects = await getCollection("projects");
 const experience = await getCollection("experience");
 const { Content: Headline } = await about.render();
 const info = about.data;
+console.log({ experience });
 ---
 
 <Layout
@@ -44,7 +45,7 @@ const info = about.data;
           <Briefcase class="size-8" />
           Experience
         </TitleSection>
-        <Experience experience={experience.slice(0, 5).reverse()} />
+        <Experience experience={experience.reverse().slice(0, 5)} />
         <div
           class="group flex gap-2 items-center justify-center text-orange-500 dark:text-orange-200 transition"
         >
