@@ -11,7 +11,9 @@ const tag = z.enum([
   "typescript",
   "firebase",
   "golang",
-  "reasonml","rust"
+  "reasonml",
+  "supabase",
+  "rust",
 ]);
 
 export type TechTag = z.infer<typeof tag>;

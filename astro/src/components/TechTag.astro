@@ -4,6 +4,7 @@ import Firebase from "@/icons/Firebase.astro";
 import NextJS from "@/icons/NextJS.astro";
 import Tailwind from "@/icons/Tailwind.astro";
 import AstroIcon from "./icons/AstroIcon.astro";
+import Golang from "./icons/Golang.astro";
 import Obsidian from "./icons/Obsidian.astro";
 import React from "./icons/React.astro";
 import Redux from "./icons/Redux.astro";
@@ -80,7 +81,13 @@ const tagAppearance: Record<
 golang: {
     class: "border-blue-700 text-gray-700 bg-blue-200 dark:text-blue-300 dark:bg-transparent dark:border-blue-600",
   name: "Go",
-  icon: null,
+  icon: Golang,
+},
+
+supabase: {
+    class: "bg-[#FFC107] border-[#FFC107] text-white dark:text-black dark:border-black",
+    name: "Supabase",
+    icon: null,
 }
 } as const;
 
