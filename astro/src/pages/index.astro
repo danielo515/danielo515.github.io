@@ -44,7 +44,13 @@ const info = about.data;
           <Briefcase class="size-8" />
           Experience
         </TitleSection>
-        <Experience experience={experience.reverse().slice(0, 5)} />
+        <Experience
+          experience={experience
+            .sort(
+              (a, b) => b.data.startDate.getTime() - a.data.startDate.getTime(),
+            )
+            .slice(0, 5)}
+        />
         <div
           class="group flex gap-2 items-center justify-center text-orange-500 dark:text-orange-200 transition"
         >
