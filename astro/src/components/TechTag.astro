@@ -4,7 +4,10 @@ import Firebase from "@/icons/Firebase.astro";
 import NextJS from "@/icons/NextJS.astro";
 import Tailwind from "@/icons/Tailwind.astro";
 import AstroIcon from "./icons/AstroIcon.astro";
+import Docker from "./icons/Docker.astro";
 import Golang from "./icons/Golang.astro";
+import Mongo from "./icons/Mongo.astro";
+import Nodejs from "./icons/Nodejs.astro";
 import Obsidian from "./icons/Obsidian.astro";
 import React from "./icons/React.astro";
 import Redux from "./icons/Redux.astro";
@@ -16,8 +19,8 @@ interface Props {
   tag: TechTag;
 }
 
-const defaultTagStyles = "border-gray-600 text-gray-900 bg-gray-200 dark:text-white dark:border-white dark:bg-transparent"
-
+const defaultTagStyles =
+  "border-gray-600 text-gray-900 bg-gray-200 dark:text-white dark:border-white dark:bg-transparent";
 
 const tagAppearance: Record<
   TechTag,
@@ -49,12 +52,14 @@ const tagAppearance: Record<
     icon: Svelte,
   },
   typescript: {
-    class: "border-blue-700 text-gray-700 bg-blue-200 dark:border-blue-600 bg-transparent dark:text-blue-300",
+    class:
+      "border-blue-700 text-gray-700 bg-blue-200 dark:border-blue-600 bg-transparent dark:text-blue-300",
     name: "TypeScript",
     icon: Typescript,
   },
   react: {
-    class: "border-blue-400 text-gray-100 bg-blue-500 dark:bg-transparent dark:text-blue-300 dark:border-blue-600",
+    class:
+      "border-blue-400 text-gray-100 bg-blue-500 dark:bg-transparent dark:text-blue-300 dark:border-blue-600",
     name: "React",
     icon: React,
   },
@@ -69,26 +74,45 @@ const tagAppearance: Record<
     icon: Firebase,
   },
   rust: {
-    class:"border-red-800 text-red-900 dark:text-red-500 dark:border-red-600",
+    class: "border-red-800 text-red-900 dark:text-red-500 dark:border-red-600",
     name: "Rust",
     icon: Rust,
   },
   reasonml: {
-    class:defaultTagStyles,
+    class: defaultTagStyles,
     name: "ReasonML",
     icon: null,
   },
-golang: {
-    class: "border-blue-700 text-gray-700 bg-blue-200 dark:text-blue-300 dark:bg-transparent dark:border-blue-600",
-  name: "Go",
-  icon: Golang,
-},
-
-supabase: {
-    class: "bg-[#FFC107] border-[#FFC107] text-white dark:text-black dark:border-black",
+  golang: {
+    class:
+      "border-blue-700 text-gray-700 bg-blue-200 dark:text-blue-300 dark:bg-transparent dark:border-blue-600",
+    name: "Go",
+    icon: Golang,
+  },
+  supabase: {
+    class:
+      "bg-[#FFC107] border-[#FFC107] text-white dark:text-black dark:border-black",
     name: "Supabase",
     icon: null,
-}
+  },
+  mongodb: {
+    class:
+      "bg-[#4DB33D] border-[#4DB33D] text-white dark:border-green-800 dark:bg-transparent",
+    name: "MongoDB",
+    icon: Mongo,
+  },
+  nodejs: {
+    class:
+      "bg-green-400 border-green-400 dark:border-green-500 dark:bg-transparent text-white",
+    name: "Node.js",
+    icon: Nodejs,
+  },
+  docker: {
+    class:
+      "bg-[#66B3FA] border-[#2496ED] text-white dark:border-blue-300 dark:bg-transparent",
+    name: "Docker",
+    icon: Docker,
+  },
 } as const;
 
 const tag = tagAppearance[Astro.props.tag];
@@ -97,6 +121,6 @@ const tag = tagAppearance[Astro.props.tag];
 <span
   class={`flex gap-x-2 rounded-full text-xs border ${tag.class} py-1 px-2 `}
 >
-  {tag.icon && <tag.icon class="size-4" /> }
+  {tag.icon && <tag.icon class="size-4" />}
   {tag.name}
 </span>

@@ -13,6 +13,9 @@ const tag = z.enum([
   "golang",
   "reasonml",
   "supabase",
+  "nodejs",
+  "mongodb",
+  "docker",
   "rust",
 ]);
 
