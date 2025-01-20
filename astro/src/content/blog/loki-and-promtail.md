@@ -4,6 +4,7 @@ tags:
 - self-hosting
 - logging
 title: My experience configuring loki on alpine linux
+description: A little brain dump of the steps I took to configure Loki in the same LXC container where I had Grafana
 created: 2025-01-09
 date: 2025-01-09
 ---
