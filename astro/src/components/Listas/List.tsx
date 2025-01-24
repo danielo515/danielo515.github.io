@@ -1,6 +1,7 @@
 import { JazzProvider, useCoState } from "jazz-react";
 import type { ID } from "jazz-tools";
 import { useState } from "react";
+import { Checkbox } from "./Checkbox";
 import { ListEntry } from "./schema/List";
 
 export default function Lists() {
@@ -19,51 +20,6 @@ export default function Lists() {
 
   return <div className="text-center font-bold">Could not find any list to load. Please check the URL</div>;
 }
-
-interface CheckboxProps {
-  disabled?: boolean;
-  defaultChecked?: boolean;
-  value: boolean;
-  id: string;
-  label: string;
-  onChange: (toggled: boolean) => unknown;
-}
-
-const Checkbox = ({ value, ...props }: CheckboxProps) => (
-  <div className="w-full flex gap-2 items-center">
-    <div className="relative">
-      <input
-        className="
-          peer relative appearance-none shrink-0 w-4 h-4 border-2 border-blue-200 rounded-sm bg-white
-          focus:outline-none focus:ring-offset-0 focus:ring-1 focus:ring-blue-100
-          checked:bg-blue-500 checked:border-0
-          disabled:border-steel-400 disabled:bg-steel-400
-        "
-        type="checkbox"
-        {...props}
-        checked={value}
-        onChange={() => {
-          return props.onChange(!value);
-        }}
-      />
-      <svg
-        className="absolute w-4 h-4 pointer-events-none hidden peer-checked:block stroke-white left-0 top-0"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-    </div>
-    <label htmlFor={props.id} className="peer-checked:line-through">
-      {props.label}
-    </label>
-  </div>
-);
 
 export function List({ list: listID }: { list: ID<ListEntry> }) {
 
@@ -89,8 +45,9 @@ export function List({ list: listID }: { list: ID<ListEntry> }) {
                 <li key={item.id} >
                   <Checkbox
                     id={`${item.id}-checkbox`}
-                    value={item.status._tag === 'completed'}
+                    checked={item.status._tag === 'completed'}
                     label={`${item.emoji} ${item.name}`}
+
                     onChange={(e) => {
                       console.log('new status', e)
                       if (e) {
