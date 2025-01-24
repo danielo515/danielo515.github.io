@@ -1,0 +1,19 @@
+---
+import Lists from "@/components/Listas/List";
+import SectionContainer from "@/components/SectionContainer.astro";
+import { config } from "@/config";
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout
+  title="Danielo Rodriguez"
+  description="Full-stack developer"
+  footerLinks={config.footerLinks}
+  navItems={config.navItems}
+>
+  <main class="px-4">
+    <SectionContainer class="py-16 md:py-36 flex gap-8 justify-center">
+      <Lists client:only="react" />
+    </SectionContainer>
+  </main>
+</Layout>
