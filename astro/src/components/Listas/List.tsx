@@ -50,20 +50,14 @@ export function List({ list: listID }: { list: ID<ListEntry> }) {
             list.items.map((item) => {
               if (!item) return;
               return (
-                <li key={item.id} className="bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 rounded-lg shadow-sm">
-                  <div className="p-3 md:p-4" onClick={() => item.status._tag === 'completed' ? item.uncomplete() : item.complete()}>
-                    <Checkbox
-                      id={`${item.id}-checkbox`}
-                      checked={item.status._tag === 'completed'}
-                      label={`${item.emoji} ${item.name}`}
-                      onChange={(e) => {
-                        if (e) {
-                          return item.complete()
-                        }
-                        item.uncomplete()
-                      }}
-                    ></Checkbox>
-                  </div>
+                <li key={item.id}>
+                  <Checkbox
+                    id={`${item.id}-checkbox`}
+                    checked={item.status._tag === 'completed'}
+                    label={`${item.emoji} ${item.name}`}
+                    onChange={(checked) => checked ? item.complete() : item.uncomplete()}
+                    className="bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 rounded-lg shadow-sm"
+                  />
                 </li>
               );
             })

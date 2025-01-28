@@ -4,21 +4,21 @@ interface CheckboxProps {
     checked: boolean;
     id: string;
     label: string;
-    onChange: (toggled: boolean) => unknown;
-    stopPropagation?: boolean;
+    onChange: (checked: boolean) => unknown;
+    className?: string;
 }
 
 export const Checkbox = (props: CheckboxProps) => {
-  const handleChange = (e: React.MouseEvent<HTMLInputElement>) => {
-    if (props.stopPropagation) {
-      e.stopPropagation();
-    }
+  const handleChange = () => {
     props.onChange(!props.checked);
   };
 
   return (
-    <div className="w-full flex gap-3 items-center relative select-none" onClick={e => props.stopPropagation && e.stopPropagation()}>
-      <div className="relative">
+    <div 
+      className={`w-full flex gap-3 items-center relative select-none p-3 md:p-4 cursor-pointer ${props.className || ''}`}
+      onClick={handleChange}
+    >
+      <div className="relative" onClick={e => e.stopPropagation()}>
         <input
           className="
             peer relative appearance-none shrink-0 w-6 h-6 border-2 border-blue-200 dark:border-blue-700 rounded-md 
@@ -30,8 +30,7 @@ export const Checkbox = (props: CheckboxProps) => {
           "
           type="checkbox"
           {...props}
-          onClick={handleChange}
-          onChange={() => {}}
+          onChange={handleChange}
         />
         <svg
           className="absolute w-6 h-6 pointer-events-none hidden peer-checked:block stroke-white left-0 top-0"
@@ -48,7 +47,7 @@ export const Checkbox = (props: CheckboxProps) => {
       <label
         htmlFor={props.id}
         className={`flex-grow text-lg text-gray-900 dark:text-gray-100 ${props.checked ? 'text-gray-500 dark:text-gray-400 line-through' : ''}`}
-        onClick={e => props.stopPropagation && e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         {props.label}
       </label>
