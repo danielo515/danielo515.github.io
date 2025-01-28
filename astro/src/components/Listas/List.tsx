@@ -33,6 +33,15 @@ export function List({ list: listID }: { list: ID<ListEntry> }) {
         </span>
         <span className="text-center">{remaining}/{list.items?.length}</span>
       </h2>
+      <p className="text-sm text-gray-500 italic -mt-3 mb-2">
+        {list.createdAt ? new Date(list.createdAt).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : 'Fecha desconocida'}
+      </p>
       {list.items == null ? (
         <div>The list appears to be empty. Maybe a permissions issue</div>
       ) : (
@@ -49,11 +58,9 @@ export function List({ list: listID }: { list: ID<ListEntry> }) {
                     label={`${item.emoji} ${item.name}`}
 
                     onChange={(e) => {
-                      console.log('new status', e)
                       if (e) {
                         return item.complete()
                       }
-                      console.log('Hola puta')
                       item.uncomplete()
                     }}
                   ></Checkbox>

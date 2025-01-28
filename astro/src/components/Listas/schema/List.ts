@@ -7,12 +7,12 @@ type ShoppingListItem = {
 };
 
 type Completed = {
-  _tag: 'completed';
+  _tag: "completed";
   completedAt: Date;
 };
 
 type Pending = {
-  _tag: 'pending';
+  _tag: "pending";
 };
 
 export class ListItem extends CoMap {
@@ -23,41 +23,70 @@ export class ListItem extends CoMap {
   addedAt = co.Date;
 
   complete = () => {
-    this.status = { _tag: 'completed', completedAt: new Date() };
+    this.status = { _tag: "completed", completedAt: new Date() };
+  };
+  uncomplete = () => {
+    this.status = { _tag: "pending" };
   };
 
-  uncomplete = () => {
-    this.status = { _tag: 'pending' };
+  static fromShoppingListItem(
+    item: ShoppingListItem,
+    addedAt: Date,
+    owner: Group
+  ) {
+    return ListItem.create(
+      {
+        name: item.name,
+        quantity: item.quantity,
+        emoji: item.emoji ?? "",
+        addedAt,
+        status: { _tag: "pending" },
+      },
+      { owner }
+    );
+  }
+}
+export class ListItems extends CoList.Of(co.ref(ListItem)) {
+  add(item: ShoppingListItem, addedAt: Date) {
+    this.push(
+      ListItem.fromShoppingListItem(item, addedAt, this._owner as Group)
+    );
+    return this;
+  }
+  addAll = (items: Readonly<ShoppingListItem[]>, addedAt: Date) => {
+    items.forEach((item) => this.add(item, addedAt));
+    return this;
   };
 }
 
-class ListItems extends CoList.Of(co.ref(ListItem)) { }
-
 export class ListEntry extends CoMap {
   items = co.ref(ListItems);
-  type = co.literal('todo', 'shopping');
+  type = co.literal("todo", "shopping");
 
-  static make({ items, owner, addedAt }: {
-    items: ShoppingListItem[];
+  createdAt = co.Date;
+
+  static make({
+    items,
+    owner,
+    addedAt,
+  }: {
+    items: Readonly<ShoppingListItem[]>;
     owner: Group;
     addedAt: Date;
   }) {
-    const newList = ListEntry.create({
-      items: ListItems
-        .create(
-          items.map(({ emoji, name, quantity }) =>
-            ListItem.create({
-              name,
-              quantity,
-              emoji: emoji ?? '',
-              addedAt,
-              status: { _tag: 'pending' },
-            }, { owner })
+    const newList = ListEntry.create(
+      {
+        createdAt: addedAt,
+        type: "shopping",
+        items: ListItems.create(
+          items.map((item) =>
+            ListItem.fromShoppingListItem(item, addedAt, owner)
           ),
-          { owner },
+          { owner }
         ),
-      type: 'shopping',
-    }, { owner });
+      },
+      { owner }
+    );
     return newList;
   }
 }
