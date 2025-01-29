@@ -3,6 +3,7 @@ import type { ID } from "jazz-tools";
 import { useState } from "react";
 import { Checkbox } from "./Checkbox";
 import { ListEntry } from "./schema/List";
+import { AddItemForm } from "./AddItemForm";
 
 export default function Lists() {
   const [listID, _setIssueID] = useState<ID<ListEntry> | undefined>(
@@ -62,6 +63,13 @@ export function List({ list: listID }: { list: ID<ListEntry> }) {
               );
             })
           }
+          <li>
+            <AddItemForm
+              onAddItem={(name) => {
+                list.items.add({ name, emoji: "📝", quantity: 1 }, new Date());
+              }}
+            />
+          </li>
         </ul>
       )}
     </div>
