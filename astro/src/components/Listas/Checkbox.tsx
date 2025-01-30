@@ -9,7 +9,8 @@ interface CheckboxProps {
 }
 
 export const Checkbox = (props: CheckboxProps) => {
-  const handleChange = () => {
+  const handleChange = (e: React.MouseEvent | React.ChangeEvent) => {
+    e.stopPropagation();
     props.onChange(!props.checked);
   };
 
@@ -29,8 +30,10 @@ export const Checkbox = (props: CheckboxProps) => {
             transition-colors duration-200
           "
           type="checkbox"
-          {...props}
+          id={props.id}
+          checked={props.checked}
           onChange={handleChange}
+          onClick={e => e.stopPropagation()}
         />
         <svg
           className="absolute w-6 h-6 pointer-events-none hidden peer-checked:block stroke-white left-0 top-0"
