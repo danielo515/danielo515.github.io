@@ -92,7 +92,7 @@ export function ListItem({ id, checked, label, onChange, onDelete }: ListItemPro
           label={label}
           onChange={onChange}
           className="hover:bg-gray-100 dark:hover:bg-gray-700 
-                    active:bg-gray-200 dark:active:bg-gray-600 rounded-lg shadow-sm"
+                    active:bg-gray-200 dark:active:bg-gray-600 shadow-sm"
         />
       </div>
 
