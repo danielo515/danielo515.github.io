@@ -17,6 +17,8 @@ const tag = z.enum([
   "mongodb",
   "docker",
   "rust",
+  "effect-ts",
+  "nix"
 ]);
 
 export type TechTag = z.infer<typeof tag>;

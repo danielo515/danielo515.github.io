@@ -5,6 +5,7 @@ import NextJS from "@/icons/NextJS.astro";
 import Tailwind from "@/icons/Tailwind.astro";
 import AstroIcon from "./icons/AstroIcon.astro";
 import Docker from "./icons/Docker.astro";
+import Effect from "./icons/Effect.astro";
 import Golang from "./icons/Golang.astro";
 import Mongo from "./icons/Mongo.astro";
 import Nodejs from "./icons/Nodejs.astro";
@@ -112,6 +113,18 @@ const tagAppearance: Record<
       "bg-[#66B3FA] border-[#2496ED] text-white dark:border-blue-300 dark:bg-transparent",
     name: "Docker",
     icon: Docker,
+  },
+  nix: {
+    class:
+      "bg-[#7F5AF0] border-[#7F5AF0] text-white dark:border-blue-300 dark:bg-transparent",
+    name: "Nix",
+    icon: null,
+  },
+  "effect-ts": {
+    class:
+      "bg-[#003159] border-[#003159] text-white dark:border-blue-300 dark:bg-transparent",
+    name: "Effect",
+    icon: Effect,
   },
 } as const;
 
