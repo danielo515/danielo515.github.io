@@ -18,14 +18,15 @@ Throughout my career, I've learned that each day brings new challenges and oppor
 
 ## EMPLOYMENT
 
-### Feb 2024 - Currently - Fullstack engineer at Rhino.fi
+### Feb 2024 - Apr 2025 - Fullstack engineer at Rhino.fi
 
 **Tech Stack**: MongoDB, FP-TS, Effect-ts, Nix
 
-Member of the bridge and ifrastructure team, which is a core part of Rino.fi business (it is a crypto bridge after all).
-Thanks to my experience in Effect-ts I became productive pretty quickly once I grasp the Crypto specific details.
-Also because my interestest on mentoring I helped several team members when they were struggling with the Effect-ts little gotchas.
-Thanks to this position I solidified a lot of my Nix knowledge, which I was just starting to learn at the time.
+At Rhino.fi, a leading **Web3 crypto bridge**, I contributed to the **Bridge and Infrastructure team**, focusing on the development and maintenance of its the bridge core functionalities.
+I quickly became productive by leveraging my expertise in **Effect-TS** and I actively mentored team members through the intricacies of the framework.
+My contributions included building an IP blacklisting/whitelisting mechanism.
+During this role, I significantly deepened my knowledge of **Nix**.
+The architecture was event-based and deployed on **Google Cloud Platform (GCP)**.
 
 ### Nov 2023 - Nov 2024 - Lead dev engineer at Dharma
 
