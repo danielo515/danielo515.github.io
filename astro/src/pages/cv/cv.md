@@ -28,6 +28,8 @@ My contributions included building an IP blacklisting/whitelisting mechanism.
 During this role, I significantly deepened my knowledge of **Nix**.
 The architecture was event-based and deployed on **Google Cloud Platform (GCP)**.
 
+---
+
 ### Nov 2023 - Nov 2024 - Lead dev engineer at Dharma
 
 **Tech Stack**: Typescript, Svelte, FP-TS, DynamoDB
@@ -36,8 +38,6 @@ I lead the creation of the in-house booking engine and inventory system.
 I owned the entire process, from understanding requirements and helping product to collect them, to plan the required tasks and assign them to the available developers, myself included.
 It was a challenging project because we were on a tight deadline, and we were also aiming at replacing an already existing solution that we were using for this purpose.
 Carefully planning and specially prioritizing the most important parts was key to the success of the project.
-
----
 
 ### Sep 2022 - Nov 2023 - Freelancer at Tella
 
@@ -57,6 +57,8 @@ Pento is the first one click payroll solution. We are demonstrating that managin
 Payroll is a traditionally obscure process that takes out ressources from companies that may limit their success.
 Thanks to Pento handling payrolls isn't harder than using other modern tools like google docs.
 
+---
+
 ### January 2019 - January 2020 – Aula
 
 **Tech Stack**: Javascript, React, Redux, AWS (specially lambdas)
@@ -70,8 +72,6 @@ reliable (99.9%), but that also meets the requirement of helping people reach ea
 **Tech Stack**: NodeJS, MongoDB, Docker
 
 On Case we use stunning cutting edge technologies as MongoDB and NodeJS to deliver the best services to our customers. We are always open to innovation and we are not afraid of doing things that no one did before, for example, we started using MongoDB even before it reached it's version 1.0
-
----
 
 ### April 2016 – June 2016 Level 3 software support – Gemalto
 
@@ -122,6 +122,8 @@ As the first level of customer support I took take care of Telefonica’s global
 - Experienced in managing projects successfully as a lead developer
 - Deep interest in Domain Driven Design
 - Autonomous self learner committed to continuous personal and professional development
+
+---
 
 ## Technical Expertise
 
