@@ -8,6 +8,7 @@ technologies:
 - effect-ts
 - nix
 - mongodb
+- react
 ---
 
 
