@@ -20,7 +20,7 @@ Throughout my career, I've learned that each day brings new challenges and oppor
 
 ### Feb 2024 - Apr 2025 - Fullstack engineer at Rhino.fi
 
-**Tech Stack**: MongoDB, FP-TS, Effect-ts, Nix, React
+**Tech Stack**: MongoDB, FP-TS, Effect-ts, Nix, React, NextJs
 
 At Rhino.fi, a leading **Web3 crypto bridge**, I contributed to the **Bridge and Infrastructure team**, focusing on the development and maintenance of its the bridge core functionalities.
 I quickly became productive by leveraging my expertise in **Effect-TS** and I actively mentored team members through the intricacies of the framework.
@@ -41,7 +41,7 @@ Carefully planning and specially prioritizing the most important parts was key t
 
 ### Sep 2022 - Nov 2023 - Freelancer at Tella
 
-**Tech Stack**: ReasonML, React, Rust, AWS
+**Tech Stack**: ReasonML, React, Rust, AWS, NextJs
 
 Tella is an innovative screen recording platform with a web based editor that requires no installation at all.
 As it was a very little startup, I did anything the company needed.
