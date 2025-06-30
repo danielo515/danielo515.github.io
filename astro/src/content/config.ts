@@ -18,7 +18,8 @@ const tag = z.enum([
   "docker",
   "rust",
   "effect-ts",
-  "nix"
+  "nix",
+  "python",
 ]);
 
 export type TechTag = z.infer<typeof tag>;

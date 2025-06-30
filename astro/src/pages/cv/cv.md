@@ -20,7 +20,7 @@ Throughout my career, I've learned that each day brings new challenges and oppor
 
 ### Feb 2024 - Apr 2025 - Fullstack engineer at Rhino.fi
 
-**Tech Stack**: MongoDB, FP-TS, Effect-ts, Nix
+**Tech Stack**: MongoDB, FP-TS, Effect-ts, Nix, React
 
 At Rhino.fi, a leading **Web3 crypto bridge**, I contributed to the **Bridge and Infrastructure team**, focusing on the development and maintenance of its the bridge core functionalities.
 I quickly became productive by leveraging my expertise in **Effect-TS** and I actively mentored team members through the intricacies of the framework.
