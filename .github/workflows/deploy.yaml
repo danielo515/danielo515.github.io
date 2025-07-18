@@ -43,8 +43,34 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      - name: Install Playwright
+        run: pnpm exec playwright install chromium
+
       - name: Build with Astro
         run: pnpm run build
+        
+      - name: Start Astro Preview Server
+        run: |
+          pnpm run preview -- --host 0.0.0.0 --port 3000 &
+          echo $! > astro-server.pid
+          # Give the server some time to start
+          sleep 10
+        shell: bash
+
+      - name: Generate PDF from CV
+        run: pnpm run generate-pdf
+        env:
+          CV_URL: "http://localhost:3000/cv"
+
+      - name: Stop Astro Server
+        run: |
+          if [ -f astro-server.pid ]; then
+            kill $(cat astro-server.pid) || true
+            rm astro-server.pid
+          fi
+        shell: bash
+        if: always()
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
