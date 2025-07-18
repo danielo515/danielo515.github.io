@@ -6,10 +6,10 @@ on:
   workflow_dispatch:
     inputs:
       job_to_run:
-        description: 'Job to run'
+        description: "Job to run"
         required: false
-        default: 'all'
-        type: 'choice'
+        default: "all"
+        type: "choice"
         options:
           - all
           - build-only
@@ -27,7 +27,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.event.inputs.job_to_run == 'all' || github.event.inputs.job_to_run == 'build-only' || github.event.inputs.job_to_run == null
     defaults:
       run:
         working-directory: ./astro
@@ -57,19 +56,19 @@ jobs:
 
       - name: Build with Astro
         run: pnpm run build
-      
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: astro-build
           path: ./astro/dist
           retention-days: 1
-          
+
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./astro/dist
-          
+
   generate-pdf:
     runs-on: ubuntu-latest
     if: github.event.inputs.job_to_run == 'all' || github.event.inputs.job_to_run == 'pdf-only' || github.event.inputs.job_to_run == null
@@ -80,7 +79,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
@@ -93,19 +92,19 @@ jobs:
           node-version: "20"
           cache: "pnpm"
           cache-dependency-path: "./astro/pnpm-lock.yaml"
-          
+
       - name: Install dependencies
         run: pnpm install
-      
+
       - name: Install Playwright
         run: pnpm exec playwright install chromium
-      
+
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
           name: astro-build
           path: ./astro/dist
-      
+
       - name: Start Astro Preview Server
         run: |
           pnpm run preview -- --host 0.0.0.0 --port 3000 &
@@ -127,7 +126,7 @@ jobs:
           fi
         shell: bash
         if: always()
-        
+
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
