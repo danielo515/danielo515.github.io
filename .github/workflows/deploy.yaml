@@ -103,7 +103,11 @@ jobs:
         run: |
           echo "Installing fonts for better PDF rendering..."
           sudo apt-get update
-          sudo apt-get install -y fonts-liberation fonts-noto fonts-roboto fonts-open-sans
+          sudo apt-get install -y fonts-liberation fonts-noto fonts-roboto fonts-open-sans fonts-inter
+          # Download Inter font which closely resembles SF Pro used on Mac
+          mkdir -p ~/.fonts
+          wget -q https://github.com/rsms/inter/releases/download/v3.19/Inter-3.19.zip
+          unzip -q Inter-3.19.zip -d ~/.fonts/inter
           # Refresh font cache
           fc-cache -f -v
 

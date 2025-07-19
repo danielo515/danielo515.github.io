@@ -31,6 +31,21 @@ async function generatePdf() {
     // Set viewport size for consistent rendering
     await page.setViewportSize({ width: 1280, height: 1600 });
 
+    // Add Google Fonts for consistent rendering
+    await page.addStyleTag({
+      content: `
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        /* Apply Inter font to everything for consistency */
+        html, body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, a, span, div {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+          text-rendering: optimizeLegibility;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+      `,
+    });
+
     // Ensure fonts are loaded properly
     await page.addStyleTag({
       content: `
