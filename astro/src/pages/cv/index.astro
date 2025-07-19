@@ -14,22 +14,37 @@ const { Content } = cv;
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <title>
       Danielo {new Date().toISOString().split("T")[0]}
     </title>
   </head>
   <body class="container mx-auto flex flex-col h-screen pt-8 print:pt-0">
     <div class="text-center fixed top-4 right-4 print:hidden">
-      <button
-        class="btn btn-primary border rounded-md p-2"
-        type="button"
-        onclick="print()"
-      >
-        Print
-      </button>
+      <!-- Generate PDF filename with today's date to match the generated file pattern -->
+      {
+        (() => {
+          const date = new Date();
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          const pdfFilename = `Danielo_${year}-${month}-${day}.pdf`;
+          return (
+            <a
+              href={`/pdf/${pdfFilename}`}
+              class="btn btn-primary border rounded-md p-2 inline-block no-underline"
+              download
+            >
+              Download as PDF
+            </a>
+          );
+        })()
+      }
     </div>
     <Prose>
       <Content />
@@ -39,13 +54,36 @@ const { Content } = cv;
     </div>
     <style is:global>
       /* Apply Inter font to all content */
-      html, body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, a, span, div {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      html,
+      body,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      p,
+      ul,
+      ol,
+      li,
+      a,
+      span,
+      div {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "San Francisco",
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
-      
+
       img {
         display: inline-block;
         width: 200px;
