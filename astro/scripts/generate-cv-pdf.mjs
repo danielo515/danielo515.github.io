@@ -59,20 +59,26 @@ async function generatePdf() {
     console.log("PDF generated successfully!");
     console.log(`PDF is available at: ${outputPath}`);
     
+    // Extract just the filename from the path
+    const path = await import('path');
+    const pdfFilename = path.basename(outputPath);
+    
     // Output in GitHub Actions format if running in GitHub Actions
     if (process.env.GITHUB_ACTIONS === 'true') {
-      // For GitHub Actions workflow commands
+      // For GitHub Actions workflow commands (deprecated but included for compatibility)
       console.log(`::set-output name=pdf_path::${outputPath}`);
+      console.log(`::set-output name=pdf_name::${pdfFilename}`);
       
       // For newer GitHub Actions workflow (using $GITHUB_OUTPUT)
       if (process.env.GITHUB_OUTPUT) {
         const fs = await import('fs');
         fs.appendFileSync(process.env.GITHUB_OUTPUT, `pdf_path=${outputPath}\n`);
+        fs.appendFileSync(process.env.GITHUB_OUTPUT, `pdf_name=${pdfFilename}\n`);
       }
     }
     
     // Return the path for potential use in JS actions or local scripts
-    return outputPath;
+    return outputPath; // This return statement is used when function completes successfully
   } catch (error) {
     console.error("Error generating PDF:", error);
     console.error(
@@ -80,20 +86,22 @@ async function generatePdf() {
     );
     console.error("pnpm add -D playwright");
     console.error("pnpm exec playwright install chromium");
-    process.exit(1);
+    // Return null instead of exiting to make the function return a value even in error case
+    // This allows the function to be used in module contexts
+    return null;
   } finally {
     // Ensure the browser is closed even if there's an error
     if (browser) await browser.close();
   }
 }
 
-// Execute and export for potential use as a module
-const pdfPath = await generatePdf();
+// Export for use as a module
+export { generatePdf };
 
 // If this script is the main module (not imported)
 if (import.meta.url === `file://${process.argv[1]}`) {
   // Script is being run directly
+  const pdfPath = await generatePdf();
+  console.log(`Script completed. Generated PDF: ${pdfPath}`);
   process.exit(0);
 }
-
-export { generatePdf };
