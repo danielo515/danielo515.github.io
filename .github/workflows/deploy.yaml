@@ -4,6 +4,16 @@ on:
   push:
     branches: ["astro"]
   workflow_dispatch:
+    inputs:
+      job_to_run:
+        description: "Job to run"
+        required: false
+        default: "all"
+        type: "choice"
+        options:
+          - all
+          - build-only
+          - pdf-only
 
 permissions:
   contents: read
@@ -43,19 +53,118 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
       - name: Build with Astro
         run: pnpm run build
-      - name: Upload artifact
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: astro-build
+          path: ./astro/dist
+          retention-days: 1
+
+      - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./astro/dist
+
+  generate-pdf:
+    runs-on: macos-latest
+    if: github.event.inputs.job_to_run == 'all' || github.event.inputs.job_to_run == 'pdf-only' || github.event.inputs.job_to_run == null
+    needs: [build]
+    defaults:
+      run:
+        working-directory: ./astro
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: latest
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: "./astro/pnpm-lock.yaml"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install Playwright
+        run: pnpm exec playwright install chromium
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: astro-build
+          path: ./astro/dist
+
+      - name: Start Astro Preview Server
+        run: |
+          # Start the server using astro preview directly (not the script that builds first)
+          pnpm exec astro preview --host 0.0.0.0 --port 3000 &
+          SERVER_PID=$!
+          echo $SERVER_PID > astro-server.pid
+
+          # Wait for the server to be ready with a proper health check
+          echo "Waiting for Astro server to be ready..."
+          MAX_RETRIES=30
+          RETRY_COUNT=0
+
+          until $(curl --output /dev/null --silent --fail http://localhost:3000/cv) || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+            if ! kill -0 $SERVER_PID 2>/dev/null; then
+              echo "Astro server process died. Logs:"
+              cat astro-server.log || echo "No logs available"
+              exit 1
+            fi
+            
+            echo "Waiting for server to be ready... ($((RETRY_COUNT+1))/$MAX_RETRIES)"
+            RETRY_COUNT=$((RETRY_COUNT+1))
+            sleep 2
+          done
+
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "Timed out waiting for Astro server to start"
+            exit 1
+          fi
+
+          echo "Astro server is up and running!"
+        shell: bash
+
+      - name: Generate PDF from CV
+        id: generate_pdf
+        run: pnpm run generate-pdf
+        env:
+          CV_URL: "http://localhost:3000/cv"
+
+      - name: Stop Astro Server
+        run: |
+          if [ -f astro-server.pid ]; then
+            kill $(cat astro-server.pid) || true
+            rm astro-server.pid
+          fi
+        shell: bash
+        if: always()
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CV-${{ steps.generate_pdf.outputs.pdf_name }}
+          path: ${{ steps.generate_pdf.outputs.pdf_path }}
+          retention-days: 7
 
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
+    if: github.event.inputs.job_to_run == 'all' || github.event.inputs.job_to_run == null
+    needs: [build, generate-pdf]
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

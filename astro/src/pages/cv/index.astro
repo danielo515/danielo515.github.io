@@ -14,7 +14,12 @@ const { Content } = cv;
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>CV of Danielo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>
+      Danielo {new Date().toISOString().split("T")[0]}
+    </title>
   </head>
   <body class="container mx-auto flex flex-col h-screen pt-8 print:pt-0">
     <div class="text-center fixed top-4 right-4 print:hidden">
@@ -33,6 +38,14 @@ const { Content } = cv;
       <Footer links={config.footerLinks} />
     </div>
     <style is:global>
+      /* Apply Inter font to all content */
+      html, body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, a, span, div {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
       img {
         display: inline-block;
         width: 200px;
@@ -51,13 +64,35 @@ const { Content } = cv;
           opacity: 0;
         }
 
+        /* Prevent sections from breaking across pages */
+        .prose h2,
+        .prose h3,
+        .prose p {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+
+        /* Ensure section headers stay with their content */
+        .prose h2,
+        .prose h3 {
+          break-after: avoid;
+          page-break-after: avoid;
+        }
+
+        /* Keep related content together */
+        .prose section,
+        .prose div {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+
         .prose h2 {
-          margin-top: 1em;
-          margin-bottom: 0.5em;
+          margin-top: 0.8em;
+          margin-bottom: 0.4em;
         }
 
         .prose h3 {
-          margin-bottom: 0.25em;
+          margin-bottom: 0.1em;
         }
 
         .prose li {
@@ -66,7 +101,7 @@ const { Content } = cv;
         }
 
         .prose ul {
-          margin-bottom: 0.15em;
+          margin-bottom: 0.1em;
         }
 
         .prose p {
