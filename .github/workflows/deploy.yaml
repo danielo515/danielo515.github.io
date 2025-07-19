@@ -111,12 +111,12 @@ jobs:
           pnpm exec astro preview --host 0.0.0.0 --port 3000 &
           SERVER_PID=$!
           echo $SERVER_PID > astro-server.pid
-          
+
           # Wait for the server to be ready with a proper health check
           echo "Waiting for Astro server to be ready..."
           MAX_RETRIES=30
           RETRY_COUNT=0
-          
+
           until $(curl --output /dev/null --silent --fail http://localhost:3000/cv) || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
             if ! kill -0 $SERVER_PID 2>/dev/null; then
               echo "Astro server process died. Logs:"
@@ -128,12 +128,12 @@ jobs:
             RETRY_COUNT=$((RETRY_COUNT+1))
             sleep 2
           done
-          
+
           if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
             echo "Timed out waiting for Astro server to start"
             exit 1
           fi
-          
+
           echo "Astro server is up and running!"
         shell: bash
 
@@ -155,7 +155,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cv-pdf
-          path: ./astro/dist/CV-Daniel_Rodríguez_Rivero.pdf
+          path: ./astro/public/pdf/*.pdf
           retention-days: 7
 
   deploy:
