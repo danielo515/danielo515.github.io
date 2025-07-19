@@ -14,6 +14,9 @@ const { Content } = cv;
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>
       Danielo {new Date().toISOString().split("T")[0]}
     </title>
@@ -35,6 +38,14 @@ const { Content } = cv;
       <Footer links={config.footerLinks} />
     </div>
     <style is:global>
+      /* Apply Inter font to all content */
+      html, body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, a, span, div {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
       img {
         display: inline-block;
         width: 200px;
