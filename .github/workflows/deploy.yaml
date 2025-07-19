@@ -138,6 +138,7 @@ jobs:
         shell: bash
 
       - name: Generate PDF from CV
+        id: generate_pdf
         run: pnpm run generate-pdf
         env:
           CV_URL: "http://localhost:3000/cv"
@@ -155,7 +156,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cv-pdf
-          path: ./astro/public/pdf/*.pdf
+          path: ${{ steps.generate_pdf.outputs.pdf_path }}
           retention-days: 7
 
   deploy:
