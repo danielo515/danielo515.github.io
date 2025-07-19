@@ -1,119 +1,98 @@
-## PERSONAL STATEMENT
+## Personal Statement
 
-Throughout my career, I've learned that each day brings new challenges and opportunities. Being adaptable and versatile has been crucial to my success. I am a strong advocate for open-source, and many of my projects has open licenses. I never settle for the status quo — if I see an opportunity for improvement, I take it.
+As a versatile and adaptable Fullstack Engineer, I thrive on continuous learning and solving complex challenges. I am a strong advocate for open-source principles and believe in building robust, user-centric products. I never settle for the status quo—if I see an opportunity for improvement, I take it. I'm passionate about mentoring, sharing knowledge, and building products that I would enjoy using myself. I'm currently looking for new challenges where I can continue growing while contributing to meaningful, user-focused projects.
 
-## BADGES
+## Contact
 
-![linux](LinuxCert.png)
-![suse](SuseCert.png)
+- LinkedIn: <https://www.linkedin.com/in/danielorodriguez/>
+- GitHub: <https://github.com/danielo515>
+- Portfolio: <https://danielorodriguez.com>
 
-## CERTIFICATES & MEMBERSHIPS
+## Employment
 
-- 2015 Suse Certified Linux administrator 11
-- 2015 LPIC 101 Linux professional institute certified
-- 2015 Development of cloud services with Node.js and express at Miriada X
-- 2014 HTML5 WebApps development incl. mobile and FirefoxOs at Miriada X
-- 2010 Design and network security configuration CISCO + Microsoft (1100h)
-- CCNA
+### Feb 2025 - Apr 2025 – Fullstack Engineer at Rhino.fi
 
-## EMPLOYMENT
+*MongoDB*, *FP-TS*, *Effect-ts*, *Nix*, *React*, *NextJs*
 
-### Feb 2024 - Apr 2025 - Fullstack engineer at Rhino.fi
-
-**Tech Stack**: MongoDB, FP-TS, Effect-ts, Nix, React
-
-At Rhino.fi, a leading **Web3 crypto bridge**, I contributed to the **Bridge and Infrastructure team**, focusing on the development and maintenance of its the bridge core functionalities.
-I quickly became productive by leveraging my expertise in **Effect-TS** and I actively mentored team members through the intricacies of the framework.
-My contributions included building an IP blacklisting/whitelisting mechanism.
-During this role, I significantly deepened my knowledge of **Nix**.
-The architecture was event-based and deployed on **Google Cloud Platform (GCP)**.
+- Contributed significantly to the **Bridge and Infrastructure team** at **Rhino.fi**, a leading **Web3 crypto bridge**, focusing on core bridge functionalities.
+- Leveraged deep expertise in **Effect-TS** to achieve **rapid productivity**, **championing the adoption of best practices and patterns** while actively identifying areas for improvement. I also **mentored** team members, accelerating their proficiency with the framework.
+- Developed and implemented a robust **IP blacklisting/whitelisting mechanism**, significantly **enhancing security and access control** for critical bridge operations.
+- Deepened expertise in **Nix** for improved infrastructure management within an **event-based architecture** deployed on **Google Cloud Platform (GCP)**.
 
 ---
 
-### Nov 2023 - Nov 2024 - Lead dev engineer at Dharma
+### Nov 2023 - Nov 2024 – Lead Dev Engineer at Dharma
 
-**Tech Stack**: Typescript, Svelte, FP-TS, DynamoDB
+**Typescript**, *Svelte, FP-TS, DynamoDB*
 
-I lead the creation of the in-house booking engine and inventory system.
-I owned the entire process, from understanding requirements and helping product to collect them, to plan the required tasks and assign them to the available developers, myself included.
-It was a challenging project because we were on a tight deadline, and we were also aiming at replacing an already existing solution that we were using for this purpose.
-Carefully planning and specially prioritizing the most important parts was key to the success of the project.
+- **Spearheaded** the conceptualization, development, and successful launch of a mission-critical **in-house booking engine and inventory system**. This eliminated a **1.7% per-sale provider fee**, leading to **significant anticipated revenue savings** as transaction volumes increased.
+- **Championed the build-from-scratch approach**, successfully convincing management to **abandon extending the overly complex and brittle legacy system** in favor of a new, robust solution.
+- **Architected and implemented a seamless parallel operation** for both the legacy and new systems, ensuring **zero downtime** and shared endpoint compatibility during the transition.
+- **Mentored and guided** a junior developer, fostering their growth and ensuring project milestones were met effectively under tight deadlines.
+- **Ensured end-to-end type safety** and data integrity through **strict data validation**, enhancing system reliability and maintainability.
+- **Learned Svelte from scratch** to **develop an end-to-end repository for hotels and activity providers**, encompassing data ingestion, database processing, and intuitive UI presentation.
+- **Mastered the proprietary in-house UI system**, enabling seamless integration and development of new features.
 
 ### Sep 2022 - Nov 2023 - Freelancer at Tella
 
-**Tech Stack**: ReasonML, React, Rust, AWS
+ **React**, *ReasonML, Rust, AWS, NextJs*
 
-Tella is an innovative screen recording platform with a web based editor that requires no installation at all.
-As it was a very little startup, I did anything the company needed.
-I took ownership of the automatic subtitles generation, displaying and edition end to end.
-The frontend was built with react and ReasonML, which is a type safe functional programming language that I learned while working there.
-I also had to write some little services in Rust, which I learned along the way.
+- Quickly gained **proficiency in ReasonML**  while developing core frontend functionalities with **React**.
+- Rapidly acquired **Rust** expertise over a weekend to **develop the backend service** responsible for secure user project and video downloads from **AWS S3**, leveraging **Serde**.
+- **Took end-to-end ownership** of the platform's subtitle system, transforming it from a static display to a fully editable and customizable feature.
+- **Engineered the subtitle editor** for accurate display, timing, styles, and animations, ensuring visual consistency with backend video rendering.
 
 ### February 2020 – September 2022 Pento
 
-**Tech Stack**: Typescript, React, Go
+*Typescript*, **React**, *Go*, **Storybook**, *Google Cloud Platform (GCP)*
 
-Pento is the first one click payroll solution. We are demonstrating that managing your employees salaries doesn't need to be hard, expensive or tedious.
-Payroll is a traditionally obscure process that takes out ressources from companies that may limit their success.
-Thanks to Pento handling payrolls isn't harder than using other modern tools like google docs.
-
----
+- Transitioned to a dedicated **Frontend Engineer** role to address organizational gap, leveraging strong **React** and **Typescript** expertise.
+- **Led** the complete **UI overhaul** of the platform in collaboration with a designer, significantly enhancing user experience and visual appeal.
+- **Developed a comprehensive, high-fidelity component library** in **Storybook**, establishing design system foundations for future scalability.
+- **Executed a phased migration** of the existing UI to the new design, utilizing feature flags for controlled rollouts to specific clients and sections.
 
 ### January 2019 - January 2020 – Aula
 
-**Tech Stack**: Javascript, React, Redux, AWS (specially lambdas)
+*Javascript*, *React*, *Redux*, **AWS** *(specially lambdas)*
 
-Aula is a social learning platform focused on make it easy for all educators to engage all students.
-As a full-stack engineer my role is to make sure that the platform we built is not only technically correct and
-reliable (99.9%), but that also meets the requirement of helping people reach each other. It is an humans first platform.
+- Collaborated as a **Full-stack Engineer** within a 3-person team to **develop a robust homework submission system** for students and teachers.
+- Engineered features supporting diverse submission types, including **PDFs, images, and external document links (e.g., Google Docs)**.
+- Proactively **proposed an architectural pattern** to enhance **Redux maintainability**, demonstrating a commitment to code quality and scalable design principles.
+- Ensured the platform's **technical correctness and reliability (99.9%)** and its adherence to a "humans first" user-centric design.
+- Leveraged **AWS services**, particularly **Lambdas**, for scalable and efficient backend operations.the requirement of helping people reach each other. It is an humans first platform.
 
-### June 2016 – Jan 2019 – Case on it
+---
 
-**Tech Stack**: NodeJS, MongoDB, Docker
+### June 2016 – Jan 2019 – Medux
 
-On Case we use stunning cutting edge technologies as MongoDB and NodeJS to deliver the best services to our customers. We are always open to innovation and we are not afraid of doing things that no one did before, for example, we started using MongoDB even before it reached it's version 1.0
+*NodeJS*, *MongoDB*, **Docker**
+
+- **Architected** a robust configuration system for probes, ensuring **backward compatibility** for legacy components while presenting a **unified interface** through an **adapter architecture**.
+- **Mentored** all new team members, accelerating their onboarding and contributing to team productivity.
+- **Enhanced code traceability**, **improved code quality**, and **optimized logging mechanisms**, leading to more efficient debugging and system maintenance.
 
 ### April 2016 – June 2016 Level 3 software support – Gemalto
 
-Apart from support task we also develop some minor enhancements to the products and generate production builds. Our solutions were developed in `C#` and Java EE.
+- Provided Level 3 software support and minor enhancements in C# and Java EE.
 
 ### 2014 June – April 2016 - Support Specialist L.2 – Netsize (a Gemalto company)
 
-One of the biggest messaging and mobile services providers.
-
-- Support of messaging flows and incidents investigation.
-- Infrastructure support on Red-Hat environment.
-- Audit and management of core alarms.
-- Creation of service documentation.
-
-#### Key achievements
-
-- Several bash scripts for incident analysis.
-- I’m leading a project for document, audit and improve the scripts of the whole platform.
+- Provided L.2 support for messaging flows and infrastructure on Red-Hat, improving incident resolution through custom bash scripts.
+- Led project for documenting, auditing, and improving platform-wide automation scripts.
 
 ### 2013 March – 2014 June System Administrator Specialist – Roche
 
-Mainly focused on maintenance and expansion of Roche’s computers infrastructure. This includes servers, services and users.
-
-- Windows and Linux servers installations and decommissions
-- Users and groups management
-- Infrastructure and service monitoring
-- Created a collection of scripts for repetitive tasks. All accessible through a centralized user interface.
+- Managed Windows and Linux server infrastructure, including installations, monitoring, and user management
+- Automated repetitive administrative tasks through custom scripts, accessible via a centralized UI
 
 ### 2011 Dec – 2013 March - Network Operation Center – Telefónica Global Solutions
 
-As the first level of customer support I took take care of Telefonica’s global network, with focus on being proactive NOC rather than reactive.
-
-- Monitoring international internet links.
-- Technicians management of for in-place reparations.
-- Routing issues – analyzing and solving most of it
+- Monitored international internet links and resolved routing issues, acting as a proactive NOC
+- Coordinated technician management for in-place reparations across the global network
 
 ### 2010 - 2011 Several IT positions
 
-- Day to day user issues: slow machines, lost files, incompatible hardware
-- Install network drives and printers.
-- Hard-Disk clone / restoration over SSH / whole disk encryption
-- Backup and restoration of User data.
+- Early career roles encompassing general IT support, network setup, and system maintenance
 
 ## Professional Strengths
 
@@ -123,8 +102,6 @@ As the first level of customer support I took take care of Telefonica’s global
 - Deep interest in Domain Driven Design
 - Autonomous self learner committed to continuous personal and professional development
 
----
-
 ## Technical Expertise
 
 - Frontend: **React**, Svelte, Astro, SolidJS, Leaflet
@@ -132,9 +109,16 @@ As the first level of customer support I took take care of Telefonica’s global
 - Programming Languages: **TypeScript**, Rust, OCaml
 - Scripting Languages: Python, Bash, Lua, Google Apps Script
 - Databases: **PostgreSQL**, **DynamoDB**, CouchDB, Redis, MongoDB
-- Version Control: **Git**
-- Linux Management: NFS, CRON, file/user permissions
+- DevOps: Git, Docker, GitHub Actions, GitLab CI, TravisCI
+- Infra: NFS, CRON, Linux administration
 
-## EDUCATION
+## Certificates & Memberships
+
+- 2015 Suse Certified Linux administrator 11
+- 2015 LPIC 101 Linux professional institute certified
+- 2010 Design and network security configuration CISCO + Microsoft (1100h)
+- CCNA
+
+## Education
 
 - I.E.S. Juan de la Cierva. Madrid - Technician in Computer Systems Administration (High-Grade)
