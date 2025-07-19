@@ -98,6 +98,14 @@ jobs:
 
       - name: Install Playwright
         run: pnpm exec playwright install chromium
+        
+      - name: Install fonts for consistent rendering
+        run: |
+          echo "Installing fonts for better PDF rendering..."
+          sudo apt-get update
+          sudo apt-get install -y fonts-liberation fonts-noto fonts-roboto fonts-open-sans
+          # Refresh font cache
+          fc-cache -f -v
 
       - name: Download build artifact
         uses: actions/download-artifact@v4

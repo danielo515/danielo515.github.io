@@ -31,29 +31,71 @@ async function generatePdf() {
     // Set viewport size for consistent rendering
     await page.setViewportSize({ width: 1280, height: 1600 });
 
+    // Ensure fonts are loaded properly
+    await page.addStyleTag({
+      content: `
+        /* Force all fonts to be loaded properly */
+        @font-face {
+          font-display: swap;
+        }
+        
+        /* Improve text rendering */
+        * {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+        }
+      `,
+    });
+
     // Navigate to the CV page (assuming running local dev server)
     const url = process.env.CV_URL || "http://localhost:4321/cv";
     console.log(`Navigating to ${url}`);
     await page.goto(url, { waitUntil: "networkidle" });
 
-    // Wait a bit for any dynamic content to fully render
-    await page.waitForTimeout(2000);
+    // Wait longer to ensure fonts and all resources are fully loaded and rendered
+    console.log("Waiting for fonts and resources to fully load...");
+    await page.waitForTimeout(4000);
+
+    // Execute script to check if fonts are loaded
+    const fontsReady = await page.evaluate(async () => {
+      if (document.fonts && typeof document.fonts.ready === "object") {
+        try {
+          await document.fonts.ready;
+          console.log("All fonts loaded!");
+          return true;
+        } catch (e) {
+          console.log("Error waiting for fonts to load:", e);
+          return false;
+        }
+      } else {
+        console.log("document.fonts.ready not available");
+        return true; // Older browsers don't support document.fonts API
+      }
+    });
+
+    console.log(
+      fontsReady ? "Fonts confirmed loaded" : "Font loading status unknown"
+    );
 
     // Ensure the output directory exists
     await fs.mkdir(outputDir, { recursive: true });
 
-    // Generate PDF
+    // Generate PDF with improved settings for font quality
     console.log(`Generating PDF to ${outputPath}`);
     await page.pdf({
       path: outputPath,
       format: "A4",
       margin: {
         top: "20px",
-        right: "20px",
+        right: "10px",
         bottom: "20px",
         left: "20px",
       },
-      printBackground: true,
+      printBackground: true, // Ensure backgrounds are printed
+      preferCSSPageSize: true, // Use CSS page size if available
+      scale: 1.0, // No scaling to preserve font quality
+      displayHeaderFooter: false,
     });
 
     console.log("PDF generated successfully!");
