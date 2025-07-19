@@ -8,7 +8,8 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, "..");
-const outputDir = join(projectRoot, "public", "pdf");
+// Save directly to dist directory so it's included in the GitHub Pages deployment
+const outputDir = join(projectRoot, "dist", "pdf");
 const date = new Date();
 const year = date.getFullYear();
 const month = String(date.getMonth() + 1).padStart(2, "0");
