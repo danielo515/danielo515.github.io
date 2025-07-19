@@ -58,25 +58,31 @@ async function generatePdf() {
 
     console.log("PDF generated successfully!");
     console.log(`PDF is available at: ${outputPath}`);
-    
+
     // Extract just the filename from the path
-    const path = await import('path');
+    const path = await import("path");
     const pdfFilename = path.basename(outputPath);
-    
+
     // Output in GitHub Actions format if running in GitHub Actions
-    if (process.env.GITHUB_ACTIONS === 'true') {
-      // For GitHub Actions workflow commands (deprecated but included for compatibility)
-      console.log(`::set-output name=pdf_path::${outputPath}`);
-      console.log(`::set-output name=pdf_name::${pdfFilename}`);
-      
-      // For newer GitHub Actions workflow (using $GITHUB_OUTPUT)
+    if (process.env.GITHUB_ACTIONS === "true") {
+      // This is the new syntax for GitHub Actions workflow (using $GITHUB_OUTPUT)
       if (process.env.GITHUB_OUTPUT) {
-        const fs = await import('fs');
-        fs.appendFileSync(process.env.GITHUB_OUTPUT, `pdf_path=${outputPath}\n`);
-        fs.appendFileSync(process.env.GITHUB_OUTPUT, `pdf_name=${pdfFilename}\n`);
+        const fs = await import("fs");
+        fs.appendFileSync(
+          process.env.GITHUB_OUTPUT,
+          `pdf_path=${outputPath}\n`
+        );
+        fs.appendFileSync(
+          process.env.GITHUB_OUTPUT,
+          `pdf_name=${pdfFilename}\n`
+        );
+      } else {
+        console.log(
+          "::error title=Missing GITHUB_OUTPUT environment variable::GITHUB_OUTPUT environment variable is not set. Please run this script in a GitHub Actions workflow."
+        );
       }
     }
-    
+
     // Return the path for potential use in JS actions or local scripts
     return outputPath; // This return statement is used when function completes successfully
   } catch (error) {
