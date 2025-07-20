@@ -1,10 +1,11 @@
 ---
 // This is a redirect file to maintain backward compatibility
-const defaultLang = "en";
+
+//I need to export it to prevent type errors. See bug report: https://github.com/withastro/astro/issues/14100
+export const defaultLang = "en";
 
 // Redirect to the default language page
 return Astro.redirect(`/cv/${defaultLang}/`);
 ---
 
 <!-- This page is just a redirect to the default language version -->
-<!-- See the redirect logic in the frontmatter above -->
