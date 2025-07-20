@@ -5,8 +5,12 @@ import { chromium } from "playwright";
 import { fileURLToPath } from "url";
 
 // Define supported languages
-/** @type ['en', 'es'] */
+/** @typedef {'en'|'es'} SupportedLanguage */
+
+/** @type {SupportedLanguage[]} */
 const SUPPORTED_LANGUAGES = ["en", "es"];
+
+/** @type {Record<SupportedLanguage, string>} */
 const LANGUAGE_NAMES = {
   en: "English",
   es: "Spanish",
@@ -23,7 +27,11 @@ const year = date.getFullYear();
 const month = String(date.getMonth() + 1).padStart(2, "0");
 const day = String(date.getDate()).padStart(2, "0");
 
-// Function to generate language-specific output path
+/**
+ * Function to generate language-specific output path
+ * @param {SupportedLanguage} lang - Language code
+ * @returns {string} Path to the PDF file
+ */
 const getOutputPath = (lang) => {
   const langSuffix = lang === "en" ? "" : `_${lang}`;
   return join(outputDir, `Danielo_${year}-${month}-${day}${langSuffix}.pdf`);
@@ -214,7 +222,16 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   // Script is being run directly
   const specificLang = process.argv[2]; // Allow specifying a single language via command line
 
-  if (specificLang && SUPPORTED_LANGUAGES.includes(specificLang)) {
+  /**
+   * Validates if the input is a supported language
+   * @param {string} input - Input to validate
+   * @returns {input is SupportedLanguage} - Type guard for SupportedLanguage
+   */
+  function isSupportedLanguage(input) {
+    return SUPPORTED_LANGUAGES.includes(/** @type {SupportedLanguage} */(input));
+  }
+
+  if (specificLang && isSupportedLanguage(specificLang)) {
     const pdfPath = await generatePdf(specificLang);
     console.log(`Script completed. Generated PDF: ${pdfPath}`);
   } else {
