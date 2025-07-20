@@ -1,0 +1,186 @@
+---
+import Footer from "@/components/Footer.astro";
+import Prose from "@/components/Prose.astro";
+import { config } from "../../blog/config";
+
+// Export getStaticPaths to generate static routes for each language
+export function getStaticPaths() {
+  return ["en", "es"].map((lang) => ({
+    params: { lang },
+  }));
+}
+
+// Get the current language from params
+const { lang } = Astro.params;
+
+// Default to English if an invalid language is provided (should be handled by getStaticPaths already)
+const currentLang = lang;
+
+// Import the appropriate CV markdown file based on language
+// For English, use the default cv.md; for other languages use cv.[lang].md
+const cvPath =
+  currentLang === "en"
+    ? await import("../cv.md")
+    : await import(`../cv.${currentLang}.md`);
+
+const { Content } = cvPath;
+---
+
+<!doctype html>
+<html lang={currentLang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Danielo CV - full stack developer" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>
+      Danielo {new Date().toISOString().split("T")[0]}
+    </title>
+  </head>
+  <body class="container mx-auto flex flex-col h-screen pt-8 print:pt-0">
+    <div class="text-center fixed top-4 right-4 print:hidden">
+      <!-- Generate PDF filename with today's date to match the generated file pattern -->
+      {
+        (() => {
+          const date = new Date();
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          
+          // Add language suffix for non-English languages
+          const langSuffix = currentLang === "en" ? "" : `_${currentLang}`;
+          const pdfFilename = `Danielo_${year}-${month}-${day}${langSuffix}.pdf`;
+          
+          // Generate appropriate download label based on language
+          const downloadLabel = currentLang === "en" ? "Download as PDF" : "Descargar como PDF";
+          
+          return (
+            <a
+              href={`/pdf/${pdfFilename}`}
+              class="btn btn-primary border rounded-md p-2 inline-block no-underline"
+              download
+            >
+              {downloadLabel}
+            </a>
+          );
+        })()
+      }
+    </div>
+    <div class="language-selector text-right mt-2 mr-8 print:hidden">
+      <a href="/cv/en/" class={currentLang === "en" ? "font-bold" : ""}
+        >English</a
+      > |
+      <a href="/cv/es/" class={currentLang === "es" ? "font-bold" : ""}
+        >Español</a
+      >
+    </div>
+    <Prose>
+      <Content />
+    </Prose>
+    <div class="mt-auto flex justify-center space-x-4 print:hidden">
+      <Footer links={config.footerLinks} />
+    </div>
+    <style is:global>
+      /* Apply Inter font to all content */
+      html,
+      body,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      p,
+      ul,
+      ol,
+      li,
+      a,
+      span,
+      div {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "San Francisco",
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      img {
+        display: inline-block;
+        width: 200px;
+        max-width: 200px;
+      }
+
+      @media print {
+        .prose img {
+          width: 100px;
+          margin: 0;
+        }
+
+        hr {
+          page-break-before: always;
+          display: hidden;
+          opacity: 0;
+        }
+
+        /* Prevent sections from breaking across pages */
+        .prose h2,
+        .prose h3,
+        .prose p {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+
+        /* Ensure section headers stay with their content */
+        .prose h2,
+        .prose h3 {
+          break-after: avoid;
+          page-break-after: avoid;
+        }
+
+        /* Keep related content together */
+        .prose section,
+        .prose div {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+
+        .prose h2 {
+          margin-top: 0.8em;
+          margin-bottom: 0.4em;
+        }
+
+        .prose h3 {
+          margin-bottom: 0.1em;
+        }
+
+        .prose li {
+          margin-bottom: 0.1em;
+          margin-top: 0.1em;
+        }
+
+        .prose ul {
+          margin-bottom: 0.1em;
+        }
+
+        .prose p {
+          margin-bottom: 0.15em;
+        }
+      }
+    </style>
+  </body>
+</html>

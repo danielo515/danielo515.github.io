@@ -4,6 +4,14 @@ import { dirname, join } from "path";
 import { chromium } from "playwright";
 import { fileURLToPath } from "url";
 
+// Define supported languages
+/** @type ['en', 'es'] */
+const SUPPORTED_LANGUAGES = ["en", "es"];
+const LANGUAGE_NAMES = {
+  en: "English",
+  es: "Spanish",
+};
+
 // Get the current directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,9 +22,19 @@ const date = new Date();
 const year = date.getFullYear();
 const month = String(date.getMonth() + 1).padStart(2, "0");
 const day = String(date.getDate()).padStart(2, "0");
-const outputPath = join(outputDir, `Danielo_${year}-${month}-${day}.pdf`);
 
-async function generatePdf() {
+// Function to generate language-specific output path
+const getOutputPath = (lang) => {
+  const langSuffix = lang === "en" ? "" : `_${lang}`;
+  return join(outputDir, `Danielo_${year}-${month}-${day}${langSuffix}.pdf`);
+};
+
+/**
+ * Generates a PDF for a specific language
+ * @param {'en' | 'es'} lang - Language code (e.g. 'en', 'es')
+ * @returns {Promise<string|null>} - Path to the generated PDF or null if failed
+ */
+async function generatePdf(lang = "en") {
   console.log("Launching browser to generate CV PDF...");
 
   // Define browser outside the try block so it's accessible in the finally block
@@ -64,9 +82,10 @@ async function generatePdf() {
       `,
     });
 
-    // Navigate to the CV page (assuming running local dev server)
-    const url = process.env.CV_URL || "http://localhost:4321/cv";
-    console.log(`Navigating to ${url}`);
+    // Navigate to the CV page with language parameter (assuming running local dev server)
+    const baseUrl = process.env.CV_URL || "http://localhost:4321/cv";
+    const url = `${baseUrl}/${lang}/`;
+    console.log(`Navigating to ${url} (${LANGUAGE_NAMES[lang] || lang})`);
     await page.goto(url, { waitUntil: "networkidle" });
 
     // Wait longer to ensure fonts and all resources are fully loaded and rendered
@@ -96,6 +115,9 @@ async function generatePdf() {
 
     // Ensure the output directory exists
     await fs.mkdir(outputDir, { recursive: true });
+
+    // Get language-specific output path
+    const outputPath = getOutputPath(lang);
 
     // Generate PDF with improved settings for font quality
     console.log(`Generating PDF to ${outputPath}`);
@@ -132,6 +154,10 @@ async function generatePdf() {
         );
         fs.appendFileSync(
           process.env.GITHUB_OUTPUT,
+          `pdf_folder=${outputDir}\n`
+        );
+        fs.appendFileSync(
+          process.env.GITHUB_OUTPUT,
           `pdf_name=${pdfFilename}\n`
         );
       } else {
@@ -159,13 +185,46 @@ async function generatePdf() {
   }
 }
 
+/**
+ * Generates PDFs for all supported languages
+ * @returns {Promise<string[]>} - Array of paths to the generated PDFs
+ */
+async function generateAllPdfs() {
+  console.log(
+    `Generating PDFs for all languages: ${SUPPORTED_LANGUAGES.join(", ")}`
+  );
+  const results = [];
+
+  for (const lang of SUPPORTED_LANGUAGES) {
+    console.log(`\n=== Generating ${LANGUAGE_NAMES[lang] || lang} PDF ===`);
+    const pdfPath = await generatePdf(lang);
+    if (pdfPath) {
+      results.push(pdfPath);
+    }
+  }
+
+  return results;
+}
+
 // Export for use as a module
-export { generatePdf };
+export { generateAllPdfs, generatePdf };
 
 // If this script is the main module (not imported)
 if (import.meta.url === `file://${process.argv[1]}`) {
   // Script is being run directly
-  const pdfPath = await generatePdf();
-  console.log(`Script completed. Generated PDF: ${pdfPath}`);
+  const specificLang = process.argv[2]; // Allow specifying a single language via command line
+
+  if (specificLang && SUPPORTED_LANGUAGES.includes(specificLang)) {
+    const pdfPath = await generatePdf(specificLang);
+    console.log(`Script completed. Generated PDF: ${pdfPath}`);
+  } else {
+    const pdfPaths = await generateAllPdfs();
+    console.log(
+      `Script completed. Generated ${pdfPaths.length} PDFs: ${pdfPaths.join(
+        ", "
+      )}`
+    );
+  }
+
   process.exit(0);
 }

@@ -152,9 +152,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CV-${{ steps.generate_pdf.outputs.pdf_name }}
-          path: ${{ steps.generate_pdf.outputs.pdf_path }}
+          path: ${{ steps.generate_pdf.outputs.pdf_folder }}/*.pdf
           retention-days: 7
-          
+
       # Upload the complete dist directory including the generated PDF as the pages artifact
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
