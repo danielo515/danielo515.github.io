@@ -34,6 +34,6 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^24.0.7",
-    "playwright": "^1.43.1"
+    "playwright": "^1.55.1"
   }
 }
