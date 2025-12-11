@@ -27,9 +27,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./astro
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,7 +42,7 @@ jobs:
         with:
           node-version: "20"
           cache: "pnpm"
-          cache-dependency-path: "./astro/pnpm-lock.yaml"
+          cache-dependency-path: "./pnpm-lock.yaml"
 
       - name: Setup Pages
         id: pages
@@ -61,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: astro-build
-          path: ./astro/dist
+          path: ./dist
           retention-days: 1
 
       # Note: Pages artifact will be uploaded after PDF generation
@@ -70,9 +67,6 @@ jobs:
     runs-on: macos-latest
     if: github.event.inputs.job_to_run == 'all' || github.event.inputs.job_to_run == 'pdf-only' || github.event.inputs.job_to_run == null
     needs: [build]
-    defaults:
-      run:
-        working-directory: ./astro
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -88,7 +82,7 @@ jobs:
         with:
           node-version: "20"
           cache: "pnpm"
-          cache-dependency-path: "./astro/pnpm-lock.yaml"
+          cache-dependency-path: "./pnpm-lock.yaml"
 
       - name: Install dependencies
         run: pnpm install
@@ -99,7 +93,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: astro-build
-          path: ./astro/dist
+          path: ./dist
 
       - name: Start Astro Preview Server
         run: |
@@ -159,7 +153,7 @@ jobs:
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./astro/dist
+          path: ./dist
 
   deploy:
     environment:
