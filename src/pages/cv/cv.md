@@ -10,6 +10,17 @@ As a versatile and adaptable Fullstack Engineer, I thrive on continuous learning
 
 ## Employment
 
+### Aug 2025 - Present – Fullstack Engineer at Betalyra
+
+*Effect-ts*, *React*, *Next.js*, *AI SDKs*
+
+- Building **AI-powered automation solutions** at [Betalyra](https://betalyra.pt/), an AI innovation lab helping companies automate repetitive tasks like **data entry, email processing, and report generation**.
+- Developing **agentic workflows** and **document extraction systems** that transform unstructured data from invoices, contracts, and forms into actionable insights.
+- Leveraging deep expertise in **Effect-TS** to build **robust, type-safe, and composable** backend services that power AI integrations.
+- Developing **modern React applications** with **Next.js**, integrating multiple **AI SDKs** to deliver intelligent user experiences.
+
+---
+
 ### Feb 2025 - Apr 2025 – Fullstack Engineer at Rhino.fi
 
 *MongoDB*, *FP-TS*, *Effect-ts*, *Nix*, *React*, *NextJs*

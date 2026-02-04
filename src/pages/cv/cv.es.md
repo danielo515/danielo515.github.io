@@ -10,6 +10,17 @@ Soy un Ingeniero Fullstack versátil y orientado a producto, con pasión por el 
 
 ## Experiencia Laboral
 
+### Ago 2025 - Actualidad – Ingeniero Fullstack en Betalyra
+
+*Effect-ts*, *React*, *Next.js*, *AI SDKs*
+
+- Desarrollo de **soluciones de automatización con IA** en [Betalyra](https://betalyra.pt/), un laboratorio de innovación en IA que ayuda a empresas a automatizar tareas repetitivas como **entrada de datos, procesamiento de emails y generación de informes**.
+- Desarrollo de **flujos de trabajo agénticos** y **sistemas de extracción de documentos** que transforman datos no estructurados de facturas, contratos y formularios en información procesable.
+- Aprovechando mi experiencia en **Effect-TS** para construir servicios backend **robustos, type-safe y componibles** que potencian las integraciones de IA.
+- Desarrollo de **aplicaciones React modernas** con **Next.js**, integrando múltiples **SDKs de IA** para ofrecer experiencias de usuario inteligentes.
+
+---
+
 ### Feb 2025 - Abr 2025 – Ingeniero Fullstack en Rhino.fi
 
 *MongoDB*, **TypeScript**, **Effect-ts**, *Nix*, *React*, *NextJs*
