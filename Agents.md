@@ -23,6 +23,19 @@ pnpm run check        # Run TypeScript check only
 pnpm run preview      # Build and preview production
 ```
 
+### Adding Dependencies
+
+**NEVER** modify `package.json` directly to add or update dependencies. Always use the package manager CLI:
+
+```bash
+pnpm add <package>              # Add a new dependency
+pnpm add -D <package>           # Add a dev dependency
+pnpm add <package>@<version>    # Add a specific version
+pnpm add <package>@latest       # Add the latest version explicitly
+```
+
+When reinstalling or updating existing dependencies, always specify the version explicitly or use `@latest` to ensure deterministic installs.
+
 ## Content Collections
 
 Content is organized using Astro's content collections with Zod schemas defined in `src/content/config.ts`.
@@ -103,3 +116,12 @@ src/
 Configured in `tsconfig.json`:
 - `@/*` → `./src/*`
 - `@/icons/*` → `./src/components/icons/*`
+
+## Task Completion Requirements
+
+Before considering any task complete, you **MUST** run the following checks:
+
+1. **Type Check**: Run `pnpm run check` to verify there are no TypeScript errors
+2. **Build**: Run `pnpm run build` to ensure the project builds successfully
+
+Both commands must pass without errors before committing or marking a task as done. If either fails, fix the issues before proceeding.
