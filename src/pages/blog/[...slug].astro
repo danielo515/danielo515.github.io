@@ -1,4 +1,5 @@
 ---
+import Prose from "@/components/Prose.astro";
 import SectionContainer from "@/components/SectionContainer.astro";
 import Layout from "@/layouts/Layout.astro";
 import type { GetStaticPaths } from "astro";
@@ -15,6 +16,12 @@ export const getStaticPaths = (async () => {
 
 const content = await getEntry("blog", slug);
 const { Content } = await content.render();
+
+const formattedDate = content.data.date.toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
 ---
 
 <Layout
@@ -24,11 +31,79 @@ const { Content } = await content.render();
   navItems={config.navItems}
 >
   <main class="px-4">
-    <SectionContainer class="py-16 md:py-36">
-      <h1 class="text-3xl font-bold pb-4 text-center">{content.data.title}</h1>
-      <div>
-        <Content />
-      </div>
+    <SectionContainer class="py-16 md:py-24">
+      <a
+        href="/blog/"
+        class="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mb-8 group"
+      >
+        <svg
+          class="h-4 w-4 transition-transform group-hover:-translate-x-1"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M7 16l-4-4m0 0l4-4m-4 4h18"></path>
+        </svg>
+        Back to blog
+      </a>
+
+      <article>
+        <header class="mb-10 border-b border-gray-200 dark:border-gray-800 pb-8">
+          <div
+            class="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4"
+          >
+            <time
+              datetime={content.data.date.toISOString()}
+              class="flex items-center gap-1.5"
+            >
+              <svg
+                class="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
+              {formattedDate}
+            </time>
+          </div>
+
+          <h1
+            class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-6"
+          >
+            {content.data.title}
+          </h1>
+
+          <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+            {content.data.description}
+          </p>
+
+          {
+            content.data.tags.length > 0 && (
+              <div class="flex flex-wrap gap-2 mt-6">
+                {content.data.tags.map((tag) => (
+                  <span class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )
+          }
+        </header>
+
+        <Prose>
+          <Content />
+        </Prose>
+      </article>
     </SectionContainer>
   </main>
 </Layout>
