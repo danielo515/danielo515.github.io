@@ -1,0 +1,47 @@
+name: PR Preview Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Surge
+        run: npm install -g surge
+
+      - name: Teardown Surge preview
+        env:
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+        run: |
+          PREVIEW_URL="pr-${{ github.event.pull_request.number }}-danielo515.surge.sh"
+          surge teardown $PREVIEW_URL --token $SURGE_TOKEN || echo "Preview may have already been removed"
+
+      - name: Find existing comment
+        uses: peter-evans/find-comment@v3
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "Preview deployment"
+
+      - name: Update comment
+        if: steps.find-comment.outputs.comment-id != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+          body: |
+            ## Preview deployment
+
+            | Status | URL |
+            |--------|-----|
+            | 🗑️ Removed | Preview has been torn down |
+
+            _PR was ${{ github.event.pull_request.merged && 'merged' || 'closed' }} on ${{ github.event.pull_request.closed_at }}_
