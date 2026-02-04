@@ -12,14 +12,12 @@ As a versatile and adaptable Fullstack Engineer, I thrive on continuous learning
 
 ### Aug 2025 - Present – Fullstack Engineer at Betalyra
 
-*Effect-ts*, *React*, *Next.js*, *AI SDKs*, *WebGPU*, *Rust/WASM*, *TypeScript*
+*Effect-ts*, *React*, *Next.js*, *AI SDKs*
 
-- Building **AI-powered solutions** at [Betalyra](https://betalyra.pt/), a Portugal-based AI consultancy focused on **custom AI development** and **business process optimization through agentic workflows**.
-- Specializing in **Web-Based AI**, enabling AI models to run **directly in the browser** using **WebGPU**, delivering instant AI features with zero server costs and enhanced user privacy.
+- Building **AI-powered solutions** at [Betalyra](https://betalyra.pt/), a company focused on **optimizing business processes through artificial intelligence** and **agentic workflows**.
 - Designing and implementing **autonomous AI agents** that execute complex, multi-step tasks with minimal human intervention, transforming how businesses approach automation.
 - Leveraging deep expertise in **Effect-TS** to build **robust, type-safe, and composable** backend services that power AI integrations.
-- Developing **high-performance AI applications** using **TypeScript** and **Rust/WASM**, optimizing models through quantization and pruning for browser constraints.
-- Integrating multiple **AI SDKs** (OpenAI, Anthropic, Vercel AI SDK) with **React** and **Next.js** to deliver intelligent user experiences.
+- Developing **modern React applications** with **Next.js**, integrating multiple **AI SDKs** to deliver intelligent user experiences.
 
 ---
 
