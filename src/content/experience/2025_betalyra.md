@@ -6,8 +6,8 @@ location: remote
 technologies:
 - effect-ts
 - react
-- next.js
-- ai-sdks
+- nextjs
+- typescript
 ---
 
 At [Betalyra](https://betalyra.pt/), an AI innovation lab, I build automation solutions that help companies eliminate repetitive tasks like data entry, email processing, and report generation.
