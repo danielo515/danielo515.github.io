@@ -1,0 +1,23 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Custom theme extensions migrated from tailwind.config.mjs */
+@theme {
+  --animate-bounce-right: slide-in 0.5s ease-in-out infinite alternate;
+
+  @keyframes slide-in {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(1rem);
+    }
+  }
+}
+
+/* Custom utility for visible links */
+@utility visible-links {
+  & a {
+    color: var(--color-blue-500);
+  }
+}

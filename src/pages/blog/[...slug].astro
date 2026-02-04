@@ -15,6 +15,9 @@ export const getStaticPaths = (async () => {
 }) satisfies GetStaticPaths;
 
 const content = await getEntry("blog", slug);
+if (!content) {
+  throw new Error(`Blog post not found: ${slug}`);
+}
 const { Content } = await content.render();
 
 const formattedDate = content.data.date.toLocaleDateString("en-US", {

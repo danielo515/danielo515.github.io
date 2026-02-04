@@ -1,9 +1,10 @@
 ---
 import "@fontsource-variable/onest";
+import "@/styles/global.css";
 
 import Header from "@/components/Header.astro";
 import type { links } from "@/links";
-import { ViewTransitions } from "astro:transitions";
+import { ClientRouter } from "astro:transitions";
 import Footer from "../components/Footer.astro";
 
 interface Props {
@@ -29,7 +30,7 @@ const { description, title } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
-    <ViewTransitions />
+    <ClientRouter />
   </head>
 
   <body class="relative text-black dark:text-white">
@@ -45,6 +46,8 @@ const { description, title } = Astro.props;
     <slot />
     <Footer links={Astro.props.footerLinks} />
     <style is:global>
+      @reference "../styles/global.css";
+
       :root {
         color-scheme: light dark;
       }
