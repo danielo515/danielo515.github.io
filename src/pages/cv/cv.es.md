@@ -12,13 +12,14 @@ Soy un Ingeniero Fullstack versátil y orientado a producto, con pasión por el 
 
 ### Ago 2025 - Actualidad – Ingeniero Fullstack en Betalyra
 
-*Effect-ts*, *React*, *Next.js*, *AI SDKs*, *Vercel AI SDK*, *OpenAI*, *Anthropic*
+*Effect-ts*, *React*, *Next.js*, *AI SDKs*, *WebGPU*, *Rust/WASM*, *TypeScript*
 
-- Desarrollo de **soluciones impulsadas por IA** en [Betalyra](https://betalyra.com/), una empresa enfocada en **optimizar procesos de negocio mediante inteligencia artificial** y **flujos de trabajo agénticos**.
-- Diseño e implementación de **agentes de IA autónomos** que ejecutan tareas complejas de múltiples pasos con mínima intervención humana, permitiendo operaciones empresariales más inteligentes y adaptativas.
+- Desarrollo de **soluciones impulsadas por IA** en [Betalyra](https://betalyra.pt/), una consultora de IA con sede en Portugal enfocada en **desarrollo de IA personalizada** y **optimización de procesos de negocio mediante flujos de trabajo agénticos**.
+- Especialización en **IA basada en Web**, permitiendo que modelos de IA se ejecuten **directamente en el navegador** usando **WebGPU**, ofreciendo funcionalidades de IA instantáneas sin costes de servidor y con mayor privacidad del usuario.
+- Diseño e implementación de **agentes de IA autónomos** que ejecutan tareas complejas de múltiples pasos con mínima intervención humana, transformando cómo las empresas abordan la automatización.
 - Aprovechando mi experiencia en **Effect-TS** para construir servicios backend **robustos, type-safe y componibles** que potencian las integraciones de IA.
-- Desarrollo de **aplicaciones React modernas** con **Next.js**, integrando múltiples **SDKs de IA** (OpenAI, Anthropic, Vercel AI SDK) para ofrecer experiencias de usuario inteligentes.
-- Contribuyendo a la arquitectura de **pipelines de IA escalables** que transforman la manera en que las empresas abordan la automatización y la toma de decisiones.
+- Desarrollo de **aplicaciones de IA de alto rendimiento** usando **TypeScript** y **Rust/WASM**, optimizando modelos mediante cuantización y poda para las limitaciones del navegador.
+- Integración de múltiples **SDKs de IA** (OpenAI, Anthropic, Vercel AI SDK) con **React** y **Next.js** para ofrecer experiencias de usuario inteligentes.
 
 ---
 
