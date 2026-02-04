@@ -103,3 +103,12 @@ src/
 Configured in `tsconfig.json`:
 - `@/*` → `./src/*`
 - `@/icons/*` → `./src/components/icons/*`
+
+## Task Completion Requirements
+
+Before considering any task complete, you **MUST** run the following checks:
+
+1. **Type Check**: Run `pnpm run check` to verify there are no TypeScript errors
+2. **Build**: Run `pnpm run build` to ensure the project builds successfully
+
+Both commands must pass without errors before committing or marking a task as done. If either fails, fix the issues before proceeding.
