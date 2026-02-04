@@ -14,8 +14,8 @@ Soy un Ingeniero Fullstack versátil y orientado a producto, con pasión por el 
 
 *Effect-ts*, *React*, *Next.js*, *AI SDKs*
 
-- Desarrollo de **soluciones impulsadas por IA** en [Betalyra](https://betalyra.pt/), una empresa enfocada en **optimizar procesos de negocio mediante inteligencia artificial** y **flujos de trabajo agénticos**.
-- Diseño e implementación de **agentes de IA autónomos** que ejecutan tareas complejas de múltiples pasos con mínima intervención humana, transformando cómo las empresas abordan la automatización.
+- Desarrollo de **soluciones de automatización con IA** en [Betalyra](https://betalyra.pt/), un laboratorio de innovación en IA que ayuda a empresas a automatizar tareas repetitivas como **entrada de datos, procesamiento de emails y generación de informes**.
+- Desarrollo de **flujos de trabajo agénticos** y **sistemas de extracción de documentos** que transforman datos no estructurados de facturas, contratos y formularios en información procesable.
 - Aprovechando mi experiencia en **Effect-TS** para construir servicios backend **robustos, type-safe y componibles** que potencian las integraciones de IA.
 - Desarrollo de **aplicaciones React modernas** con **Next.js**, integrando múltiples **SDKs de IA** para ofrecer experiencias de usuario inteligentes.
 
