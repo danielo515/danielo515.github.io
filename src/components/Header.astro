@@ -93,10 +93,35 @@ interface Props {
 
   @keyframes nav-shadow {
     0% {
-      @apply dark:bg-gray-800/0 bg-white/0;
+      background-color: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
     }
     to {
-      @apply shadow-lg ring-1 backdrop-blur-lg bg-opacity-30 ring-white/10;
+      background-color: rgb(255 255 255 / 0.8);
+      box-shadow:
+        0 10px 15px -3px rgb(0 0 0 / 0.1),
+        0 4px 6px -4px rgb(0 0 0 / 0.1),
+        0 0 0 1px rgb(255 255 255 / 0.1);
+      backdrop-filter: blur(16px);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    @keyframes nav-shadow {
+      0% {
+        background-color: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+      }
+      to {
+        background-color: rgb(31 41 55 / 0.8);
+        box-shadow:
+          0 10px 15px -3px rgb(0 0 0 / 0.1),
+          0 4px 6px -4px rgb(0 0 0 / 0.1),
+          0 0 0 1px rgb(255 255 255 / 0.1);
+        backdrop-filter: blur(16px);
+      }
     }
   }
 </style>
