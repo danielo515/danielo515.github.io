@@ -1,6 +1,6 @@
 import { Check, Plus, X } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 
 interface AddItemFormProps {
   onAddItem: (name: string) => void;
@@ -10,7 +10,7 @@ export const AddItemForm = ({ onAddItem }: AddItemFormProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [itemName, setItemName] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!itemName.trim()) return;
     onAddItem(itemName.trim());
