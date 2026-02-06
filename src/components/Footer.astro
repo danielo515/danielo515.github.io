@@ -1,5 +1,6 @@
 ---
 import type { links } from "@/links";
+import CVLink from "@/components/CVLink";
 
 const currentYear = new Date().getFullYear();
 interface Props {
@@ -22,9 +23,15 @@ interface Props {
       {
         Astro.props.links.map((link) => (
           <li class="list-none">
-            <a href={link.href} class="hover:underline me-4 md:me-6">
-              {link.label}
-            </a>
+            {link.href === "/cv" ? (
+              <CVLink className="hover:underline me-4 md:me-6" client:load>
+                {link.label}
+              </CVLink>
+            ) : (
+              <a href={link.href} class="hover:underline me-4 md:me-6">
+                {link.label}
+              </a>
+            )}
           </li>
         ))
       }
