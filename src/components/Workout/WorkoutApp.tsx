@@ -172,8 +172,17 @@ const workoutData: WorkoutDay[] = [
 
 // ─── TIMER HOOK ──────────────────────────────────────────────────────────────
 
-function postToSW(msg: Record<string, unknown>) {
-  navigator.serviceWorker?.controller?.postMessage(msg);
+async function postToSW(msg: Record<string, unknown>) {
+  const sw = navigator.serviceWorker;
+  if (!sw) return;
+  // controller may be null if the SW just installed; wait for it
+  if (sw.controller) {
+    sw.controller.postMessage(msg);
+    return;
+  }
+  const reg = await sw.ready;
+  const worker = reg.active;
+  if (worker) worker.postMessage(msg);
 }
 
 function useRestTimer() {
