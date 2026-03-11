@@ -172,44 +172,63 @@ const workoutData: WorkoutDay[] = [
 
 // ─── TIMER HOOK ──────────────────────────────────────────────────────────────
 
+function postToSW(msg: Record<string, unknown>) {
+  navigator.serviceWorker?.controller?.postMessage(msg);
+}
+
 function useRestTimer() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [running, setRunning] = useState(false);
   const endTimeRef = useRef(0);
-  const rafRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Register the service worker once and request notification permission
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/workout-sw.js")
+        .catch(() => {});
+    }
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
 
   const tick = useCallback(() => {
     const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
     if (remaining <= 0) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setSecondsLeft(0);
       setRunning(false);
       navigator.vibrate?.([300, 100, 300]);
       return;
     }
     setSecondsLeft(remaining);
-    rafRef.current = requestAnimationFrame(tick);
   }, []);
 
   const start = useCallback(
     (seconds = 60) => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      endTimeRef.current = Date.now() + seconds * 1000;
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      const delayMs = seconds * 1000;
+      endTimeRef.current = Date.now() + delayMs;
       setSecondsLeft(seconds);
       setRunning(true);
-      rafRef.current = requestAnimationFrame(tick);
+      intervalRef.current = setInterval(tick, 250);
+      postToSW({ type: "START_TIMER", delayMs });
     },
     [tick],
   );
 
   const stop = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
     setRunning(false);
     setSecondsLeft(0);
+    postToSW({ type: "STOP_TIMER" });
   }, []);
 
   useEffect(() => {
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
