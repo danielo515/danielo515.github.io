@@ -201,17 +201,36 @@ function useRestTimer() {
     }
   }, []);
 
+  const finish = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    endTimeRef.current = 0;
+    setSecondsLeft(0);
+    setRunning(false);
+    navigator.vibrate?.([300, 100, 300]);
+  }, []);
+
   const tick = useCallback(() => {
+    if (endTimeRef.current === 0) return;
     const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
     if (remaining <= 0) {
-      setSecondsLeft(0);
-      setRunning(false);
-      navigator.vibrate?.([300, 100, 300]);
+      finish();
       return;
     }
     setSecondsLeft(remaining);
     rafRef.current = requestAnimationFrame(tick);
-  }, []);
+  }, [finish]);
+
+  // When the tab becomes visible again, catch up with the timer
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && endTimeRef.current > 0) {
+        cancelAnimationFrame(rafRef.current);
+        tick();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [tick]);
 
   const start = useCallback(
     (seconds = 60) => {
@@ -228,6 +247,7 @@ function useRestTimer() {
 
   const stop = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
+    endTimeRef.current = 0;
     setRunning(false);
     setSecondsLeft(0);
     postToSW({ type: "STOP_TIMER" });
