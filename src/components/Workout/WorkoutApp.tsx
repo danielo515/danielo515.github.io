@@ -196,6 +196,8 @@ function useRestTimer() {
           if (s <= 1) {
             if (intervalRef.current) clearInterval(intervalRef.current);
             setRunning(false);
+            // Vibrate pattern: vibrate 300ms, pause 100ms, vibrate 300ms
+            navigator.vibrate?.([300, 100, 300]);
             return 0;
           }
           return s - 1;
