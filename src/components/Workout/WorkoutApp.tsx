@@ -175,39 +175,43 @@ const workoutData: WorkoutDay[] = [
 function useRestTimer() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [running, setRunning] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const endTimeRef = useRef(0);
+  const rafRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
 
-  const start = useCallback((seconds = 60) => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setSecondsLeft(seconds);
-    setRunning(true);
+  const tick = useCallback(() => {
+    const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
+    if (remaining <= 0) {
+      setSecondsLeft(0);
+      setRunning(false);
+      navigator.vibrate?.([300, 100, 300]);
+      return;
+    }
+    setSecondsLeft(remaining);
+    rafRef.current = requestAnimationFrame(tick);
   }, []);
 
+  const start = useCallback(
+    (seconds = 60) => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      endTimeRef.current = Date.now() + seconds * 1000;
+      setSecondsLeft(seconds);
+      setRunning(true);
+      rafRef.current = requestAnimationFrame(tick);
+    },
+    [tick],
+  );
+
   const stop = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
     setRunning(false);
     setSecondsLeft(0);
   }, []);
 
   useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(() => {
-        setSecondsLeft((s) => {
-          if (s <= 1) {
-            if (intervalRef.current) clearInterval(intervalRef.current);
-            setRunning(false);
-            // Vibrate pattern: vibrate 300ms, pause 100ms, vibrate 300ms
-            navigator.vibrate?.([300, 100, 300]);
-            return 0;
-          }
-          return s - 1;
-        });
-      }, 1000);
-    }
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [running]);
+  }, []);
 
   return { secondsLeft, running, start, stop };
 }
