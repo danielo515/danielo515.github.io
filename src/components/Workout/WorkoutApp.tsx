@@ -189,14 +189,12 @@ function useRestTimer() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [running, setRunning] = useState(false);
   const endTimeRef = useRef(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rafRef = useRef(0);
 
   // Register the service worker once and request notification permission
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/workout-sw.js")
-        .catch(() => {});
+      navigator.serviceWorker.register("/workout-sw.js").catch(() => {});
     }
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
@@ -206,39 +204,37 @@ function useRestTimer() {
   const tick = useCallback(() => {
     const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
     if (remaining <= 0) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
       setSecondsLeft(0);
       setRunning(false);
       navigator.vibrate?.([300, 100, 300]);
       return;
     }
     setSecondsLeft(remaining);
+    rafRef.current = requestAnimationFrame(tick);
   }, []);
 
   const start = useCallback(
     (seconds = 60) => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      cancelAnimationFrame(rafRef.current);
       const delayMs = seconds * 1000;
       endTimeRef.current = Date.now() + delayMs;
       setSecondsLeft(seconds);
       setRunning(true);
-      intervalRef.current = setInterval(tick, 250);
+      rafRef.current = requestAnimationFrame(tick);
       postToSW({ type: "START_TIMER", delayMs });
     },
     [tick],
   );
 
   const stop = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    cancelAnimationFrame(rafRef.current);
     setRunning(false);
     setSecondsLeft(0);
     postToSW({ type: "STOP_TIMER" });
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
+    return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
   return { secondsLeft, running, start, stop };
