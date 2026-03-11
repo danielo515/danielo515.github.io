@@ -583,9 +583,31 @@ function RestTimerBar({
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 export default function WorkoutApp() {
-  const [activeDay, setActiveDay] = useState(0);
-  const [completed, setCompleted] = useState<Record<string, number>>({});
+  const [activeDay, setActiveDay] = useState(() => {
+    try {
+      const saved = localStorage.getItem("workout-active-day");
+      return saved ? Number(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const [completed, setCompleted] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem("workout-completed");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const { secondsLeft, running, start, stop } = useRestTimer();
+
+  useEffect(() => {
+    localStorage.setItem("workout-active-day", String(activeDay));
+  }, [activeDay]);
+
+  useEffect(() => {
+    localStorage.setItem("workout-completed", JSON.stringify(completed));
+  }, [completed]);
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const day = workoutData[activeDay]!;
