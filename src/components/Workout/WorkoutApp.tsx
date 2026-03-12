@@ -207,6 +207,12 @@ function useRestTimer() {
     setSecondsLeft(0);
     setRunning(false);
     navigator.vibrate?.([200, 100, 200, 100, 400, 200, 200, 100, 200, 100, 400]);
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("Rest timer done!", {
+        body: "Time to start your next set",
+        tag: "workout-rest-timer",
+      });
+    }
   }, []);
 
   const tick = useCallback(() => {
