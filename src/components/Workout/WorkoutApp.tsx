@@ -206,7 +206,7 @@ function useRestTimer() {
     endTimeRef.current = 0;
     setSecondsLeft(0);
     setRunning(false);
-    navigator.vibrate?.([300, 100, 300]);
+    navigator.vibrate?.([200, 100, 200, 100, 400, 200, 200, 100, 200, 100, 400]);
   }, []);
 
   const tick = useCallback(() => {
