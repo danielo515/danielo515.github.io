@@ -655,6 +655,14 @@ export default function WorkoutApp() {
       return {};
     }
   });
+  const [weekHistory, setWeekHistory] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem("workout-week-history");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const { secondsLeft, running, start, stop } = useRestTimer();
 
   useEffect(() => {
@@ -664,6 +672,10 @@ export default function WorkoutApp() {
   useEffect(() => {
     localStorage.setItem("workout-completed", JSON.stringify(completed));
   }, [completed]);
+
+  useEffect(() => {
+    localStorage.setItem("workout-week-history", JSON.stringify(weekHistory));
+  }, [weekHistory]);
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const day = workoutData[activeDay]!;
@@ -697,6 +709,17 @@ export default function WorkoutApp() {
       ids.forEach((id) => delete next[id]);
       return next;
     });
+  };
+
+  const allWeekComplete = workoutData.every(
+    (d) => getCompletedSets(d) === getTotalSets(d) && getTotalSets(d) > 0,
+  );
+
+  const completeWeek = () => {
+    if (!allWeekComplete) return;
+    setWeekHistory((prev) => [...prev, Date.now()]);
+    setCompleted({});
+    setActiveDay(0);
   };
 
   return (
@@ -960,10 +983,100 @@ export default function WorkoutApp() {
         ))}
       </div>
 
+      {/* Complete week button */}
+      <div style={{ padding: "20px 20px 0" }}>
+        <button
+          onClick={completeWeek}
+          disabled={!allWeekComplete}
+          style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 15,
+            fontWeight: 800,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            width: "100%",
+            padding: "14px 20px",
+            background: allWeekComplete ? "#22c55e" : "#1a1a1a",
+            color: allWeekComplete ? "#000" : "#333",
+            border: allWeekComplete
+              ? "1px solid #22c55e"
+              : "1px solid #222",
+            borderRadius: 8,
+            cursor: allWeekComplete ? "pointer" : "default",
+            transition: "all 0.3s ease",
+          }}
+        >
+          {allWeekComplete
+            ? "✓ COMPLETAR SEMANA"
+            : `COMPLETAR SEMANA (${workoutData.filter((d) => getCompletedSets(d) === getTotalSets(d) && getTotalSets(d) > 0).length}/${workoutData.length} DÍAS)`}
+        </button>
+      </div>
+
+      {/* Week history */}
+      {weekHistory.length > 0 && (
+        <div style={{ padding: "16px 20px 0" }}>
+          <div
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 10,
+              fontWeight: 700,
+              color: "#444",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              marginBottom: 8,
+            }}
+          >
+            SEMANAS COMPLETADAS — {weekHistory.length}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {weekHistory.map((ts, i) => (
+              <div
+                key={ts}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "8px 12px",
+                  background: "#111",
+                  borderRadius: 6,
+                  borderLeft: "3px solid #22c55e",
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "#22c55e",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  SEMANA {i + 1}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 12,
+                    color: "#555",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {new Date(ts).toLocaleDateString("es-ES", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Week note */}
       <div
         style={{
-          margin: "4px 20px 0",
+          margin: "16px 20px 0",
           padding: "10px 14px",
           background: "#111",
           borderRadius: 8,
