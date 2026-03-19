@@ -36,6 +36,14 @@ interface WorkoutDay {
   groups: ExerciseGroup[];
 }
 
+interface WeeklyExercise {
+  id: string;
+  name: string;
+  sets: number;
+  reps: string;
+  timesPerWeek: number;
+}
+
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
 const workoutData: WorkoutDay[] = [
@@ -168,6 +176,10 @@ const workoutData: WorkoutDay[] = [
       },
     ],
   },
+];
+
+const weeklyExercises: WeeklyExercise[] = [
+  { id: "w-1", name: "ABDOMINALES", sets: 3, reps: "15", timesPerWeek: 2 },
 ];
 
 // ─── TIMER HOOK ──────────────────────────────────────────────────────────────
@@ -711,9 +723,18 @@ export default function WorkoutApp() {
     });
   };
 
-  const allWeekComplete = workoutData.every(
+  const allDaysComplete = workoutData.every(
     (d) => getCompletedSets(d) === getTotalSets(d) && getTotalSets(d) > 0,
   );
+
+  const allWeeklyComplete = weeklyExercises.every((ex) => {
+    for (let s = 1; s <= ex.timesPerWeek; s++) {
+      if ((completed[`${ex.id}-s${s}`] ?? 0) < ex.sets) return false;
+    }
+    return true;
+  });
+
+  const allWeekComplete = allDaysComplete && allWeeklyComplete;
 
   const completeWeek = () => {
     if (!allWeekComplete) return;
@@ -983,6 +1004,114 @@ export default function WorkoutApp() {
         ))}
       </div>
 
+      {/* Weekly exercises */}
+      {weeklyExercises.length > 0 && (
+        <div style={{ padding: "16px 20px 0" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 8,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 10,
+                fontWeight: 700,
+                color: "#444",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+              }}
+            >
+              EJERCICIOS SEMANALES
+            </span>
+            <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
+          </div>
+          {weeklyExercises.map((ex) => (
+            <div key={ex.id} style={{ marginBottom: 12 }}>
+              <div
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: "#fff",
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  marginBottom: 2,
+                }}
+              >
+                {ex.name}
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: 12,
+                  color: "#555",
+                  letterSpacing: "0.06em",
+                  marginBottom: 8,
+                }}
+              >
+                {ex.sets} x {ex.reps} — {ex.timesPerWeek}x SEMANA
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {Array.from({ length: ex.timesPerWeek }).map((_, si) => {
+                  const sessionKey = `${ex.id}-s${si + 1}`;
+                  const doneSets = completed[sessionKey] ?? 0;
+                  const allDone = doneSets >= ex.sets;
+                  return (
+                    <div
+                      key={si}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        background: allDone ? "#22c55e11" : "#111",
+                        border: allDone
+                          ? "1px solid #22c55e33"
+                          : "1px solid #1a1a1a",
+                        borderRadius: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "'Barlow Condensed', sans-serif",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: allDone ? "#22c55e" : "#666",
+                          letterSpacing: "0.06em",
+                        }}
+                      >
+                        SESIÓN {si + 1}
+                        {allDone && (
+                          <span style={{ marginLeft: 6, fontSize: 10 }}>
+                            {"✓"}
+                          </span>
+                        )}
+                      </span>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        {Array.from({ length: ex.sets }).map((_, setIdx) => (
+                          <SetDot
+                            key={setIdx}
+                            done={doneSets > setIdx}
+                            color="#22c55e"
+                            onClick={() =>
+                              handleSetDone(sessionKey, setIdx + 1)
+                            }
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Complete week button */}
       <div style={{ padding: "20px 20px 0" }}>
         <button
@@ -1008,7 +1137,7 @@ export default function WorkoutApp() {
         >
           {allWeekComplete
             ? "✓ COMPLETAR SEMANA"
-            : `COMPLETAR SEMANA (${workoutData.filter((d) => getCompletedSets(d) === getTotalSets(d) && getTotalSets(d) > 0).length}/${workoutData.length} DÍAS)`}
+            : `COMPLETAR SEMANA (${workoutData.filter((d) => getCompletedSets(d) === getTotalSets(d) && getTotalSets(d) > 0).length}/${workoutData.length} DÍAS${!allWeeklyComplete ? " + SEMANALES" : ""})`}
         </button>
       </div>
 
