@@ -743,6 +743,42 @@ export default function WorkoutApp() {
     setActiveDay(0);
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const exportData = () => {
+    const data = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      activeDay,
+      completed,
+      weekHistory,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `workout-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importData = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        if (data.completed) setCompleted(data.completed);
+        if (data.weekHistory) setWeekHistory(data.weekHistory);
+        if (typeof data.activeDay === "number") setActiveDay(data.activeDay);
+      } catch {
+        alert("Error al leer el archivo de backup");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div
       style={{
@@ -1224,6 +1260,65 @@ export default function WorkoutApp() {
           NOTA: 1&apos; de descanso solo en la primera semana. A partir de la
           segunda semana, 1&apos; en todos los días.
         </div>
+      </div>
+
+      {/* Export / Import */}
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          padding: "16px 20px 0",
+        }}
+      >
+        <button
+          onClick={exportData}
+          style={{
+            flex: 1,
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            padding: "10px 14px",
+            background: "#1a1a1a",
+            color: "#888",
+            border: "1px solid #333",
+            borderRadius: 6,
+            cursor: "pointer",
+          }}
+        >
+          EXPORTAR DATOS
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) importData(file);
+            e.target.value = "";
+          }}
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            flex: 1,
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            padding: "10px 14px",
+            background: "#1a1a1a",
+            color: "#888",
+            border: "1px solid #333",
+            borderRadius: 6,
+            cursor: "pointer",
+          }}
+        >
+          IMPORTAR DATOS
+        </button>
       </div>
 
       {/* Rest timer */}
