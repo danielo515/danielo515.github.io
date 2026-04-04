@@ -1,0 +1,32 @@
+---
+import WorkoutApp from "@/components/Workout/WorkoutApp";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Programa de entrenamiento - Workout Tracker" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Workout Tracker</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #0a0a0a;
+        overflow-x: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <WorkoutApp client:only="react" />
+  </body>
+</html>
