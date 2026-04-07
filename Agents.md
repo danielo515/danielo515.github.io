@@ -117,6 +117,10 @@ Configured in `tsconfig.json`:
 - `@/*` → `./src/*`
 - `@/icons/*` → `./src/components/icons/*`
 
+## Git Commit Rules
+
+- **NEVER** include `claude.ai` session links in commit messages or PR descriptions.
+
 ## Task Completion Requirements
 
 Before considering any task complete, you **MUST** run the following checks:
