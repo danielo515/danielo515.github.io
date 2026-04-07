@@ -469,8 +469,8 @@ function DitherPreview({
       </p>
       <canvas
         ref={canvasRef}
-        className="w-full h-auto rounded border border-gray-200 bg-white"
-        style={{ imageRendering: "pixelated", maxHeight: 320 }}
+        className="rounded border border-gray-200 bg-white mx-auto"
+        style={{ imageRendering: "pixelated", maxHeight: 320, width: "auto", height: "100%", aspectRatio: "3/5" }}
       />
     </div>
   );
@@ -681,7 +681,8 @@ export default function ImageToBmpConverter() {
                   <select
                     value={dither}
                     onChange={(e) => setDither(e.target.value as DitherMode)}
-                    className="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+                    className="text-sm border border-gray-300 rounded px-2 py-1 bg-white text-gray-800 focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+                    style={{ appearance: "auto" }}
                   >
                     {DITHER_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
