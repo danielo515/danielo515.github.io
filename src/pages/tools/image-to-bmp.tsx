@@ -438,10 +438,6 @@ function CropOverlay({
 
 // --- Dither gallery ---
 
-const DETAIL_SIZE = 200; // pixels to crop from center for the detail view
-
-type DetailView = "full" | "detail";
-
 function DitherThumb({
   img,
   mode,
@@ -508,18 +504,16 @@ function DitherMainPreview({
   mode,
   crop,
   dither,
-  view,
 }: {
   img: HTMLImageElement;
   mode: ResizeMode;
   crop: CropRect;
   dither: DitherMode;
-  view: DetailView;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pendingRef = useRef(false);
-  const lastArgsRef = useRef({ mode, crop, dither, view });
-  lastArgsRef.current = { mode, crop, dither, view };
+  const lastArgsRef = useRef({ mode, crop, dither });
+  lastArgsRef.current = { mode, crop, dither };
 
   useEffect(() => {
     if (pendingRef.current) return;
@@ -529,26 +523,14 @@ function DitherMainPreview({
       pendingRef.current = false;
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const { mode: m, crop: c, dither: d, view: v } = lastArgsRef.current;
+      const { mode: m, crop: c, dither: d } = lastArgsRef.current;
       const rendered = renderToCanvas(img, m, c, d);
-
-      if (v === "detail" && d !== "none") {
-        canvas.width = DETAIL_SIZE;
-        canvas.height = DETAIL_SIZE;
-        const ctx = canvas.getContext("2d")!;
-        const sx = Math.floor((TARGET_WIDTH - DETAIL_SIZE) / 2);
-        const sy = Math.floor((TARGET_HEIGHT - DETAIL_SIZE) / 2);
-        ctx.drawImage(rendered, sx, sy, DETAIL_SIZE, DETAIL_SIZE, 0, 0, DETAIL_SIZE, DETAIL_SIZE);
-      } else {
-        canvas.width = TARGET_WIDTH;
-        canvas.height = TARGET_HEIGHT;
-        const ctx = canvas.getContext("2d")!;
-        ctx.drawImage(rendered, 0, 0);
-      }
+      canvas.width = TARGET_WIDTH;
+      canvas.height = TARGET_HEIGHT;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(rendered, 0, 0);
     });
-  }, [img, mode, crop, dither, view]);
-
-  const isDetail = view === "detail" && dither !== "none";
+  }, [img, mode, crop, dither]);
 
   return (
     <canvas
@@ -556,10 +538,10 @@ function DitherMainPreview({
       className="rounded border border-gray-200 bg-white mx-auto"
       style={{
         imageRendering: "pixelated",
-        maxHeight: 420,
         width: "auto",
         height: "100%",
-        aspectRatio: isDetail ? "1" : "3/5",
+        maxHeight: 600,
+        aspectRatio: "3/5",
       }}
     />
   );
@@ -578,7 +560,6 @@ function DitherGallery({
   selected: DitherMode;
   onSelect: (d: DitherMode) => void;
 }) {
-  const [view, setView] = useState<DetailView>("full");
   const selectedOpt = DITHER_OPTIONS.find((o) => o.value === selected)!;
 
   return (
@@ -603,44 +584,17 @@ function DitherGallery({
         ))}
       </div>
 
-      {/* Large preview with view toggle */}
+      {/* Large preview */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <span className="text-sm font-medium text-gray-800">{selectedOpt.label}</span>
-            <span className="text-xs text-gray-500 ml-2">{selectedOpt.description}</span>
-          </div>
-          {selected !== "none" && (
-            <div className="flex gap-1 text-xs">
-              <button
-                onClick={() => setView("full")}
-                className={`px-2 py-0.5 rounded transition-colors ${
-                  view === "full"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                Full
-              </button>
-              <button
-                onClick={() => setView("detail")}
-                className={`px-2 py-0.5 rounded transition-colors ${
-                  view === "detail"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                1:1 Detail
-              </button>
-            </div>
-          )}
+        <div className="mb-2">
+          <span className="text-sm font-medium text-gray-800">{selectedOpt.label}</span>
+          <span className="text-xs text-gray-500 ml-2">{selectedOpt.description}</span>
         </div>
         <DitherMainPreview
           img={img}
           mode={mode}
           crop={crop}
           dither={selected}
-          view={view}
         />
       </div>
     </div>
