@@ -1,8 +1,12 @@
-import { Image, Download, RotateCcw } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { Image, Download, RotateCcw, Crop, Maximize } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const TARGET_WIDTH = 480;
 const TARGET_HEIGHT = 800;
+const ASPECT = TARGET_WIDTH / TARGET_HEIGHT; // 0.6
+
+type CropRect = { x: number; y: number; w: number; h: number };
+type ResizeMode = "crop" | "stretch";
 
 type ConversionResult = {
   blob: Blob;
@@ -11,150 +15,413 @@ type ConversionResult = {
   originalSize: number;
 };
 
+// --- BMP encoding ---
+
 function createBmpBlob(canvas: HTMLCanvasElement): Blob {
   const ctx = canvas.getContext("2d")!;
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const { data, width, height } = imageData;
 
-  const rowSize = Math.ceil((width * 3) / 4) * 4; // rows are padded to 4-byte boundaries
+  const rowSize = Math.ceil((width * 3) / 4) * 4;
   const pixelDataSize = rowSize * height;
-  const fileSize = 54 + pixelDataSize; // 14 (file header) + 40 (info header) + pixel data
+  const fileSize = 54 + pixelDataSize;
 
   const buffer = new ArrayBuffer(fileSize);
   const view = new DataView(buffer);
 
-  // BMP File Header (14 bytes)
-  view.setUint8(0, 0x42); // 'B'
-  view.setUint8(1, 0x4d); // 'M'
+  view.setUint8(0, 0x42);
+  view.setUint8(1, 0x4d);
   view.setUint32(2, fileSize, true);
-  view.setUint32(6, 0, true); // reserved
-  view.setUint32(10, 54, true); // pixel data offset
+  view.setUint32(6, 0, true);
+  view.setUint32(10, 54, true);
 
-  // DIB Header - BITMAPINFOHEADER (40 bytes)
-  view.setUint32(14, 40, true); // header size
+  view.setUint32(14, 40, true);
   view.setInt32(18, width, true);
-  view.setInt32(22, height, true); // positive = bottom-up
-  view.setUint16(26, 1, true); // color planes
-  view.setUint16(28, 24, true); // 24-bit color depth
-  view.setUint32(30, 0, true); // no compression (BI_RGB)
+  view.setInt32(22, height, true);
+  view.setUint16(26, 1, true);
+  view.setUint16(28, 24, true);
+  view.setUint32(30, 0, true);
   view.setUint32(34, pixelDataSize, true);
-  view.setInt32(38, 2835, true); // horizontal resolution (72 DPI)
-  view.setInt32(42, 2835, true); // vertical resolution (72 DPI)
-  view.setUint32(46, 0, true); // colors in palette
-  view.setUint32(50, 0, true); // important colors
+  view.setInt32(38, 2835, true);
+  view.setInt32(42, 2835, true);
+  view.setUint32(46, 0, true);
+  view.setUint32(50, 0, true);
 
-  // Pixel data (bottom-up, BGR order)
   const pixelOffset = 54;
   for (let y = 0; y < height; y++) {
-    const bmpRow = height - 1 - y; // BMP stores bottom-up
+    const bmpRow = height - 1 - y;
     for (let x = 0; x < width; x++) {
       const srcIdx = (y * width + x) * 4;
       const dstIdx = pixelOffset + bmpRow * rowSize + x * 3;
-      view.setUint8(dstIdx, data[srcIdx + 2]!); // B
-      view.setUint8(dstIdx + 1, data[srcIdx + 1]!); // G
-      view.setUint8(dstIdx + 2, data[srcIdx]!); // R
+      view.setUint8(dstIdx, data[srcIdx + 2]!);
+      view.setUint8(dstIdx + 1, data[srcIdx + 1]!);
+      view.setUint8(dstIdx + 2, data[srcIdx]!);
     }
   }
 
   return new Blob([buffer], { type: "image/bmp" });
 }
 
-function resizeAndConvert(file: File): Promise<ConversionResult> {
-  return new Promise((resolve, reject) => {
-    const img = new globalThis.Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = TARGET_WIDTH;
-      canvas.height = TARGET_HEIGHT;
-      const ctx = canvas.getContext("2d")!;
+// --- Conversion ---
 
-      // Fill with white background (for transparent PNGs)
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+function convertToBmp(
+  img: HTMLImageElement,
+  mode: ResizeMode,
+  crop: CropRect
+): ConversionResult & { originalSize: 0; originalName: "" } {
+  const canvas = document.createElement("canvas");
+  canvas.width = TARGET_WIDTH;
+  canvas.height = TARGET_HEIGHT;
+  const ctx = canvas.getContext("2d")!;
 
-      // Calculate scaling to cover the target area while maintaining aspect ratio
-      const scale = Math.max(
-        TARGET_WIDTH / img.width,
-        TARGET_HEIGHT / img.height
-      );
-      const scaledW = img.width * scale;
-      const scaledH = img.height * scale;
-      const offsetX = (TARGET_WIDTH - scaledW) / 2;
-      const offsetY = (TARGET_HEIGHT - scaledH) / 2;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
 
-      ctx.drawImage(img, offsetX, offsetY, scaledW, scaledH);
+  if (mode === "stretch") {
+    ctx.drawImage(img, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+  } else {
+    ctx.drawImage(
+      img,
+      crop.x,
+      crop.y,
+      crop.w,
+      crop.h,
+      0,
+      0,
+      TARGET_WIDTH,
+      TARGET_HEIGHT
+    );
+  }
 
-      const blob = createBmpBlob(canvas);
-      const url = URL.createObjectURL(blob);
-      const baseName = file.name.replace(/\.[^.]+$/, "");
-
-      resolve({
-        blob,
-        url,
-        originalName: baseName + ".bmp",
-        originalSize: file.size,
-      });
-    };
-    img.onerror = () => reject(new Error("Failed to load image"));
-    img.src = URL.createObjectURL(file);
-  });
+  const blob = createBmpBlob(canvas);
+  const url = URL.createObjectURL(blob);
+  return { blob, url, originalName: "", originalSize: 0 };
 }
 
+// --- Draggable crop box ---
+
+type DragAction =
+  | { type: "move"; startX: number; startY: number; origCrop: CropRect }
+  | {
+      type: "resize";
+      handle: string;
+      startX: number;
+      startY: number;
+      origCrop: CropRect;
+    };
+
+function clampCrop(
+  crop: CropRect,
+  imgW: number,
+  imgH: number
+): CropRect {
+  let { x, y, w, h } = crop;
+  w = Math.max(20, Math.min(w, imgW));
+  h = w / ASPECT;
+  if (h > imgH) {
+    h = imgH;
+    w = h * ASPECT;
+  }
+  x = Math.max(0, Math.min(x, imgW - w));
+  y = Math.max(0, Math.min(y, imgH - h));
+  return { x, y, w, h };
+}
+
+function defaultCrop(imgW: number, imgH: number): CropRect {
+  const imgAspect = imgW / imgH;
+  let w: number, h: number;
+  if (imgAspect > ASPECT) {
+    h = imgH;
+    w = h * ASPECT;
+  } else {
+    w = imgW;
+    h = w / ASPECT;
+  }
+  return { x: (imgW - w) / 2, y: (imgH - h) / 2, w, h };
+}
+
+function CropOverlay({
+  crop,
+  imgW,
+  imgH,
+  containerW,
+  containerH,
+  onCropChange,
+}: {
+  crop: CropRect;
+  imgW: number;
+  imgH: number;
+  containerW: number;
+  containerH: number;
+  onCropChange: (c: CropRect) => void;
+}) {
+  const dragRef = useRef<DragAction | null>(null);
+  const scaleX = containerW / imgW;
+  const scaleY = containerH / imgH;
+
+  const toScreen = (c: CropRect) => ({
+    x: c.x * scaleX,
+    y: c.y * scaleY,
+    w: c.w * scaleX,
+    h: c.h * scaleY,
+  });
+
+  const sc = toScreen(crop);
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent, actionType: "move" | string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      if (actionType === "move") {
+        dragRef.current = {
+          type: "move",
+          startX: e.clientX,
+          startY: e.clientY,
+          origCrop: { ...crop },
+        };
+      } else {
+        dragRef.current = {
+          type: "resize",
+          handle: actionType,
+          startX: e.clientX,
+          startY: e.clientY,
+          origCrop: { ...crop },
+        };
+      }
+    },
+    [crop]
+  );
+
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const action = dragRef.current;
+      if (!action) return;
+      const dx = (e.clientX - action.startX) / scaleX;
+      const dy = (e.clientY - action.startY) / scaleY;
+      const oc = action.origCrop;
+
+      if (action.type === "move") {
+        onCropChange(
+          clampCrop({ x: oc.x + dx, y: oc.y + dy, w: oc.w, h: oc.h }, imgW, imgH)
+        );
+      } else {
+        const h = action.handle;
+        let newW = oc.w;
+        let newX = oc.x;
+        let newY = oc.y;
+
+        if (h.includes("e")) newW = oc.w + dx;
+        if (h.includes("w")) {
+          newW = oc.w - dx;
+          newX = oc.x + dx;
+        }
+        if (h.includes("s")) {
+          newW = oc.w + dy * ASPECT;
+        }
+        if (h.includes("n")) {
+          newW = oc.w - dy * ASPECT;
+          newY = oc.y + dy;
+        }
+
+        newW = Math.max(20, newW);
+        const newH = newW / ASPECT;
+        onCropChange(clampCrop({ x: newX, y: newY, w: newW, h: newH }, imgW, imgH));
+      }
+    },
+    [imgW, imgH, scaleX, scaleY, onCropChange]
+  );
+
+  const onPointerUp = useCallback(() => {
+    dragRef.current = null;
+  }, []);
+
+  const handles = ["nw", "ne", "sw", "se"] as const;
+  const handlePos: Record<string, { left: string; top: string; cursor: string }> = {
+    nw: { left: "-4px", top: "-4px", cursor: "nwse-resize" },
+    ne: { left: "calc(100% - 4px)", top: "-4px", cursor: "nesw-resize" },
+    sw: { left: "-4px", top: "calc(100% - 4px)", cursor: "nesw-resize" },
+    se: {
+      left: "calc(100% - 4px)",
+      top: "calc(100% - 4px)",
+      cursor: "nwse-resize",
+    },
+  };
+
+  return (
+    <div
+      className="absolute inset-0"
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+    >
+      {/* Darkened overlay outside crop */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* top */}
+        <div
+          className="absolute bg-black/50"
+          style={{ left: 0, top: 0, right: 0, height: sc.y }}
+        />
+        {/* bottom */}
+        <div
+          className="absolute bg-black/50"
+          style={{ left: 0, top: sc.y + sc.h, right: 0, bottom: 0 }}
+        />
+        {/* left */}
+        <div
+          className="absolute bg-black/50"
+          style={{ left: 0, top: sc.y, width: sc.x, height: sc.h }}
+        />
+        {/* right */}
+        <div
+          className="absolute bg-black/50"
+          style={{
+            left: sc.x + sc.w,
+            top: sc.y,
+            right: 0,
+            height: sc.h,
+          }}
+        />
+      </div>
+
+      {/* Crop box */}
+      <div
+        className="absolute border-2 border-white shadow-lg"
+        style={{
+          left: sc.x,
+          top: sc.y,
+          width: sc.w,
+          height: sc.h,
+          cursor: "move",
+        }}
+        onPointerDown={(e) => onPointerDown(e, "move")}
+      >
+        {/* Rule of thirds grid */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute bg-white/30"
+            style={{ left: "33.3%", top: 0, width: 1, bottom: 0 }}
+          />
+          <div
+            className="absolute bg-white/30"
+            style={{ left: "66.6%", top: 0, width: 1, bottom: 0 }}
+          />
+          <div
+            className="absolute bg-white/30"
+            style={{ top: "33.3%", left: 0, height: 1, right: 0 }}
+          />
+          <div
+            className="absolute bg-white/30"
+            style={{ top: "66.6%", left: 0, height: 1, right: 0 }}
+          />
+        </div>
+
+        {/* Resize handles */}
+        {handles.map((h) => (
+          <div
+            key={h}
+            className="absolute w-3 h-3 bg-white border border-gray-400 rounded-sm"
+            style={{
+              ...handlePos[h],
+              cursor: handlePos[h]!.cursor,
+            }}
+            onPointerDown={(e) => onPointerDown(e, h)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// --- Main component ---
+
+type Stage = "upload" | "crop" | "result";
+
 export default function ImageToBmpConverter() {
+  const [stage, setStage] = useState<Stage>("upload");
+  const [mode, setMode] = useState<ResizeMode>("crop");
+  const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [fileName, setFileName] = useState("");
+  const [fileSize, setFileSize] = useState(0);
+  const [crop, setCrop] = useState<CropRect>({ x: 0, y: 0, w: 100, h: 100 });
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
   const [result, setResult] = useState<ConversionResult | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [converting, setConverting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imgContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleFile = useCallback(async (file: File) => {
+  const loadImage = useCallback((file: File) => {
     if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) {
       setError("Please select a PNG or JPG image.");
       return;
     }
     setError(null);
-    setConverting(true);
-    setPreview(URL.createObjectURL(file));
+    setFileName(file.name.replace(/\.[^.]+$/, "") + ".bmp");
+    setFileSize(file.size);
 
-    try {
-      const converted = await resizeAndConvert(file);
-      setResult(converted);
-    } catch {
-      setError("Failed to convert image. Please try a different file.");
-    } finally {
-      setConverting(false);
-    }
+    const url = URL.createObjectURL(file);
+    setImgSrc(url);
+
+    const img = new globalThis.Image();
+    img.onload = () => {
+      setImgEl(img);
+      setCrop(defaultCrop(img.naturalWidth, img.naturalHeight));
+      setStage("crop");
+    };
+    img.onerror = () => setError("Failed to load image.");
+    img.src = url;
   }, []);
+
+  // Measure container after image is rendered
+  useEffect(() => {
+    if (stage !== "crop" || !imgContainerRef.current) return;
+    const obs = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setContainerSize({
+          w: entry.contentRect.width,
+          h: entry.contentRect.height,
+        });
+      }
+    });
+    obs.observe(imgContainerRef.current);
+    return () => obs.disconnect();
+  }, [stage]);
+
+  const handleConvert = useCallback(() => {
+    if (!imgEl) return;
+    const res = convertToBmp(imgEl, mode, crop);
+    setResult({
+      blob: res.blob,
+      url: res.url,
+      originalName: fileName,
+      originalSize: fileSize,
+    });
+    setStage("result");
+  }, [imgEl, mode, crop, fileName, fileSize]);
+
+  const reset = () => {
+    if (result?.url) URL.revokeObjectURL(result.url);
+    if (imgSrc) URL.revokeObjectURL(imgSrc);
+    setStage("upload");
+    setImgEl(null);
+    setImgSrc(null);
+    setResult(null);
+    setError(null);
+    setMode("crop");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setDragOver(false);
       const file = e.dataTransfer.files[0];
-      if (file) handleFile(file);
+      if (file) loadImage(file);
     },
-    [handleFile]
+    [loadImage]
   );
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback(() => {
-    setDragOver(false);
-  }, []);
-
-  const reset = () => {
-    if (result?.url) URL.revokeObjectURL(result.url);
-    if (preview) URL.revokeObjectURL(preview);
-    setResult(null);
-    setPreview(null);
-    setError(null);
-    setConverting(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -166,6 +433,7 @@ export default function ImageToBmpConverter() {
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-lg shadow p-6">
+          {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Image className="w-6 h-6 text-indigo-600" />
@@ -173,7 +441,7 @@ export default function ImageToBmpConverter() {
                 Image to BMP Converter
               </h1>
             </div>
-            {(result || preview) && (
+            {stage !== "upload" && (
               <button
                 onClick={reset}
                 className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
@@ -185,68 +453,144 @@ export default function ImageToBmpConverter() {
           </div>
 
           <p className="text-sm text-gray-600 mb-4">
-            Convert PNG or JPG images to uncompressed 24-bit BMP at 480x800
-            pixels.
+            Convert PNG or JPG images to uncompressed 24-bit BMP at 480×800 pixels.
           </p>
 
-          {/* Drop zone */}
-          <div
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-              dragOver
-                ? "border-indigo-500 bg-indigo-50"
-                : "border-gray-300 hover:border-indigo-400 hover:bg-gray-50"
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFile(file);
-              }}
-            />
-            <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-sm text-gray-600">
-              Drop an image here or click to select
-            </p>
-            <p className="text-xs text-gray-400 mt-1">PNG or JPG only</p>
-          </div>
-
           {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
               {error}
             </div>
           )}
 
-          {converting && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-              Converting...
+          {/* Upload stage */}
+          {stage === "upload" && (
+            <div
+              onDrop={handleDrop}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                dragOver
+                  ? "border-indigo-500 bg-indigo-50"
+                  : "border-gray-300 hover:border-indigo-400 hover:bg-gray-50"
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) loadImage(file);
+                }}
+              />
+              <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-sm text-gray-600">
+                Drop an image here or click to select
+              </p>
+              <p className="text-xs text-gray-400 mt-1">PNG or JPG only</p>
             </div>
           )}
 
-          {/* Preview and result */}
-          {preview && result && (
-            <div className="mt-6 space-y-4">
+          {/* Crop stage */}
+          {stage === "crop" && imgEl && imgSrc && (
+            <div className="space-y-4">
+              {/* Mode toggle */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setMode("crop")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-colors ${
+                    mode === "crop"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Crop className="w-4 h-4" />
+                  Crop
+                </button>
+                <button
+                  onClick={() => setMode("stretch")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-colors ${
+                    mode === "stretch"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Maximize className="w-4 h-4" />
+                  Stretch
+                </button>
+              </div>
+
+              {mode === "crop" && (
+                <p className="text-xs text-gray-500">
+                  Drag the box to choose the crop area. Drag corners to resize. Aspect
+                  ratio is locked to 3:5.
+                </p>
+              )}
+              {mode === "stretch" && (
+                <p className="text-xs text-gray-500">
+                  The entire image will be stretched to fit 480×800 without
+                  preserving aspect ratio.
+                </p>
+              )}
+
+              {/* Image with crop overlay */}
+              <div
+                ref={imgContainerRef}
+                className="relative select-none overflow-hidden rounded border border-gray-200"
+                style={{ touchAction: "none" }}
+              >
+                <img
+                  src={imgSrc}
+                  alt="Source"
+                  className="block w-full h-auto"
+                  draggable={false}
+                />
+                {mode === "crop" &&
+                  containerSize.w > 0 &&
+                  containerSize.h > 0 && (
+                    <CropOverlay
+                      crop={crop}
+                      imgW={imgEl.naturalWidth}
+                      imgH={imgEl.naturalHeight}
+                      containerW={containerSize.w}
+                      containerH={containerSize.h}
+                      onCropChange={setCrop}
+                    />
+                  )}
+              </div>
+
+              {/* Convert button */}
+              <button
+                onClick={handleConvert}
+                className="w-full py-2.5 bg-indigo-600 text-white rounded font-medium hover:bg-indigo-700 transition-colors"
+              >
+                Convert to BMP
+              </button>
+            </div>
+          )}
+
+          {/* Result stage */}
+          {stage === "result" && result && imgSrc && (
+            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-medium text-gray-600 mb-1">
                     Original
                   </p>
                   <img
-                    src={preview}
+                    src={imgSrc}
                     alt="Original"
                     className="w-full rounded border border-gray-200 object-contain max-h-64"
                   />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-600 mb-1">
-                    Converted (480x800 BMP)
+                    Converted (480×800 BMP)
                   </p>
                   <img
                     src={result.url}
