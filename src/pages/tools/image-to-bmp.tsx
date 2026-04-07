@@ -438,6 +438,9 @@ function CropOverlay({
 
 // --- Dither gallery ---
 
+const DETAIL_SIZE = 160; // pixels to crop from center for the detail view
+const DETAIL_DISPLAY = 160; // display size of the detail inset
+
 function DitherCard({
   img,
   mode,
@@ -458,6 +461,7 @@ function DitherCard({
   onSelect: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const detailRef = useRef<HTMLCanvasElement>(null);
   const pendingRef = useRef(false);
   const lastArgsRef = useRef({ mode, crop, dither });
   lastArgsRef.current = { mode, crop, dither };
@@ -469,13 +473,23 @@ function DitherCard({
     requestAnimationFrame(() => {
       pendingRef.current = false;
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      const detail = detailRef.current;
+      if (!canvas || !detail) return;
       const { mode: m, crop: c, dither: d } = lastArgsRef.current;
       const rendered = renderToCanvas(img, m, c, d);
+
       canvas.width = TARGET_WIDTH;
       canvas.height = TARGET_HEIGHT;
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(rendered, 0, 0);
+
+      // Draw 1:1 detail crop from center
+      const sx = Math.floor((TARGET_WIDTH - DETAIL_SIZE) / 2);
+      const sy = Math.floor((TARGET_HEIGHT - DETAIL_SIZE) / 2);
+      detail.width = DETAIL_SIZE;
+      detail.height = DETAIL_SIZE;
+      const dCtx = detail.getContext("2d")!;
+      dCtx.drawImage(rendered, sx, sy, DETAIL_SIZE, DETAIL_SIZE, 0, 0, DETAIL_SIZE, DETAIL_SIZE);
     });
   }, [img, mode, crop, dither]);
 
@@ -483,21 +497,33 @@ function DitherCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-lg p-2 text-left transition-all cursor-pointer ${
+      className={`rounded-lg p-3 text-left transition-all cursor-pointer ${
         selected
           ? "ring-2 ring-indigo-600 bg-indigo-50"
           : "ring-1 ring-gray-200 hover:ring-indigo-300 bg-white"
       }`}
     >
-      <canvas
-        ref={canvasRef}
-        className="w-full rounded bg-white"
-        style={{ imageRendering: "pixelated", aspectRatio: "3/5" }}
-      />
-      <p className={`text-sm font-medium mt-1.5 ${selected ? "text-indigo-700" : "text-gray-800"}`}>
-        {label}
-      </p>
-      <p className="text-xs text-gray-500">{description}</p>
+      <div className="flex gap-3 items-start">
+        {/* Full preview */}
+        <canvas
+          ref={canvasRef}
+          className="rounded bg-white shrink-0"
+          style={{ imageRendering: "pixelated", aspectRatio: "3/5", width: 90 }}
+        />
+        {/* 1:1 detail crop */}
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm font-medium ${selected ? "text-indigo-700" : "text-gray-800"}`}>
+            {label}
+          </p>
+          <p className="text-xs text-gray-500 mb-2">{description}</p>
+          <canvas
+            ref={detailRef}
+            className="rounded border border-gray-200 bg-white w-full"
+            style={{ imageRendering: "pixelated", aspectRatio: "1" , maxWidth: DETAIL_DISPLAY }}
+          />
+          <p className="text-[10px] text-gray-400 mt-1">1:1 detail</p>
+        </div>
+      </div>
     </button>
   );
 }
@@ -520,7 +546,7 @@ function DitherGallery({
       <p className="text-xs font-medium text-gray-600 mb-2">
         Choose dithering — click to select
       </p>
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {DITHER_OPTIONS.map((opt) => (
           <DitherCard
             key={opt.value}
