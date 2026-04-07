@@ -4,6 +4,7 @@ import { config } from "@/config";
 import Layout from "@/layouts/Layout.astro";
 import { Fragment } from "react";
 import TokenCostCalculator from "./token-calculator";
+import ImageToBmpConverter from "./image-to-bmp";
 ---
 
 <Layout
@@ -13,8 +14,9 @@ import TokenCostCalculator from "./token-calculator";
   navItems={config.navItems}
 >
   <main class="px-2">
-    <SectionContainer class="py-16 md:py-36 flex gap-8 justify-center">
+    <SectionContainer class="py-16 md:py-36 flex flex-col gap-8 items-center">
       <TokenCostCalculator client:only="react" />
+      <ImageToBmpConverter client:only="react" />
     </SectionContainer>
   </main>
 </Layout>
