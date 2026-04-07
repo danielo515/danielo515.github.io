@@ -16,12 +16,12 @@ type ConversionResult = {
   originalSize: number;
 };
 
-const DITHER_OPTIONS: { value: DitherMode; label: string }[] = [
-  { value: "none", label: "None (color)" },
-  { value: "threshold", label: "Threshold" },
-  { value: "floydSteinberg", label: "Floyd-Steinberg" },
-  { value: "atkinson", label: "Atkinson" },
-  { value: "ordered", label: "Ordered (Bayer)" },
+const DITHER_OPTIONS: { value: DitherMode; label: string; description: string }[] = [
+  { value: "none", label: "None", description: "No dithering, smooth grayscale" },
+  { value: "threshold", label: "Threshold", description: "Hard B&W cutoff" },
+  { value: "floydSteinberg", label: "Floyd-Steinberg", description: "Smooth error diffusion" },
+  { value: "atkinson", label: "Atkinson", description: "High contrast, classic Mac" },
+  { value: "ordered", label: "Ordered", description: "Patterned Bayer matrix" },
 ];
 
 // --- Dithering algorithms ---
@@ -436,42 +436,105 @@ function CropOverlay({
   );
 }
 
-// --- B&W Preview ---
+// --- Dither gallery ---
 
-function DitherPreview({
+function DitherCard({
   img,
   mode,
   crop,
   dither,
+  label,
+  description,
+  selected,
+  onSelect,
 }: {
   img: HTMLImageElement;
   mode: ResizeMode;
   crop: CropRect;
   dither: DitherMode;
+  label: string;
+  description: string;
+  selected: boolean;
+  onSelect: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pendingRef = useRef(false);
+  const lastArgsRef = useRef({ mode, crop, dither });
+  lastArgsRef.current = { mode, crop, dither };
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (pendingRef.current) return;
+    pendingRef.current = true;
 
-    const rendered = renderToCanvas(img, mode, crop, dither);
-    canvas.width = TARGET_WIDTH;
-    canvas.height = TARGET_HEIGHT;
-    const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(rendered, 0, 0);
+    requestAnimationFrame(() => {
+      pendingRef.current = false;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const { mode: m, crop: c, dither: d } = lastArgsRef.current;
+      const rendered = renderToCanvas(img, m, c, d);
+      canvas.width = TARGET_WIDTH;
+      canvas.height = TARGET_HEIGHT;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(rendered, 0, 0);
+    });
   }, [img, mode, crop, dither]);
 
   return (
-    <div>
-      <p className="text-xs font-medium text-gray-600 mb-1">
-        E-ink preview ({TARGET_WIDTH}&times;{TARGET_HEIGHT})
-      </p>
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`rounded-lg p-2 text-left transition-all cursor-pointer ${
+        selected
+          ? "ring-2 ring-indigo-600 bg-indigo-50"
+          : "ring-1 ring-gray-200 hover:ring-indigo-300 bg-white"
+      }`}
+    >
       <canvas
         ref={canvasRef}
-        className="rounded border border-gray-200 bg-white mx-auto"
-        style={{ imageRendering: "pixelated", maxHeight: 320, width: "auto", height: "100%", aspectRatio: "3/5" }}
+        className="w-full rounded bg-white"
+        style={{ imageRendering: "pixelated", aspectRatio: "3/5" }}
       />
+      <p className={`text-sm font-medium mt-1.5 ${selected ? "text-indigo-700" : "text-gray-800"}`}>
+        {label}
+      </p>
+      <p className="text-xs text-gray-500">{description}</p>
+    </button>
+  );
+}
+
+function DitherGallery({
+  img,
+  mode,
+  crop,
+  selected,
+  onSelect,
+}: {
+  img: HTMLImageElement;
+  mode: ResizeMode;
+  crop: CropRect;
+  selected: DitherMode;
+  onSelect: (d: DitherMode) => void;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-medium text-gray-600 mb-2">
+        Choose dithering — click to select
+      </p>
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+        {DITHER_OPTIONS.map((opt) => (
+          <DitherCard
+            key={opt.value}
+            img={img}
+            mode={mode}
+            crop={crop}
+            dither={opt.value}
+            label={opt.label}
+            description={opt.description}
+            selected={selected === opt.value}
+            onSelect={() => onSelect(opt.value)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -647,50 +710,30 @@ export default function ImageToBmpConverter() {
           {/* Crop stage */}
           {stage === "crop" && imgEl && imgSrc && (
             <div className="space-y-4">
-              {/* Mode + Dither controls */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setMode("crop")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-colors ${
-                      mode === "crop"
-                        ? "bg-indigo-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    <Crop className="w-4 h-4" />
-                    Crop
-                  </button>
-                  <button
-                    onClick={() => setMode("stretch")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-colors ${
-                      mode === "stretch"
-                        ? "bg-indigo-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    <Maximize className="w-4 h-4" />
-                    Stretch
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2 ml-auto">
-                  <label className="text-xs font-medium text-gray-600">
-                    Dithering:
-                  </label>
-                  <select
-                    value={dither}
-                    onChange={(e) => setDither(e.target.value as DitherMode)}
-                    className="text-sm border border-gray-300 rounded px-2 py-1 bg-white text-gray-800 focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
-                    style={{ appearance: "auto" }}
-                  >
-                    {DITHER_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Mode controls */}
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setMode("crop")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-colors ${
+                    mode === "crop"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Crop className="w-4 h-4" />
+                  Crop
+                </button>
+                <button
+                  onClick={() => setMode("stretch")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-colors ${
+                    mode === "stretch"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <Maximize className="w-4 h-4" />
+                  Stretch
+                </button>
               </div>
 
               {mode === "crop" && (
@@ -732,15 +775,14 @@ export default function ImageToBmpConverter() {
                   )}
               </div>
 
-              {/* Dither preview */}
-              {dither !== "none" && (
-                <DitherPreview
-                  img={imgEl}
-                  mode={mode}
-                  crop={crop}
-                  dither={dither}
-                />
-              )}
+              {/* Dither gallery */}
+              <DitherGallery
+                img={imgEl}
+                mode={mode}
+                crop={crop}
+                selected={dither}
+                onSelect={setDither}
+              />
 
               {/* Convert button */}
               <button
