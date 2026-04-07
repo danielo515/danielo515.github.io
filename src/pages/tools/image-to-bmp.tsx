@@ -7,6 +7,7 @@ const ASPECT = TARGET_WIDTH / TARGET_HEIGHT; // 0.6
 
 type CropRect = { x: number; y: number; w: number; h: number };
 type ResizeMode = "crop" | "stretch";
+type DitherMode = "none" | "threshold" | "floydSteinberg" | "atkinson" | "ordered";
 
 type ConversionResult = {
   blob: Blob;
@@ -14,6 +15,131 @@ type ConversionResult = {
   originalName: string;
   originalSize: number;
 };
+
+const DITHER_OPTIONS: { value: DitherMode; label: string }[] = [
+  { value: "none", label: "None (color)" },
+  { value: "threshold", label: "Threshold" },
+  { value: "floydSteinberg", label: "Floyd-Steinberg" },
+  { value: "atkinson", label: "Atkinson" },
+  { value: "ordered", label: "Ordered (Bayer)" },
+];
+
+// --- Dithering algorithms ---
+
+function toGrayscale(data: Uint8ClampedArray, width: number, height: number): Float32Array {
+  const gray = new Float32Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    const idx = i * 4;
+    gray[i] = 0.299 * data[idx]! + 0.587 * data[idx + 1]! + 0.114 * data[idx + 2]!;
+  }
+  return gray;
+}
+
+function applyGrayscaleToImageData(gray: Float32Array, data: Uint8ClampedArray) {
+  for (let i = 0; i < gray.length; i++) {
+    const v = Math.max(0, Math.min(255, Math.round(gray[i]!)));
+    const idx = i * 4;
+    data[idx] = v;
+    data[idx + 1] = v;
+    data[idx + 2] = v;
+  }
+}
+
+function ditherThreshold(gray: Float32Array): Float32Array {
+  const out = new Float32Array(gray.length);
+  for (let i = 0; i < gray.length; i++) {
+    out[i] = gray[i]! > 128 ? 255 : 0;
+  }
+  return out;
+}
+
+function ditherFloydSteinberg(gray: Float32Array, w: number, h: number): Float32Array {
+  const out = Float32Array.from(gray);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const old = out[i]!;
+      const val = old > 128 ? 255 : 0;
+      out[i] = val;
+      const err = old - val;
+      if (x + 1 < w) out[i + 1] = out[i + 1]! + err * (7 / 16);
+      if (y + 1 < h) {
+        if (x > 0) out[i + w - 1] = out[i + w - 1]! + err * (3 / 16);
+        out[i + w] = out[i + w]! + err * (5 / 16);
+        if (x + 1 < w) out[i + w + 1] = out[i + w + 1]! + err * (1 / 16);
+      }
+    }
+  }
+  return out;
+}
+
+function ditherAtkinson(gray: Float32Array, w: number, h: number): Float32Array {
+  const out = Float32Array.from(gray);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const old = out[i]!;
+      const val = old > 128 ? 255 : 0;
+      out[i] = val;
+      const err = (old - val) / 8;
+      if (x + 1 < w) out[i + 1] = out[i + 1]! + err;
+      if (x + 2 < w) out[i + 2] = out[i + 2]! + err;
+      if (y + 1 < h) {
+        if (x > 0) out[i + w - 1] = out[i + w - 1]! + err;
+        out[i + w] = out[i + w]! + err;
+        if (x + 1 < w) out[i + w + 1] = out[i + w + 1]! + err;
+      }
+      if (y + 2 < h) out[i + 2 * w] = out[i + 2 * w]! + err;
+    }
+  }
+  return out;
+}
+
+// 8x8 Bayer matrix
+const BAYER8 = [
+  [0, 48, 12, 60, 3, 51, 15, 63],
+  [32, 16, 44, 28, 35, 19, 47, 31],
+  [8, 56, 4, 52, 11, 59, 7, 55],
+  [40, 24, 36, 20, 43, 27, 39, 23],
+  [2, 50, 14, 62, 1, 49, 13, 61],
+  [34, 18, 46, 30, 33, 17, 45, 29],
+  [10, 58, 6, 54, 9, 57, 5, 53],
+  [42, 26, 38, 22, 41, 25, 37, 21],
+];
+
+function ditherOrdered(gray: Float32Array, w: number, h: number): Float32Array {
+  const out = new Float32Array(gray.length);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const threshold = (BAYER8[y % 8]![x % 8]! / 64) * 255;
+      out[i] = gray[i]! > threshold ? 255 : 0;
+    }
+  }
+  return out;
+}
+
+function applyDither(imageData: ImageData, mode: DitherMode): void {
+  if (mode === "none") return;
+  const { data, width, height } = imageData;
+  const gray = toGrayscale(data, width, height);
+  let result: Float32Array;
+  switch (mode) {
+    case "threshold":
+      result = ditherThreshold(gray);
+      break;
+    case "floydSteinberg":
+      result = ditherFloydSteinberg(gray, width, height);
+      break;
+    case "atkinson":
+      result = ditherAtkinson(gray, width, height);
+      break;
+    case "ordered":
+      result = ditherOrdered(gray, width, height);
+      break;
+  }
+  applyGrayscaleToImageData(result, data);
+}
 
 // --- BMP encoding ---
 
@@ -62,13 +188,14 @@ function createBmpBlob(canvas: HTMLCanvasElement): Blob {
   return new Blob([buffer], { type: "image/bmp" });
 }
 
-// --- Conversion ---
+// --- Rendering to canvas ---
 
-function convertToBmp(
+function renderToCanvas(
   img: HTMLImageElement,
   mode: ResizeMode,
-  crop: CropRect
-): ConversionResult & { originalSize: 0; originalName: "" } {
+  crop: CropRect,
+  dither: DitherMode
+): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = TARGET_WIDTH;
   canvas.height = TARGET_HEIGHT;
@@ -80,22 +207,16 @@ function convertToBmp(
   if (mode === "stretch") {
     ctx.drawImage(img, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
   } else {
-    ctx.drawImage(
-      img,
-      crop.x,
-      crop.y,
-      crop.w,
-      crop.h,
-      0,
-      0,
-      TARGET_WIDTH,
-      TARGET_HEIGHT
-    );
+    ctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
   }
 
-  const blob = createBmpBlob(canvas);
-  const url = URL.createObjectURL(blob);
-  return { blob, url, originalName: "", originalSize: 0 };
+  if (dither !== "none") {
+    const imageData = ctx.getImageData(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+    applyDither(imageData, dither);
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  return canvas;
 }
 
 // --- Draggable crop box ---
@@ -110,11 +231,7 @@ type DragAction =
       origCrop: CropRect;
     };
 
-function clampCrop(
-  crop: CropRect,
-  imgW: number,
-  imgH: number
-): CropRect {
+function clampCrop(crop: CropRect, imgW: number, imgH: number): CropRect {
   let { x, y, w, h } = crop;
   w = Math.max(20, Math.min(w, imgW));
   h = w / ASPECT;
@@ -254,36 +371,25 @@ function CropOverlay({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      {/* Darkened overlay outside crop */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* top */}
         <div
           className="absolute bg-black/50"
           style={{ left: 0, top: 0, right: 0, height: sc.y }}
         />
-        {/* bottom */}
         <div
           className="absolute bg-black/50"
           style={{ left: 0, top: sc.y + sc.h, right: 0, bottom: 0 }}
         />
-        {/* left */}
         <div
           className="absolute bg-black/50"
           style={{ left: 0, top: sc.y, width: sc.x, height: sc.h }}
         />
-        {/* right */}
         <div
           className="absolute bg-black/50"
-          style={{
-            left: sc.x + sc.w,
-            top: sc.y,
-            right: 0,
-            height: sc.h,
-          }}
+          style={{ left: sc.x + sc.w, top: sc.y, right: 0, height: sc.h }}
         />
       </div>
 
-      {/* Crop box */}
       <div
         className="absolute border-2 border-white shadow-lg"
         style={{
@@ -295,7 +401,6 @@ function CropOverlay({
         }}
         onPointerDown={(e) => onPointerDown(e, "move")}
       >
-        {/* Rule of thirds grid */}
         <div className="absolute inset-0 pointer-events-none">
           <div
             className="absolute bg-white/30"
@@ -315,7 +420,6 @@ function CropOverlay({
           />
         </div>
 
-        {/* Resize handles */}
         {handles.map((h) => (
           <div
             key={h}
@@ -332,6 +436,46 @@ function CropOverlay({
   );
 }
 
+// --- B&W Preview ---
+
+function DitherPreview({
+  img,
+  mode,
+  crop,
+  dither,
+}: {
+  img: HTMLImageElement;
+  mode: ResizeMode;
+  crop: CropRect;
+  dither: DitherMode;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rendered = renderToCanvas(img, mode, crop, dither);
+    canvas.width = TARGET_WIDTH;
+    canvas.height = TARGET_HEIGHT;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(rendered, 0, 0);
+  }, [img, mode, crop, dither]);
+
+  return (
+    <div>
+      <p className="text-xs font-medium text-gray-600 mb-1">
+        E-ink preview ({TARGET_WIDTH}&times;{TARGET_HEIGHT})
+      </p>
+      <canvas
+        ref={canvasRef}
+        className="w-full h-auto rounded border border-gray-200 bg-white"
+        style={{ imageRendering: "pixelated", maxHeight: 320 }}
+      />
+    </div>
+  );
+}
+
 // --- Main component ---
 
 type Stage = "upload" | "crop" | "result";
@@ -339,6 +483,7 @@ type Stage = "upload" | "crop" | "result";
 export default function ImageToBmpConverter() {
   const [stage, setStage] = useState<Stage>("upload");
   const [mode, setMode] = useState<ResizeMode>("crop");
+  const [dither, setDither] = useState<DitherMode>("floydSteinberg");
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
@@ -373,7 +518,6 @@ export default function ImageToBmpConverter() {
     img.src = url;
   }, []);
 
-  // Measure container after image is rendered
   useEffect(() => {
     if (stage !== "crop" || !imgContainerRef.current) return;
     const obs = new ResizeObserver((entries) => {
@@ -391,15 +535,17 @@ export default function ImageToBmpConverter() {
 
   const handleConvert = useCallback(() => {
     if (!imgEl) return;
-    const res = convertToBmp(imgEl, mode, crop);
+    const canvas = renderToCanvas(imgEl, mode, crop, dither);
+    const blob = createBmpBlob(canvas);
+    const url = URL.createObjectURL(blob);
     setResult({
-      blob: res.blob,
-      url: res.url,
+      blob,
+      url,
       originalName: fileName,
       originalSize: fileSize,
     });
     setStage("result");
-  }, [imgEl, mode, crop, fileName, fileSize]);
+  }, [imgEl, mode, crop, dither, fileName, fileSize]);
 
   const reset = () => {
     if (result?.url) URL.revokeObjectURL(result.url);
@@ -410,6 +556,7 @@ export default function ImageToBmpConverter() {
     setResult(null);
     setError(null);
     setMode("crop");
+    setDither("floydSteinberg");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -453,7 +600,8 @@ export default function ImageToBmpConverter() {
           </div>
 
           <p className="text-sm text-gray-600 mb-4">
-            Convert PNG or JPG images to uncompressed 24-bit BMP at 480×800 pixels.
+            Convert PNG or JPG images to uncompressed 24-bit BMP at 480×800 pixels
+            for e-ink displays.
           </p>
 
           {error && (
@@ -499,36 +647,55 @@ export default function ImageToBmpConverter() {
           {/* Crop stage */}
           {stage === "crop" && imgEl && imgSrc && (
             <div className="space-y-4">
-              {/* Mode toggle */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setMode("crop")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-colors ${
-                    mode === "crop"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  <Crop className="w-4 h-4" />
-                  Crop
-                </button>
-                <button
-                  onClick={() => setMode("stretch")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-colors ${
-                    mode === "stretch"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  <Maximize className="w-4 h-4" />
-                  Stretch
-                </button>
+              {/* Mode + Dither controls */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setMode("crop")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-colors ${
+                      mode === "crop"
+                        ? "bg-indigo-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    <Crop className="w-4 h-4" />
+                    Crop
+                  </button>
+                  <button
+                    onClick={() => setMode("stretch")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-colors ${
+                      mode === "stretch"
+                        ? "bg-indigo-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    <Maximize className="w-4 h-4" />
+                    Stretch
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 ml-auto">
+                  <label className="text-xs font-medium text-gray-600">
+                    Dithering:
+                  </label>
+                  <select
+                    value={dither}
+                    onChange={(e) => setDither(e.target.value as DitherMode)}
+                    className="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    {DITHER_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {mode === "crop" && (
                 <p className="text-xs text-gray-500">
-                  Drag the box to choose the crop area. Drag corners to resize. Aspect
-                  ratio is locked to 3:5.
+                  Drag the box to choose the crop area. Drag corners to resize.
+                  Aspect ratio is locked to 3:5.
                 </p>
               )}
               {mode === "stretch" && (
@@ -563,6 +730,16 @@ export default function ImageToBmpConverter() {
                     />
                   )}
               </div>
+
+              {/* Dither preview */}
+              {dither !== "none" && (
+                <DitherPreview
+                  img={imgEl}
+                  mode={mode}
+                  crop={crop}
+                  dither={dither}
+                />
+              )}
 
               {/* Convert button */}
               <button
