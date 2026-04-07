@@ -2,21 +2,41 @@
 import SectionContainer from "@/components/SectionContainer.astro";
 import { config } from "@/config";
 import Layout from "@/layouts/Layout.astro";
-import { Fragment } from "react";
-import TokenCostCalculator from "./token-calculator";
-import ImageToBmpConverter from "./image-to-bmp";
+
+const tools = [
+  {
+    title: "Token Cost Calculator",
+    description: "Compare token pricing across different AI models and calculate costs for your usage.",
+    href: "/tools/token-calculator",
+  },
+  {
+    title: "Image to BMP Converter",
+    description: "Convert PNG or JPG images to uncompressed 24-bit BMP at 480×800 for e-ink displays, with dithering options.",
+    href: "/tools/image-to-bmp",
+  },
+];
 ---
 
 <Layout
   title="Danielo Rodriguez - Tools"
-  description="Full-stack developer"
+  description="Developer tools"
   footerLinks={config.footerLinks}
   navItems={config.navItems}
 >
   <main class="px-2">
-    <SectionContainer class="py-16 md:py-36 flex flex-col gap-8 items-center">
-      <TokenCostCalculator client:only="react" />
-      <ImageToBmpConverter client:only="react" />
+    <SectionContainer class="py-16 md:py-36">
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-8">Tools</h1>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {tools.map((tool) => (
+          <a
+            href={tool.href}
+            class="block p-5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md transition-all"
+          >
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-1">{tool.title}</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{tool.description}</p>
+          </a>
+        ))}
+      </div>
     </SectionContainer>
   </main>
 </Layout>
