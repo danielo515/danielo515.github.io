@@ -17,7 +17,7 @@ type ConversionResult = {
 };
 
 const DITHER_OPTIONS: { value: DitherMode; label: string; description: string }[] = [
-  { value: "none", label: "None", description: "No dithering, original colors" },
+  { value: "none", label: "None", description: "Raw color, no B&W conversion" },
   { value: "threshold", label: "Threshold", description: "Hard B&W cutoff" },
   { value: "floydSteinberg", label: "Floyd-Steinberg", description: "Smooth error diffusion" },
   { value: "atkinson", label: "Atkinson", description: "High contrast, classic Mac" },
@@ -473,8 +473,7 @@ function DitherCard({
     requestAnimationFrame(() => {
       pendingRef.current = false;
       const canvas = canvasRef.current;
-      const detail = detailRef.current;
-      if (!canvas || !detail) return;
+      if (!canvas) return;
       const { mode: m, crop: c, dither: d } = lastArgsRef.current;
       const rendered = renderToCanvas(img, m, c, d);
 
@@ -483,13 +482,16 @@ function DitherCard({
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(rendered, 0, 0);
 
-      // Draw 1:1 detail crop from center
-      const sx = Math.floor((TARGET_WIDTH - DETAIL_SIZE) / 2);
-      const sy = Math.floor((TARGET_HEIGHT - DETAIL_SIZE) / 2);
-      detail.width = DETAIL_SIZE;
-      detail.height = DETAIL_SIZE;
-      const dCtx = detail.getContext("2d")!;
-      dCtx.drawImage(rendered, sx, sy, DETAIL_SIZE, DETAIL_SIZE, 0, 0, DETAIL_SIZE, DETAIL_SIZE);
+      // Draw 1:1 detail crop from center (skip for "none")
+      const detail = detailRef.current;
+      if (detail && d !== "none") {
+        const sx = Math.floor((TARGET_WIDTH - DETAIL_SIZE) / 2);
+        const sy = Math.floor((TARGET_HEIGHT - DETAIL_SIZE) / 2);
+        detail.width = DETAIL_SIZE;
+        detail.height = DETAIL_SIZE;
+        const dCtx = detail.getContext("2d")!;
+        dCtx.drawImage(rendered, sx, sy, DETAIL_SIZE, DETAIL_SIZE, 0, 0, DETAIL_SIZE, DETAIL_SIZE);
+      }
     });
   }, [img, mode, crop, dither]);
 
@@ -516,12 +518,16 @@ function DitherCard({
             {label}
           </p>
           <p className="text-xs text-gray-500 mb-2">{description}</p>
-          <canvas
-            ref={detailRef}
-            className="rounded border border-gray-200 bg-white w-full"
-            style={{ imageRendering: "pixelated", aspectRatio: "1" , maxWidth: DETAIL_DISPLAY }}
-          />
-          <p className="text-[10px] text-gray-400 mt-1">1:1 detail</p>
+          {dither !== "none" && (
+            <>
+              <canvas
+                ref={detailRef}
+                className="rounded border border-gray-200 bg-white w-full"
+                style={{ imageRendering: "pixelated", aspectRatio: "1" , maxWidth: DETAIL_DISPLAY }}
+              />
+              <p className="text-[10px] text-gray-400 mt-1">1:1 detail</p>
+            </>
+          )}
         </div>
       </div>
     </button>
