@@ -17,7 +17,7 @@ type ConversionResult = {
 };
 
 const DITHER_OPTIONS: { value: DitherMode; label: string; description: string }[] = [
-  { value: "none", label: "None", description: "No dithering, smooth grayscale" },
+  { value: "none", label: "None", description: "No dithering, original colors" },
   { value: "threshold", label: "Threshold", description: "Hard B&W cutoff" },
   { value: "floydSteinberg", label: "Floyd-Steinberg", description: "Smooth error diffusion" },
   { value: "atkinson", label: "Atkinson", description: "High contrast, classic Mac" },
