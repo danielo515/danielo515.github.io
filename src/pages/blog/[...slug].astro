@@ -3,14 +3,14 @@ import Prose from "@/components/Prose.astro";
 import SectionContainer from "@/components/SectionContainer.astro";
 import Layout from "@/layouts/Layout.astro";
 import type { GetStaticPaths } from "astro";
-import { getCollection, getEntry } from "astro:content";
+import { getCollection, getEntry, render } from "astro:content";
 import { config } from "./config";
 const { slug } = Astro.params;
 
 export const getStaticPaths = (async () => {
   const posts = await getCollection("blog");
   return posts.map((post) => ({
-    params: { slug: post.slug },
+    params: { slug: post.id },
   }));
 }) satisfies GetStaticPaths;
 
@@ -18,7 +18,7 @@ const content = await getEntry("blog", slug);
 if (!content) {
   throw new Error(`Blog post not found: ${slug}`);
 }
-const { Content } = await content.render();
+const { Content } = await render(content);
 
 const formattedDate = content.data.date.toLocaleDateString("en-US", {
   year: "numeric",

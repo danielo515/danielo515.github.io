@@ -1,4 +1,6 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
+import { glob } from "astro/loaders";
+import { z } from "astro/zod";
 
 const tag = z.enum([
   "nextjs",
@@ -26,7 +28,7 @@ export type TechTag = z.infer<typeof tag>;
 
 export const collections = {
   projects: defineCollection({
-    type: "content",
+    loader: glob({ pattern: "**/*.md", base: "./src/content/projects" }),
     schema: ({ image }) =>
       z.object({
         title: z.string(),
@@ -40,7 +42,7 @@ export const collections = {
       }),
   }),
   experience: defineCollection({
-    type: "content",
+    loader: glob({ pattern: "**/*.md", base: "./src/content/experience" }),
     schema: z.object({
       title: z.string(),
       companyName: z.string(),
@@ -50,7 +52,7 @@ export const collections = {
     }),
   }),
   about: defineCollection({
-    type: "content",
+    loader: glob({ pattern: "**/*.md", base: "./src/content/about" }),
     schema: z.object({
       name: z.string(),
       fullName: z.string(),
@@ -60,7 +62,7 @@ export const collections = {
     }),
   }),
   blog: defineCollection({
-    type: "content",
+    loader: glob({ pattern: "**/*.md", base: "./src/content/blog" }),
     schema: ({ image }) =>
       z.object({
         title: z.string(),
