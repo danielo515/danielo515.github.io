@@ -1,5 +1,6 @@
 ---
 import { Image } from "astro:assets";
+import { render } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import GitHub from "./icons/GitHub.astro";
 import Link from "./icons/Link.astro";
@@ -16,8 +17,9 @@ const projects = Astro.props.projects;
 <div class="flex flex-col gap-y-16">
   {
     projects.map(
-      async ({ data: { image, title, tags, url: link, github }, render }) => {
-        const { Content } = await render();
+      async (project) => {
+        const { data: { image, title, tags, url: link, github } } = project;
+        const { Content } = await render(project);
         return (
           <Fragment>
             <article class="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">

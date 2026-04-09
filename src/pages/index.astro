@@ -12,7 +12,7 @@ import SectionContainer from "@/components/SectionContainer.astro";
 import TitleSection from "@/components/TitleSection.astro";
 import { config } from "@/config";
 import Layout from "@/layouts/Layout.astro";
-import { getCollection, getEntry } from "astro:content";
+import { getCollection, getEntry, render } from "astro:content";
 
 const about = await getEntry("about", "about");
 if (!about) {
@@ -20,7 +20,7 @@ if (!about) {
 }
 const projects = await getCollection("projects");
 const experience = await getCollection("experience");
-const { Content: Headline } = await about.render();
+const { Content: Headline } = await render(about);
 const info = about.data;
 ---
 
