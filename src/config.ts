@@ -18,6 +18,11 @@ export const config: links = {
       href: "/#projects",
     },
     {
+      title: "Tools",
+      label: "tools",
+      href: "/#tools",
+    },
+    {
       title: "About me",
       label: "about-me",
       href: "/#about-me",
