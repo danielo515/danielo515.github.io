@@ -1,7 +1,7 @@
 ---
 title: Mapping DB Rows to Tagged Unions with Effect Schema
 date: 2026-04-22
-description: How to bridge the gap between flat wide-table database rows and Effect tagged union domain types using Schema.transformOrFail, Match.discriminatorsExhaustive, and Match.tagsExhaustive — with exhaustiveness enforced at compile time.
+description: Database schemas rarely match your domain types. Here's how to safely map a wide table with nullable columns to a discriminated union — with exhaustiveness enforced by the type system.
 tags:
   - typescript
   - effect-ts
@@ -9,44 +9,15 @@ tags:
   - type-safety
 ---
 
-## Context
+## The problem
 
-Database schemas rarely match the shape of an Effect `Schema` one-to-one.
-A common mismatch is a domain tagged union whose persisted form is a flat
-row with per-variant nullable columns. `Schema.decode` rejects that row
-because its `Encoded` type doesn't match, and `Schema.decodeUnknown`
-silently accepts drift between the table and the schema.
+Database schemas rarely match the shape of domain types.
+A common mismatch is a tagged union whose persisted form is a flat wide table with
+per-variant nullable columns. `Schema.decode` rejects that row because
+its `Encoded` type doesn't match, and `Schema.decodeUnknown` silently
+accepts drift between the table and the schema.
 
-There are two levels of answer:
-
-1. If the DB representation per variant is "clean" (separate tables, a
-   view, or a JSON payload column), a plain `Schema.Union` is enough —
-   no transform, no dispatch.
-2. If the DB is a classic wide table with per-variant nullable columns
-   (the realistic case), the manual step collapses to a small
-   `Match.discriminatorsExhaustive` / `Match.tagsExhaustive` block.
-   Exhaustiveness is enforced by the type system, so adding a new
-   variant becomes a compile error rather than a silent skip.
-
-## Scenario A — No transform needed (when possible)
-
-If each row only carries the columns for its own variant, a
-discriminated `Schema.Union` is the row schema *and* the domain schema.
-See `packages/effect/test/Schema/Schema/Union/Union.test.ts:34-77`.
-
-```ts
-import { Schema } from "effect"
-
-const Notification = Schema.Union(
-  Schema.Struct({ _tag: Schema.Literal("Email"), id: Schema.String, address: Schema.String, subject: Schema.String }),
-  Schema.Struct({ _tag: Schema.Literal("Sms"),   id: Schema.String, phone: Schema.String }),
-  Schema.Struct({ _tag: Schema.Literal("Push"),  id: Schema.String, deviceToken: Schema.String, title: Schema.String })
-)
-```
-
-## Scenario B — Wide table, nullable columns (realistic)
-
-Table:
+The wide table pattern looks like this:
 
 ```sql
 notifications(
@@ -57,7 +28,7 @@ notifications(
 )
 ```
 
-Domain:
+And the domain type we want on the TypeScript side:
 
 ```ts
 type Notification =
@@ -66,7 +37,10 @@ type Notification =
   | { _tag: "Push";  id: string; deviceToken: string; title: string }
 ```
 
-### Step 1 — row schema and domain schema
+The solution is a `Schema.transformOrFail` that maps between the two,
+with exhaustiveness for every variant enforced at compile time.
+
+## Step 1 — row schema and domain schema
 
 ```ts
 import { Match, ParseResult, Schema, pipe } from "effect"
@@ -90,7 +64,7 @@ const NotificationDomain = Schema.Union(Email, Sms, Push)
 type NotificationDomain = typeof NotificationDomain.Type
 ```
 
-### Step 2 — lift a nullable cell into a `ParseIssue`
+## Step 2 — lift a nullable cell into a `ParseIssue`
 
 ```ts
 const required =
@@ -101,7 +75,7 @@ const required =
       : ParseResult.succeed(value)
 ```
 
-### Step 3 — decode with `Match.discriminatorsExhaustive`
+## Step 3 — decode with `Match.discriminatorsExhaustive`
 
 `discriminatorsExhaustive("kind")({...})` forces a handler for every
 literal in `kind`. Drop a case → compile error.
@@ -129,7 +103,7 @@ const decodeRow = (row: NotificationRow, ast: ParseResult.ParseIssue["ast"]) => 
 }
 ```
 
-### Step 4 — encode with `Match.tagsExhaustive`
+## Step 4 — encode with `Match.tagsExhaustive`
 
 On the domain side `_tag` is the discriminator, so use `tagsExhaustive`.
 Again: add a fourth tag to the union → compile error here.
@@ -150,7 +124,7 @@ const encodeDomain = Match.type<NotificationDomain>().pipe(
 )
 ```
 
-### Step 5 — wire them with `Schema.transformOrFail`
+## Step 5 — wire them with `Schema.transformOrFail`
 
 ```ts
 const Notification = Schema.transformOrFail(NotificationRow, NotificationDomain, {
@@ -165,16 +139,18 @@ const Notification = Schema.transformOrFail(NotificationRow, NotificationDomain,
 
 ## Why this beats `decodeUnknown`
 
-- `Match.discriminatorsExhaustive` and `Match.tagsExhaustive` both
-  reject non-exhaustive handlers at compile time — the same guarantee a
+- The exhaustive match helpers reject non-exhaustive handlers at compile time — the same guarantee a
   `switch` gives with `Match.exhaustive`, but declarative.
 - The row schema is itself a typed `Schema`. Rename a column → DB
   queries and the transform both fail to type-check.
 - Each variant mapping is one line once null-lifting is factored out.
 
-## Scenario C — Escape hatches
+## Escape hatches
+
+Not every project ends up with wide tables. Two common alternatives:
 
 - **JSON payload column.** `kind text` + `payload jsonb`; decode with
-  `Schema.parseJson(Schema.Union(Email, Sms, Push))`. No transform
-  needed.
-- **Per-variant tables + view.** The view emits Scenario A rows.
+  `Schema.parseJson(Schema.Union(Email, Sms, Push))`. No transform needed.
+- **Per-variant tables + view.** The view emits clean rows where each row only
+  carries the columns for its own variant, which a plain `Schema.Union` handles
+  without any transform.
