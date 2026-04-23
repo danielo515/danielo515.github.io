@@ -38,12 +38,12 @@ type Notification =
 ```
 
 The solution is a `Schema.transformOrFail` that maps between the two,
-with exhaustiveness for every variant enforced at compile time.
+with exhaustiveness enforced at compile time in both directions.
 
 ## Step 1 — row schema and domain schema
 
 ```ts
-import { Match, ParseResult, Schema, SchemaAST, pipe } from "effect"
+import { Effect, Match, ParseResult, Schema, SchemaAST } from "effect"
 
 const NotificationRow = Schema.Struct({
   id: Schema.String,
@@ -66,7 +66,7 @@ type NotificationDomain = typeof NotificationDomain.Type
 
 ## Step 2 — lift a nullable cell into a `ParseIssue`
 
-`ParseResult.Type` takes an `AST.AST` as its first argument — that's the expected
+`ParseResult.Type` takes a `SchemaAST.AST` as its first argument — the expected
 type description used in error messages. The `ast` the `decode` callback
 receives from `transformOrFail` is `SchemaAST.Transformation`, which is
 a member of that union.
@@ -80,38 +80,45 @@ const required =
       : ParseResult.succeed(value)
 ```
 
-## Step 3 — decode with `Match.discriminatorsExhaustive`
+## Step 3 — decode with an exhaustive switch
 
-`discriminatorsExhaustive("kind")({...})` forces a handler for every
-literal in `kind`. Drop a case → compile error.
+`NotificationRow` is a flat struct, not a discriminated union type, so
+`Match.discriminatorsExhaustive` doesn't apply here — it needs a union where
+each member carries a distinct literal. A `switch` on `row.kind` with an
+explicit return type is the right tool: TypeScript narrows the `kind` field in
+each branch, and if you later add a new literal to `Schema.Literal(...)` without
+adding a case, the compiler errors because the function might not return.
 
 ```ts
-const decodeRow = (row: NotificationRow, ast: SchemaAST.Transformation) => {
+const decodeRow = (
+  row: NotificationRow,
+  ast: SchemaAST.Transformation
+): Effect.Effect<NotificationDomain, ParseResult.ParseIssue> => {
   const need = required(ast, row)
-  return pipe(
-    Match.type<NotificationRow>(),
-    Match.discriminatorsExhaustive("kind")({
-      Email: (r) =>
-        ParseResult.all([need(r.email_address, "email_address"), need(r.email_subject, "email_subject")]).pipe(
-          ParseResult.map(([address, subject]) => Email.make({ id: r.id, address, subject }))
-        ),
-      Sms: (r) =>
-        need(r.sms_phone, "sms_phone").pipe(
-          ParseResult.map((phone) => Sms.make({ id: r.id, phone }))
-        ),
-      Push: (r) =>
-        ParseResult.all([need(r.push_device_token, "push_device_token"), need(r.push_title, "push_title")]).pipe(
-          ParseResult.map(([deviceToken, title]) => Push.make({ id: r.id, deviceToken, title }))
-        )
-    })
-  )(row)
+  switch (row.kind) {
+    case "Email":
+      return Effect.all([need(row.email_address, "email_address"), need(row.email_subject, "email_subject")]).pipe(
+        Effect.map(([address, subject]) => Email.make({ id: row.id, address, subject }))
+      )
+    case "Sms":
+      return need(row.sms_phone, "sms_phone").pipe(
+        Effect.map((phone) => Sms.make({ id: row.id, phone }))
+      )
+    case "Push":
+      return Effect.all([need(row.push_device_token, "push_device_token"), need(row.push_title, "push_title")]).pipe(
+        Effect.map(([deviceToken, title]) => Push.make({ id: row.id, deviceToken, title }))
+      )
+  }
 }
 ```
 
 ## Step 4 — encode with `Match.tagsExhaustive`
 
-On the domain side `_tag` is the discriminator, so use `tagsExhaustive`.
-Again: add a fourth tag to the union → compile error here.
+For the encode direction the situation is different: `NotificationDomain` is a
+proper tagged union (`Schema.Union` of `TaggedStruct` variants), so
+`Match.tagsExhaustive` works correctly here. Each handler receives a
+properly-narrowed type, and adding a fourth variant to the union becomes a
+compile error.
 
 ```ts
 const nulls = {
@@ -144,11 +151,13 @@ const Notification = Schema.transformOrFail(NotificationRow, NotificationDomain,
 
 ## Why this beats `decodeUnknown`
 
-- The exhaustive match helpers reject non-exhaustive handlers at compile time — the same guarantee a
-  `switch` gives with `Match.exhaustive`, but declarative.
 - The row schema is itself a typed `Schema`. Rename a column → DB
   queries and the transform both fail to type-check.
-- Each variant mapping is one line once null-lifting is factored out.
+- The explicit return type on `decodeRow` gives exhaustiveness: add a new
+  literal to `Schema.Literal` and forget the switch case → compile error.
+- `Match.tagsExhaustive` on the encode side gives the same guarantee for
+  the domain → row direction, because `NotificationDomain` is a proper union.
+- Each variant mapping is concise once null-lifting is factored out.
 
 ## Escape hatches
 
@@ -169,7 +178,7 @@ Not every project ends up with wide tables. Two common alternatives:
     </summary>
     <div class="relative">
       <button id="copy-complete" class="absolute top-3 right-3 z-10 px-2.5 py-1 text-xs font-medium rounded-md bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors">Copy</button>
-      <pre id="complete-code" class="m-0 rounded-none text-sm p-6 bg-gray-900 dark:bg-gray-950 text-gray-100 overflow-x-auto leading-relaxed"><code>import { Match, ParseResult, Schema, SchemaAST, pipe } from "effect"
+      <pre id="complete-code" class="m-0 rounded-none text-sm p-6 bg-gray-900 dark:bg-gray-950 text-gray-100 overflow-x-auto leading-relaxed"><code>import { Effect, Match, ParseResult, Schema, SchemaAST } from "effect"
 
 const NotificationRow = Schema.Struct({
   id: Schema.String,
@@ -196,25 +205,25 @@ const required =
       ? ParseResult.fail(new ParseResult.Type(ast, row, `${column} required when kind=${row.kind}`))
       : ParseResult.succeed(value)
 
-const decodeRow = (row: NotificationRow, ast: SchemaAST.Transformation) =&gt; {
+const decodeRow = (
+  row: NotificationRow,
+  ast: SchemaAST.Transformation
+): Effect.Effect&lt;NotificationDomain, ParseResult.ParseIssue&gt; =&gt; {
   const need = required(ast, row)
-  return pipe(
-    Match.type&lt;NotificationRow&gt;(),
-    Match.discriminatorsExhaustive("kind")({
-      Email: (r) =&gt;
-        ParseResult.all([need(r.email_address, "email_address"), need(r.email_subject, "email_subject")]).pipe(
-          ParseResult.map(([address, subject]) =&gt; Email.make({ id: r.id, address, subject }))
-        ),
-      Sms: (r) =&gt;
-        need(r.sms_phone, "sms_phone").pipe(
-          ParseResult.map((phone) =&gt; Sms.make({ id: r.id, phone }))
-        ),
-      Push: (r) =&gt;
-        ParseResult.all([need(r.push_device_token, "push_device_token"), need(r.push_title, "push_title")]).pipe(
-          ParseResult.map(([deviceToken, title]) =&gt; Push.make({ id: r.id, deviceToken, title }))
-        )
-    })
-  )(row)
+  switch (row.kind) {
+    case "Email":
+      return Effect.all([need(row.email_address, "email_address"), need(row.email_subject, "email_subject")]).pipe(
+        Effect.map(([address, subject]) =&gt; Email.make({ id: row.id, address, subject }))
+      )
+    case "Sms":
+      return need(row.sms_phone, "sms_phone").pipe(
+        Effect.map((phone) =&gt; Sms.make({ id: row.id, phone }))
+      )
+    case "Push":
+      return Effect.all([need(row.push_device_token, "push_device_token"), need(row.push_title, "push_title")]).pipe(
+        Effect.map(([deviceToken, title]) =&gt; Push.make({ id: row.id, deviceToken, title }))
+      )
+  }
 }
 
 const nulls = {
