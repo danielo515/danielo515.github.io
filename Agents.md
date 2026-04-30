@@ -129,3 +129,7 @@ Before considering any task complete, you **MUST** run the following checks:
 2. **Build**: Run `pnpm run build` to ensure the project builds successfully
 
 Both commands must pass without errors before committing or marking a task as done. If either fails, fix the issues before proceeding.
+
+## Git Commit Messages
+
+**NEVER** include Claude Code session URLs (e.g. `https://claude.ai/code/session_...`) in commit messages or pull request descriptions. Keep commit messages clean and focused on the changes.

@@ -44,9 +44,17 @@ interface WeeklyExercise {
   timesPerWeek: number;
 }
 
+interface WorkoutRoutine {
+  id: string;
+  name: string;
+  workoutData: WorkoutDay[];
+  weeklyExercises: WeeklyExercise[];
+  notes: string[];
+}
+
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
-const workoutData: WorkoutDay[] = [
+const workoutDataA: WorkoutDay[] = [
   {
     id: 1,
     label: "DÍA 1",
@@ -178,8 +186,168 @@ const workoutData: WorkoutDay[] = [
   },
 ];
 
-const weeklyExercises: WeeklyExercise[] = [
+const weeklyExercisesA: WeeklyExercise[] = [
   { id: "w-1", name: "ABDOMINALES", sets: 3, reps: "15", timesPerWeek: 2 },
+];
+
+const workoutDataB: WorkoutDay[] = [
+  {
+    id: 1,
+    label: "DÍA 1",
+    title: "PECHO Y TRÍCEPS",
+    color: "#FF6B35",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "PECHO",
+        supersets: false,
+        exercises: [
+          { id: "b1-1", name: "PRESS SUPERIOR MANC", sets: 6, reps: "8 (+2 DESC)" },
+          { id: "b1-2", name: "APERTURAS SUPERIORES", sets: 4, reps: "10" },
+          { id: "b1-3", name: "FONDOS PESADOS", sets: 4, reps: "8" },
+          { id: "b1-4", name: "PRESS PLANO CONVERGENTE", sets: 4, reps: "15" },
+        ],
+      },
+      {
+        name: "TRÍCEPS",
+        supersets: true,
+        exercises: [
+          {
+            id: "b1-5",
+            name: "POLEA CON CUERDA",
+            pairedWith: "FONDOS PARALELAS",
+            pairedId: "b1-5b",
+            sets: 4,
+            reps: "15",
+            repsB: "FALLO",
+          },
+          {
+            id: "b1-6",
+            name: "FRANCÉS Z",
+            pairedWith: "PRESS CERRADO Z",
+            pairedId: "b1-6b",
+            sets: 4,
+            reps: "8",
+            repsB: "FALLO",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "DÍA 2",
+    title: "PIERNA",
+    color: "#B8FF3D",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "PIERNA",
+        supersets: false,
+        exercises: [
+          { id: "b2-1", name: "EXTENSIÓN", sets: 6, reps: "12 (+2x20)" },
+          { id: "b2-2", name: "PRENSA DISCOS", sets: 6, reps: "12 (+2x30)" },
+          { id: "b2-3", name: "FEMORAL TUMBADO", sets: 6, reps: "8 (+2 DESC)" },
+          { id: "b2-4", name: "FEMORAL SENTADO", sets: 4, reps: "12" },
+        ],
+      },
+      {
+        name: "GEMELO",
+        supersets: false,
+        exercises: [
+          { id: "b2-5", name: "GEMELO EN PRENSA", sets: 5, reps: "12 (+1x30)" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 3,
+    label: "DÍA 3",
+    title: "HOMBRO",
+    color: "#CF6BFF",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "HOMBRO",
+        supersets: false,
+        exercises: [
+          { id: "b3-1", name: "LATERALES SENTADO", sets: 4, reps: "12" },
+          { id: "b3-2", name: "LATERALES DE PIE", sets: 5, reps: "6 (+2x20)" },
+          { id: "b3-3", name: "PRESS MANCUERNAS", sets: 6, reps: "8 (+2 DESC +1x20)" },
+          { id: "b3-4", name: "PÁJAROS MÁQUINA", sets: 4, reps: "12" },
+          { id: "b3-5", name: "ENCOGIMIENTOS", sets: 3, reps: "12" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 4,
+    label: "DÍA 4",
+    title: "ESPALDA Y BÍCEPS",
+    color: "#00E5FF",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "ESPALDA",
+        supersets: false,
+        exercises: [
+          { id: "b4-1", name: "JALÓN INVERTIDO AL PECHO", sets: 5, reps: "8 (+1x15)" },
+          { id: "b4-2", name: "REMO MANCUERNA", sets: 5, reps: "8 (+1x12)" },
+          { id: "b4-3", name: "REMO GIRONDA", sets: 4, reps: "10" },
+          { id: "b4-4", name: "REMO Z INVERTIDO", sets: 5, reps: "6 (+2x12)" },
+        ],
+      },
+      {
+        name: "BÍCEPS",
+        supersets: true,
+        exercises: [
+          {
+            id: "b4-5",
+            name: "CURL BARRA Z ABIERTA",
+            pairedWith: "MARTILLO EN POLEA",
+            pairedId: "b4-5b",
+            sets: 4,
+            reps: "8",
+            repsB: "12",
+          },
+        ],
+      },
+      {
+        name: "BÍCEPS",
+        supersets: false,
+        exercises: [
+          { id: "b4-6", name: "PREDICADOR Z", sets: 5, reps: "8 (+1x12 CERRADO)" },
+        ],
+      },
+    ],
+  },
+];
+
+const weeklyExercisesB: WeeklyExercise[] = [
+  { id: "wb-1", name: "ENCOGIMIENTOS EN POLEA", sets: 4, reps: "20", timesPerWeek: 2 },
+  { id: "wb-2", name: "ELEVACIÓN DE PIERNAS", sets: 4, reps: "FALLO", timesPerWeek: 2 },
+];
+
+const routines: WorkoutRoutine[] = [
+  {
+    id: "a",
+    name: "RUTINA A",
+    workoutData: workoutDataA,
+    weeklyExercises: weeklyExercisesA,
+    notes: [
+      "1' de descanso solo en la primera semana. A partir de la segunda semana, 1' en todos los días.",
+    ],
+  },
+  {
+    id: "b",
+    name: "RUTINA B",
+    workoutData: workoutDataB,
+    weeklyExercises: weeklyExercisesB,
+    notes: [
+      "TODOS LOS DÍAS TRAS LAS PESAS: 10' DE CARDIO HIT + 10' DE LISS",
+      "DOS DÍAS EN SEMANA: ABDOMEN (incluido en ejercicios semanales)",
+    ],
+  },
 ];
 
 // ─── TIMER HOOK ──────────────────────────────────────────────────────────────
@@ -651,43 +819,80 @@ function RestTimerBar({
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 export default function WorkoutApp() {
-  const [activeDay, setActiveDay] = useState(() => {
+  // ── Helpers for per-routine localStorage ──
+  const loadActiveDay = (rid: string) => {
     try {
-      const saved = localStorage.getItem("workout-active-day");
+      const saved = localStorage.getItem(`workout-${rid}-active-day`);
       return saved ? Number(saved) : 0;
     } catch {
       return 0;
     }
-  });
-  const [completed, setCompleted] = useState<Record<string, number>>(() => {
+  };
+  const loadCompleted = (rid: string): Record<string, number> => {
     try {
-      const saved = localStorage.getItem("workout-completed");
+      const saved = localStorage.getItem(`workout-${rid}-completed`);
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
     }
-  });
-  const [weekHistory, setWeekHistory] = useState<number[]>(() => {
+  };
+  const loadWeekHistory = (rid: string): number[] => {
     try {
-      const saved = localStorage.getItem("workout-week-history");
+      const saved = localStorage.getItem(`workout-${rid}-week-history`);
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
+  };
+
+  // ── Routine selection (new routine "b" is default) ──
+  const [activeRoutineId, setActiveRoutineId] = useState(() => {
+    try {
+      // Migration: move old data to routine "a" namespace
+      if (!localStorage.getItem("workout-routine")) {
+        const oldCompleted = localStorage.getItem("workout-completed");
+        const oldActiveDay = localStorage.getItem("workout-active-day");
+        const oldWeekHistory = localStorage.getItem("workout-week-history");
+        if (oldCompleted) localStorage.setItem("workout-a-completed", oldCompleted);
+        if (oldActiveDay) localStorage.setItem("workout-a-active-day", oldActiveDay);
+        if (oldWeekHistory) localStorage.setItem("workout-a-week-history", oldWeekHistory);
+        localStorage.setItem("workout-routine", "b");
+        return "b";
+      }
+      return localStorage.getItem("workout-routine") || "b";
+    } catch {
+      return "b";
+    }
   });
+
+  const routine = routines.find((r) => r.id === activeRoutineId) ?? routines[1]!;
+  const workoutData = routine.workoutData;
+  const weeklyExercises = routine.weeklyExercises;
+
+  const [activeDay, setActiveDay] = useState(() => loadActiveDay(activeRoutineId));
+  const [completed, setCompleted] = useState<Record<string, number>>(() => loadCompleted(activeRoutineId));
+  const [weekHistory, setWeekHistory] = useState<number[]>(() => loadWeekHistory(activeRoutineId));
   const { secondsLeft, running, start, stop } = useRestTimer();
 
-  useEffect(() => {
-    localStorage.setItem("workout-active-day", String(activeDay));
-  }, [activeDay]);
+  const switchRoutine = (newId: string) => {
+    setActiveRoutineId(newId);
+    localStorage.setItem("workout-routine", newId);
+    setActiveDay(loadActiveDay(newId));
+    setCompleted(loadCompleted(newId));
+    setWeekHistory(loadWeekHistory(newId));
+  };
 
   useEffect(() => {
-    localStorage.setItem("workout-completed", JSON.stringify(completed));
-  }, [completed]);
+    localStorage.setItem(`workout-${activeRoutineId}-active-day`, String(activeDay));
+  }, [activeDay, activeRoutineId]);
 
   useEffect(() => {
-    localStorage.setItem("workout-week-history", JSON.stringify(weekHistory));
-  }, [weekHistory]);
+    localStorage.setItem(`workout-${activeRoutineId}-completed`, JSON.stringify(completed));
+  }, [completed, activeRoutineId]);
+
+  useEffect(() => {
+    localStorage.setItem(`workout-${activeRoutineId}-week-history`, JSON.stringify(weekHistory));
+  }, [weekHistory, activeRoutineId]);
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const day = workoutData[activeDay]!;
@@ -789,6 +994,39 @@ export default function WorkoutApp() {
         paddingBottom: 120,
       }}
     >
+      {/* Routine selector */}
+      <div
+        style={{
+          display: "flex",
+          gap: 0,
+          borderBottom: "1px solid #1a1a1a",
+        }}
+      >
+        {routines.map((r) => (
+          <button
+            key={r.id}
+            onClick={() => switchRoutine(r.id)}
+            style={{
+              flex: 1,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 13,
+              fontWeight: r.id === activeRoutineId ? 700 : 500,
+              letterSpacing: "0.1em",
+              color: r.id === activeRoutineId ? "#fff" : "#555",
+              background: r.id === activeRoutineId ? "#1a1a1a" : "transparent",
+              border: "none",
+              borderBottom: `2px solid ${r.id === activeRoutineId ? day.color : "transparent"}`,
+              padding: "12px 16px",
+              cursor: "pointer",
+              textTransform: "uppercase",
+              transition: "all 0.15s",
+            }}
+          >
+            {r.name}
+          </button>
+        ))}
+      </div>
+
       {/* Header */}
       <div
         style={{
@@ -1238,29 +1476,32 @@ export default function WorkoutApp() {
         </div>
       )}
 
-      {/* Week note */}
-      <div
-        style={{
-          margin: "16px 20px 0",
-          padding: "10px 14px",
-          background: "#111",
-          borderRadius: 8,
-          borderLeft: "3px solid #333",
-        }}
-      >
+      {/* Routine notes */}
+      {routine.notes.map((note, i) => (
         <div
+          key={i}
           style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontSize: 11,
-            color: "#444",
-            letterSpacing: "0.08em",
-            lineHeight: 1.5,
+            margin: `${i === 0 ? 16 : 8}px 20px 0`,
+            padding: "10px 14px",
+            background: "#111",
+            borderRadius: 8,
+            borderLeft: `3px solid ${day.color}44`,
           }}
         >
-          NOTA: 1&apos; de descanso solo en la primera semana. A partir de la
-          segunda semana, 1&apos; en todos los días.
+          <div
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 11,
+              color: "#444",
+              letterSpacing: "0.08em",
+              lineHeight: 1.5,
+              textTransform: "uppercase",
+            }}
+          >
+            {note}
+          </div>
         </div>
-      </div>
+      ))}
 
       {/* Export / Import */}
       <div
