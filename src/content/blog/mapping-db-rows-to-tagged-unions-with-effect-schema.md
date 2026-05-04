@@ -66,15 +66,15 @@ type NotificationDomain = typeof NotificationDomain.Type
 
 ## Step 2 — decode with an exhaustive switch
 
-`NotificationRow` is a flat struct, not a discriminated union type, so
-`Match.discriminatorsExhaustive` doesn't apply here — it needs a union where
-each member carries a distinct literal. A `switch` on `row.kind` with an
-explicit return type is the right tool: TypeScript narrows the `kind` field in
-each branch, and if you later add a new literal to `Schema.Literal(...)` without
-adding a case, the compiler errors because the function might not return.
+`decodeRow` switches on `row.kind` and maps each variant to its domain type.
+The explicit return type annotation makes the switch exhaustive: add a new
+literal to `Schema.Literal(...)` without a matching case and the compiler
+will error because the function might not return on all paths.
 
-The `need` helper is defined inline so TypeScript can infer the generic `T`
-directly from each call site without fighting the curried form.
+The `need` helper lifts a nullable column into a `ParseResult.ParseIssue`,
+using the `ast` and `row` already in scope to produce a meaningful error
+message. `Either.all` combines two of these into a single `Either`, and
+`ParseResult.map` maps over the result without leaving the `Either`-land.
 
 ```ts
 const decodeRow = (
@@ -104,11 +104,13 @@ const decodeRow = (
 
 ## Step 3 — encode with `Match.tagsExhaustive`
 
-For the encode direction the situation is different: `NotificationDomain` is a
-proper tagged union (`Schema.Union` of `TaggedStruct` variants), so
-`Match.tagsExhaustive` works correctly here. Each handler receives a
-properly-narrowed type, and adding a fourth variant to the union becomes a
-compile error.
+`NotificationDomain` is a tagged union — a `Schema.Union` of `TaggedStruct`
+variants each carrying a distinct `_tag` literal. `Match.tagsExhaustive`
+requires a handler for every tag in the union at compile time: add a fourth
+variant without a matching handler and it's a compile error.
+
+Each handler spreads a `nulls` baseline and fills in only the columns that
+belong to that variant.
 
 ```ts
 const nulls = {
@@ -141,12 +143,12 @@ const Notification = Schema.transformOrFail(NotificationRow, NotificationDomain,
 
 ## Why this beats `decodeUnknown`
 
-- The row schema is itself a typed `Schema`. Rename a column → DB
-  queries and the transform both fail to type-check.
-- The explicit return type on `decodeRow` gives exhaustiveness: add a new
-  literal to `Schema.Literal` and forget the switch case → compile error.
-- `Match.tagsExhaustive` on the encode side gives the same guarantee for
-  the domain → row direction, because `NotificationDomain` is a proper union.
+- The row schema is a typed `Schema`. Rename a column → DB queries and
+  the transform both fail to type-check.
+- Adding a new `kind` literal without a switch case is a compile error:
+  the explicit return type forces every path to return.
+- Adding a new domain variant without an encode handler is also a compile
+  error: `Match.tagsExhaustive` requires every `_tag` to be covered.
 - Each variant mapping is concise once null-lifting is factored out.
 
 ## Escape hatches
