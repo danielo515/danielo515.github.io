@@ -43,7 +43,7 @@ with exhaustiveness enforced at compile time in both directions.
 ## Step 1 — row schema and domain schema
 
 ```ts
-import { Effect, Match, ParseResult, Schema, SchemaAST } from "effect"
+import { Effect, Either, Match, ParseResult, Schema, SchemaAST } from "effect"
 
 const NotificationRow = Schema.Struct({
   id: Schema.String,
@@ -64,23 +64,7 @@ const NotificationDomain = Schema.Union(Email, Sms, Push)
 type NotificationDomain = typeof NotificationDomain.Type
 ```
 
-## Step 2 — lift a nullable cell into a `ParseIssue`
-
-`ParseResult.Type` takes a `SchemaAST.AST` as its first argument — the expected
-type description used in error messages. The `ast` the `decode` callback
-receives from `transformOrFail` is `SchemaAST.Transformation`, which is
-a member of that union.
-
-```ts
-const required =
-  <T>(ast: SchemaAST.AST, row: NotificationRow) =>
-  (value: T | null, column: string) =>
-    value === null
-      ? ParseResult.fail(new ParseResult.Type(ast, row, `${column} required when kind=${row.kind}`))
-      : ParseResult.succeed(value)
-```
-
-## Step 3 — decode with an exhaustive switch
+## Step 2 — decode with an exhaustive switch
 
 `NotificationRow` is a flat struct, not a discriminated union type, so
 `Match.discriminatorsExhaustive` doesn't apply here — it needs a union where
@@ -89,30 +73,36 @@ explicit return type is the right tool: TypeScript narrows the `kind` field in
 each branch, and if you later add a new literal to `Schema.Literal(...)` without
 adding a case, the compiler errors because the function might not return.
 
+The `need` helper is defined inline so TypeScript can infer the generic `T`
+directly from each call site without fighting the curried form.
+
 ```ts
 const decodeRow = (
   row: NotificationRow,
   ast: SchemaAST.Transformation
 ): Effect.Effect<NotificationDomain, ParseResult.ParseIssue> => {
-  const need = required(ast, row)
+  const need = <T>(value: T | null, column: string) =>
+    value === null
+      ? ParseResult.fail(new ParseResult.Type(ast, row, `${column} required when kind=${row.kind}`))
+      : ParseResult.succeed(value)
   switch (row.kind) {
     case "Email":
-      return Effect.all([need(row.email_address, "email_address"), need(row.email_subject, "email_subject")]).pipe(
-        Effect.map(([address, subject]) => Email.make({ id: row.id, address, subject }))
+      return Either.all([need(row.email_address, "email_address"), need(row.email_subject, "email_subject")]).pipe(
+        ParseResult.map(([address, subject]) => Email.make({ id: row.id, address, subject }))
       )
     case "Sms":
       return need(row.sms_phone, "sms_phone").pipe(
-        Effect.map((phone) => Sms.make({ id: row.id, phone }))
+        ParseResult.map((phone) => Sms.make({ id: row.id, phone }))
       )
     case "Push":
-      return Effect.all([need(row.push_device_token, "push_device_token"), need(row.push_title, "push_title")]).pipe(
-        Effect.map(([deviceToken, title]) => Push.make({ id: row.id, deviceToken, title }))
+      return Either.all([need(row.push_device_token, "push_device_token"), need(row.push_title, "push_title")]).pipe(
+        ParseResult.map(([deviceToken, title]) => Push.make({ id: row.id, deviceToken, title }))
       )
   }
 }
 ```
 
-## Step 4 — encode with `Match.tagsExhaustive`
+## Step 3 — encode with `Match.tagsExhaustive`
 
 For the encode direction the situation is different: `NotificationDomain` is a
 proper tagged union (`Schema.Union` of `TaggedStruct` variants), so
@@ -136,7 +126,7 @@ const encodeDomain = Match.type<NotificationDomain>().pipe(
 )
 ```
 
-## Step 5 — wire them with `Schema.transformOrFail`
+## Step 4 — wire them with `Schema.transformOrFail`
 
 ```ts
 const Notification = Schema.transformOrFail(NotificationRow, NotificationDomain, {
@@ -189,7 +179,7 @@ Not every project ends up with wide tables. Two common alternatives:
     var btn = document.getElementById("copy-complete");
     if (!pre || !btn) return;
 
-    pre.textContent = `import { Effect, Match, ParseResult, Schema, SchemaAST } from "effect"
+    pre.textContent = `import { Effect, Either, Match, ParseResult, Schema, SchemaAST } from "effect"
 
 const NotificationRow = Schema.Struct({
   id: Schema.String,
@@ -209,30 +199,26 @@ const Push  = Schema.TaggedStruct("Push",  { id: Schema.String, deviceToken: Sch
 const NotificationDomain = Schema.Union(Email, Sms, Push)
 type NotificationDomain = typeof NotificationDomain.Type
 
-const required =
-  <T>(ast: SchemaAST.AST, row: NotificationRow) =>
-  (value: T | null, column: string) =>
-    value === null
-      ? ParseResult.fail(new ParseResult.Type(ast, row, \`\${column} required when kind=\${row.kind}\`))
-      : ParseResult.succeed(value)
-
 const decodeRow = (
   row: NotificationRow,
   ast: SchemaAST.Transformation
 ): Effect.Effect<NotificationDomain, ParseResult.ParseIssue> => {
-  const need = required(ast, row)
+  const need = <T>(value: T | null, column: string) =>
+    value === null
+      ? ParseResult.fail(new ParseResult.Type(ast, row, \`\${column} required when kind=\${row.kind}\`))
+      : ParseResult.succeed(value)
   switch (row.kind) {
     case "Email":
-      return Effect.all([need(row.email_address, "email_address"), need(row.email_subject, "email_subject")]).pipe(
-        Effect.map(([address, subject]) => Email.make({ id: row.id, address, subject }))
+      return Either.all([need(row.email_address, "email_address"), need(row.email_subject, "email_subject")]).pipe(
+        ParseResult.map(([address, subject]) => Email.make({ id: row.id, address, subject }))
       )
     case "Sms":
       return need(row.sms_phone, "sms_phone").pipe(
-        Effect.map((phone) => Sms.make({ id: row.id, phone }))
+        ParseResult.map((phone) => Sms.make({ id: row.id, phone }))
       )
     case "Push":
-      return Effect.all([need(row.push_device_token, "push_device_token"), need(row.push_title, "push_title")]).pipe(
-        Effect.map(([deviceToken, title]) => Push.make({ id: row.id, deviceToken, title }))
+      return Either.all([need(row.push_device_token, "push_device_token"), need(row.push_title, "push_title")]).pipe(
+        ParseResult.map(([deviceToken, title]) => Push.make({ id: row.id, deviceToken, title }))
       )
   }
 }
