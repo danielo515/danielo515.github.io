@@ -178,7 +178,18 @@ Not every project ends up with wide tables. Two common alternatives:
     </summary>
     <div class="relative">
       <button id="copy-complete" class="absolute top-3 right-3 z-10 px-2.5 py-1 text-xs font-medium rounded-md bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors">Copy</button>
-      <pre id="complete-code" class="m-0 rounded-none text-sm p-6 bg-gray-900 dark:bg-gray-950 text-gray-100 overflow-x-auto leading-relaxed"><code>import { Effect, Match, ParseResult, Schema, SchemaAST } from "effect"
+      <pre id="complete-code" class="m-0 rounded-none text-sm p-6 bg-gray-900 dark:bg-gray-950 text-gray-100 overflow-x-auto leading-relaxed"></pre>
+    </div>
+  </details>
+</div>
+
+<script>
+  (function () {
+    var pre = document.getElementById("complete-code");
+    var btn = document.getElementById("copy-complete");
+    if (!pre || !btn) return;
+
+    pre.textContent = `import { Effect, Match, ParseResult, Schema, SchemaAST } from "effect"
 
 const NotificationRow = Schema.Struct({
   id: Schema.String,
@@ -199,29 +210,29 @@ const NotificationDomain = Schema.Union(Email, Sms, Push)
 type NotificationDomain = typeof NotificationDomain.Type
 
 const required =
-  &lt;T&gt;(ast: SchemaAST.AST, row: NotificationRow) =&gt;
-  (value: T | null, column: string) =&gt;
+  <T>(ast: SchemaAST.AST, row: NotificationRow) =>
+  (value: T | null, column: string) =>
     value === null
-      ? ParseResult.fail(new ParseResult.Type(ast, row, `${column} required when kind=${row.kind}`))
+      ? ParseResult.fail(new ParseResult.Type(ast, row, \`\${column} required when kind=\${row.kind}\`))
       : ParseResult.succeed(value)
 
 const decodeRow = (
   row: NotificationRow,
   ast: SchemaAST.Transformation
-): Effect.Effect&lt;NotificationDomain, ParseResult.ParseIssue&gt; =&gt; {
+): Effect.Effect<NotificationDomain, ParseResult.ParseIssue> => {
   const need = required(ast, row)
   switch (row.kind) {
     case "Email":
       return Effect.all([need(row.email_address, "email_address"), need(row.email_subject, "email_subject")]).pipe(
-        Effect.map(([address, subject]) =&gt; Email.make({ id: row.id, address, subject }))
+        Effect.map(([address, subject]) => Email.make({ id: row.id, address, subject }))
       )
     case "Sms":
       return need(row.sms_phone, "sms_phone").pipe(
-        Effect.map((phone) =&gt; Sms.make({ id: row.id, phone }))
+        Effect.map((phone) => Sms.make({ id: row.id, phone }))
       )
     case "Push":
       return Effect.all([need(row.push_device_token, "push_device_token"), need(row.push_title, "push_title")]).pipe(
-        Effect.map(([deviceToken, title]) =&gt; Push.make({ id: row.id, deviceToken, title }))
+        Effect.map(([deviceToken, title]) => Push.make({ id: row.id, deviceToken, title }))
       )
   }
 }
@@ -232,29 +243,21 @@ const nulls = {
   push_device_token: null, push_title: null
 } as const
 
-const encodeDomain = Match.type&lt;NotificationDomain&gt;().pipe(
+const encodeDomain = Match.type<NotificationDomain>().pipe(
   Match.tagsExhaustive({
-    Email: (n) =&gt; ({ ...nulls, id: n.id, kind: "Email" as const, email_address: n.address, email_subject: n.subject }),
-    Sms:   (n) =&gt; ({ ...nulls, id: n.id, kind: "Sms"   as const, sms_phone: n.phone }),
-    Push:  (n) =&gt; ({ ...nulls, id: n.id, kind: "Push"  as const, push_device_token: n.deviceToken, push_title: n.title })
+    Email: (n) => ({ ...nulls, id: n.id, kind: "Email" as const, email_address: n.address, email_subject: n.subject }),
+    Sms:   (n) => ({ ...nulls, id: n.id, kind: "Sms"   as const, sms_phone: n.phone }),
+    Push:  (n) => ({ ...nulls, id: n.id, kind: "Push"  as const, push_device_token: n.deviceToken, push_title: n.title })
   })
 )
 
 const Notification = Schema.transformOrFail(NotificationRow, NotificationDomain, {
-  decode: (row, _opts, ast) =&gt; decodeRow(row, ast),
-  encode: (domain) =&gt; ParseResult.succeed(encodeDomain(domain))
-})</code></pre>
-    </div>
-  </details>
-</div>
+  decode: (row, _opts, ast) => decodeRow(row, ast),
+  encode: (domain) => ParseResult.succeed(encodeDomain(domain))
+})`;
 
-<script>
-  (function () {
-    var btn = document.getElementById("copy-complete");
-    if (!btn) return;
     btn.addEventListener("click", function () {
-      var pre = document.getElementById("complete-code");
-      navigator.clipboard.writeText(pre.innerText).then(function () {
+      navigator.clipboard.writeText(pre.textContent).then(function () {
         btn.textContent = "Copied!";
         setTimeout(function () { btn.textContent = "Copy"; }, 2000);
       });
