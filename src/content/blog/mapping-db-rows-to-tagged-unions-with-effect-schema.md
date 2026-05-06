@@ -38,12 +38,12 @@ type Notification =
 ```
 
 The solution is a `Schema.transformOrFail` that maps between the two,
-with exhaustiveness for every variant enforced at compile time.
+with exhaustiveness enforced at compile time in both directions.
 
 ## Step 1 — row schema and domain schema
 
 ```ts
-import { Match, ParseResult, Schema, SchemaAST, pipe } from "effect"
+import { Effect, Either, Match, ParseResult, Schema, SchemaAST } from "effect"
 
 const NotificationRow = Schema.Struct({
   id: Schema.String,
@@ -64,54 +64,53 @@ const NotificationDomain = Schema.Union(Email, Sms, Push)
 type NotificationDomain = typeof NotificationDomain.Type
 ```
 
-## Step 2 — lift a nullable cell into a `ParseIssue`
+## Step 2 — decode with an exhaustive switch
 
-`ParseResult.Type` takes an `AST.AST` as its first argument — that's the expected
-type description used in error messages. The `ast` the `decode` callback
-receives from `transformOrFail` is `SchemaAST.Transformation`, which is
-a member of that union.
+`decodeRow` switches on `row.kind` and maps each variant to its domain type.
+The explicit return type annotation makes the switch exhaustive: add a new
+literal to `Schema.Literal(...)` without a matching case and the compiler
+will error because the function might not return on all paths.
+
+The `need` helper lifts a nullable column into a `ParseResult.ParseIssue`,
+using the `ast` and `row` already in scope to produce a meaningful error
+message. `Either.all` combines two of these into a single `Either`, and
+`ParseResult.map` maps over the result without leaving the `Either`-land.
 
 ```ts
-const required =
-  <T>(ast: SchemaAST.AST, row: NotificationRow) =>
-  (value: T | null, column: string) =>
+const decodeRow = (
+  row: NotificationRow,
+  ast: SchemaAST.Transformation
+): Effect.Effect<NotificationDomain, ParseResult.ParseIssue> => {
+  const need = <T>(value: T | null, column: string) =>
     value === null
       ? ParseResult.fail(new ParseResult.Type(ast, row, `${column} required when kind=${row.kind}`))
       : ParseResult.succeed(value)
-```
-
-## Step 3 — decode with `Match.discriminatorsExhaustive`
-
-`discriminatorsExhaustive("kind")({...})` forces a handler for every
-literal in `kind`. Drop a case → compile error.
-
-```ts
-const decodeRow = (row: NotificationRow, ast: SchemaAST.Transformation) => {
-  const need = required(ast, row)
-  return pipe(
-    Match.type<NotificationRow>(),
-    Match.discriminatorsExhaustive("kind")({
-      Email: (r) =>
-        ParseResult.all([need(r.email_address, "email_address"), need(r.email_subject, "email_subject")]).pipe(
-          ParseResult.map(([address, subject]) => Email.make({ id: r.id, address, subject }))
-        ),
-      Sms: (r) =>
-        need(r.sms_phone, "sms_phone").pipe(
-          ParseResult.map((phone) => Sms.make({ id: r.id, phone }))
-        ),
-      Push: (r) =>
-        ParseResult.all([need(r.push_device_token, "push_device_token"), need(r.push_title, "push_title")]).pipe(
-          ParseResult.map(([deviceToken, title]) => Push.make({ id: r.id, deviceToken, title }))
-        )
-    })
-  )(row)
+  switch (row.kind) {
+    case "Email":
+      return Either.all([need(row.email_address, "email_address"), need(row.email_subject, "email_subject")]).pipe(
+        ParseResult.map(([address, subject]) => Email.make({ id: row.id, address, subject }))
+      )
+    case "Sms":
+      return need(row.sms_phone, "sms_phone").pipe(
+        ParseResult.map((phone) => Sms.make({ id: row.id, phone }))
+      )
+    case "Push":
+      return Either.all([need(row.push_device_token, "push_device_token"), need(row.push_title, "push_title")]).pipe(
+        ParseResult.map(([deviceToken, title]) => Push.make({ id: row.id, deviceToken, title }))
+      )
+  }
 }
 ```
 
-## Step 4 — encode with `Match.tagsExhaustive`
+## Step 3 — encode with `Match.tagsExhaustive`
 
-On the domain side `_tag` is the discriminator, so use `tagsExhaustive`.
-Again: add a fourth tag to the union → compile error here.
+`NotificationDomain` is a tagged union — a `Schema.Union` of `TaggedStruct`
+variants each carrying a distinct `_tag` literal. `Match.tagsExhaustive`
+requires a handler for every tag in the union at compile time: add a fourth
+variant without a matching handler and it's a compile error.
+
+Each handler spreads a `nulls` baseline and fills in only the columns that
+belong to that variant.
 
 ```ts
 const nulls = {
@@ -129,7 +128,7 @@ const encodeDomain = Match.type<NotificationDomain>().pipe(
 )
 ```
 
-## Step 5 — wire them with `Schema.transformOrFail`
+## Step 4 — wire them with `Schema.transformOrFail`
 
 ```ts
 const Notification = Schema.transformOrFail(NotificationRow, NotificationDomain, {
@@ -144,11 +143,13 @@ const Notification = Schema.transformOrFail(NotificationRow, NotificationDomain,
 
 ## Why this beats `decodeUnknown`
 
-- The exhaustive match helpers reject non-exhaustive handlers at compile time — the same guarantee a
-  `switch` gives with `Match.exhaustive`, but declarative.
-- The row schema is itself a typed `Schema`. Rename a column → DB
-  queries and the transform both fail to type-check.
-- Each variant mapping is one line once null-lifting is factored out.
+- The row schema is a typed `Schema`. Rename a column → DB queries and
+  the transform both fail to type-check.
+- Adding a new `kind` literal without a switch case is a compile error:
+  the explicit return type forces every path to return.
+- Adding a new domain variant without an encode handler is also a compile
+  error: `Match.tagsExhaustive` requires every `_tag` to be covered.
+- Each variant mapping is concise once null-lifting is factored out.
 
 ## Escape hatches
 
@@ -169,7 +170,18 @@ Not every project ends up with wide tables. Two common alternatives:
     </summary>
     <div class="relative">
       <button id="copy-complete" class="absolute top-3 right-3 z-10 px-2.5 py-1 text-xs font-medium rounded-md bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors">Copy</button>
-      <pre id="complete-code" class="m-0 rounded-none text-sm p-6 bg-gray-900 dark:bg-gray-950 text-gray-100 overflow-x-auto leading-relaxed"><code>import { Match, ParseResult, Schema, SchemaAST, pipe } from "effect"
+      <pre id="complete-code" class="m-0 rounded-none text-sm p-6 bg-gray-900 dark:bg-gray-950 text-gray-100 overflow-x-auto leading-relaxed"></pre>
+    </div>
+  </details>
+</div>
+
+<script>
+  (function () {
+    var pre = document.getElementById("complete-code");
+    var btn = document.getElementById("copy-complete");
+    if (!pre || !btn) return;
+
+    pre.textContent = `import { Effect, Either, Match, ParseResult, Schema, SchemaAST } from "effect"
 
 const NotificationRow = Schema.Struct({
   id: Schema.String,
@@ -189,32 +201,28 @@ const Push  = Schema.TaggedStruct("Push",  { id: Schema.String, deviceToken: Sch
 const NotificationDomain = Schema.Union(Email, Sms, Push)
 type NotificationDomain = typeof NotificationDomain.Type
 
-const required =
-  &lt;T&gt;(ast: SchemaAST.AST, row: NotificationRow) =&gt;
-  (value: T | null, column: string) =&gt;
+const decodeRow = (
+  row: NotificationRow,
+  ast: SchemaAST.Transformation
+): Effect.Effect<NotificationDomain, ParseResult.ParseIssue> => {
+  const need = <T>(value: T | null, column: string) =>
     value === null
-      ? ParseResult.fail(new ParseResult.Type(ast, row, `${column} required when kind=${row.kind}`))
+      ? ParseResult.fail(new ParseResult.Type(ast, row, \`\${column} required when kind=\${row.kind}\`))
       : ParseResult.succeed(value)
-
-const decodeRow = (row: NotificationRow, ast: SchemaAST.Transformation) =&gt; {
-  const need = required(ast, row)
-  return pipe(
-    Match.type&lt;NotificationRow&gt;(),
-    Match.discriminatorsExhaustive("kind")({
-      Email: (r) =&gt;
-        ParseResult.all([need(r.email_address, "email_address"), need(r.email_subject, "email_subject")]).pipe(
-          ParseResult.map(([address, subject]) =&gt; Email.make({ id: r.id, address, subject }))
-        ),
-      Sms: (r) =&gt;
-        need(r.sms_phone, "sms_phone").pipe(
-          ParseResult.map((phone) =&gt; Sms.make({ id: r.id, phone }))
-        ),
-      Push: (r) =&gt;
-        ParseResult.all([need(r.push_device_token, "push_device_token"), need(r.push_title, "push_title")]).pipe(
-          ParseResult.map(([deviceToken, title]) =&gt; Push.make({ id: r.id, deviceToken, title }))
-        )
-    })
-  )(row)
+  switch (row.kind) {
+    case "Email":
+      return Either.all([need(row.email_address, "email_address"), need(row.email_subject, "email_subject")]).pipe(
+        ParseResult.map(([address, subject]) => Email.make({ id: row.id, address, subject }))
+      )
+    case "Sms":
+      return need(row.sms_phone, "sms_phone").pipe(
+        ParseResult.map((phone) => Sms.make({ id: row.id, phone }))
+      )
+    case "Push":
+      return Either.all([need(row.push_device_token, "push_device_token"), need(row.push_title, "push_title")]).pipe(
+        ParseResult.map(([deviceToken, title]) => Push.make({ id: row.id, deviceToken, title }))
+      )
+  }
 }
 
 const nulls = {
@@ -223,29 +231,21 @@ const nulls = {
   push_device_token: null, push_title: null
 } as const
 
-const encodeDomain = Match.type&lt;NotificationDomain&gt;().pipe(
+const encodeDomain = Match.type<NotificationDomain>().pipe(
   Match.tagsExhaustive({
-    Email: (n) =&gt; ({ ...nulls, id: n.id, kind: "Email" as const, email_address: n.address, email_subject: n.subject }),
-    Sms:   (n) =&gt; ({ ...nulls, id: n.id, kind: "Sms"   as const, sms_phone: n.phone }),
-    Push:  (n) =&gt; ({ ...nulls, id: n.id, kind: "Push"  as const, push_device_token: n.deviceToken, push_title: n.title })
+    Email: (n) => ({ ...nulls, id: n.id, kind: "Email" as const, email_address: n.address, email_subject: n.subject }),
+    Sms:   (n) => ({ ...nulls, id: n.id, kind: "Sms"   as const, sms_phone: n.phone }),
+    Push:  (n) => ({ ...nulls, id: n.id, kind: "Push"  as const, push_device_token: n.deviceToken, push_title: n.title })
   })
 )
 
 const Notification = Schema.transformOrFail(NotificationRow, NotificationDomain, {
-  decode: (row, _opts, ast) =&gt; decodeRow(row, ast),
-  encode: (domain) =&gt; ParseResult.succeed(encodeDomain(domain))
-})</code></pre>
-    </div>
-  </details>
-</div>
+  decode: (row, _opts, ast) => decodeRow(row, ast),
+  encode: (domain) => ParseResult.succeed(encodeDomain(domain))
+})`;
 
-<script>
-  (function () {
-    var btn = document.getElementById("copy-complete");
-    if (!btn) return;
     btn.addEventListener("click", function () {
-      var pre = document.getElementById("complete-code");
-      navigator.clipboard.writeText(pre.innerText).then(function () {
+      navigator.clipboard.writeText(pre.textContent).then(function () {
         btn.textContent = "Copied!";
         setTimeout(function () { btn.textContent = "Copy"; }, 2000);
       });
