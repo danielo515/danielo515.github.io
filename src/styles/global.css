@@ -22,6 +22,19 @@
   }
 }
 
+/* The prose-code:* modifiers in Prose.astro style inline `<code>` elements
+   (background, padding, rounded, text-sm). They also match `<code>` inside
+   Shiki's `<pre class="astro-code">`, painting a pill behind the highlighted
+   spans. Reset those on code blocks so Shiki's inline styles show through. */
+.astro-code > code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
 /* Shiki dual-theme: switch to the dark theme variables based on the user's
    color-scheme preference. The site uses prefers-color-scheme for dark mode,
    matching Tailwind v4's default `dark:` variant. */
