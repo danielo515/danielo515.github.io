@@ -15,13 +15,19 @@ type Props = {
 
 const { linkedinUrl, github, name, personalImageAlt, stackOverflow } =
   Astro.props;
+
+const prefixWords = ["Hi,", "I'm"];
+const nameWords = name.split(" ");
 ---
 
-<div class="max-w-xl">
-  <div class="flex gap-4 mb-4">
-    <a href="/profile">
+<div class="max-w-2xl">
+  <div class="flex gap-4 mb-6 items-center">
+    <a
+      href="/profile"
+      class="relative inline-flex p-[2px] rounded-full bg-gradient-to-br from-blue-400 via-violet-500 to-amber-400 shadow-lg hover:shadow-violet-500/30 transition-shadow"
+    >
       <img
-        class="rounded-full shadow-lg size-16"
+        class="rounded-full size-16 ring-2 ring-white/70 dark:ring-gray-900/70"
         src="/danielo-1.webp"
         transition:name="avatar"
         id="avatar"
@@ -37,17 +43,36 @@ const { linkedinUrl, github, name, personalImageAlt, stackOverflow } =
       <Badge>Available for work</Badge>
     </a>
   </div>
+
   <h1
-    class="text-4xl font-bold tracking-tight text-gray-800 sm:text-5xl dark:text-white"
+    class="display text-5xl sm:text-6xl md:text-7xl tracking-tight text-gray-900 dark:text-white leading-[1.05]"
   >
-    Hi, I'm <span class="text-blue-500">{name}</span>
+    {
+      prefixWords.map((word, i) => (
+        <span class="hero-word mr-[0.25em]" style={`--i: ${i}`}>
+          {word}
+        </span>
+      ))
+    }
+    {
+      nameWords.map((word, i) => (
+        <span
+          class="hero-word mr-[0.25em] bg-gradient-to-br from-blue-500 via-violet-500 to-amber-400 bg-clip-text text-transparent italic"
+          style={`--i: ${prefixWords.length + i}`}
+        >
+          {word}
+        </span>
+      ))
+    }
   </h1>
+
   <p
-    class="mt-6 text-xl text-gray-800 dark:[&>strong]:text-yellow-200 [&>strong]:text-yellow-500 [&>strong]:font-semibold dark:text-gray-300"
+    class="mt-6 text-xl text-gray-700 dark:[&>strong]:text-yellow-200 [&>strong]:text-yellow-600 [&>strong]:font-semibold dark:text-gray-300 max-w-xl"
   >
     <slot />
   </p>
-  <nav class="flex flex-wrap gap-4 mt-8 max-sm:justify-center">
+
+  <nav class="flex flex-wrap gap-3 mt-8 max-sm:justify-center">
     <SocialPill href={github}>
       <GitHub class="size-4" />
       Github
