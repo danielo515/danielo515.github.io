@@ -21,3 +21,14 @@
     color: var(--color-blue-500);
   }
 }
+
+/* Inline `<code>` inside expressive-code frames must not inherit the
+   prose-code:* pill styling from Prose.astro. */
+.expressive-code code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
