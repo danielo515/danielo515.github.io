@@ -22,5 +22,10 @@ export const config: links = {
       label: "about-me",
       href: "/#about-me",
     },
+    {
+      title: "Blog",
+      label: "blog",
+      href: "/blog",
+    },
   ],
 };
