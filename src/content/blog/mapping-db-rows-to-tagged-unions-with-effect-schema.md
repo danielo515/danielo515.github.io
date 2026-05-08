@@ -163,25 +163,13 @@ Not every project ends up with wide tables. Two common alternatives:
 
 ---
 
-<div class="not-prose mt-10">
-  <details class="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-    <summary class="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-      Complete example
-    </summary>
-    <div class="relative">
-      <button id="copy-complete" class="absolute top-3 right-3 z-10 px-2.5 py-1 text-xs font-medium rounded-md bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors">Copy</button>
-      <pre id="complete-code" class="m-0 rounded-none text-sm p-6 bg-gray-900 dark:bg-gray-950 text-gray-100 overflow-x-auto leading-relaxed"></pre>
-    </div>
-  </details>
-</div>
+<details class="mt-10">
+<summary class="cursor-pointer select-none text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-3">
+Complete example
+</summary>
 
-<script>
-  (function () {
-    var pre = document.getElementById("complete-code");
-    var btn = document.getElementById("copy-complete");
-    if (!pre || !btn) return;
-
-    pre.textContent = `import { Effect, Either, Match, ParseResult, Schema, SchemaAST } from "effect"
+```ts title="complete-example.ts"
+import { Effect, Either, Match, ParseResult, Schema, SchemaAST } from "effect"
 
 const NotificationRow = Schema.Struct({
   id: Schema.String,
@@ -207,7 +195,7 @@ const decodeRow = (
 ): Effect.Effect<NotificationDomain, ParseResult.ParseIssue> => {
   const need = <T>(value: T | null, column: string) =>
     value === null
-      ? ParseResult.fail(new ParseResult.Type(ast, row, \`\${column} required when kind=\${row.kind}\`))
+      ? ParseResult.fail(new ParseResult.Type(ast, row, `${column} required when kind=${row.kind}`))
       : ParseResult.succeed(value)
   switch (row.kind) {
     case "Email":
@@ -242,13 +230,7 @@ const encodeDomain = Match.type<NotificationDomain>().pipe(
 const Notification = Schema.transformOrFail(NotificationRow, NotificationDomain, {
   decode: (row, _opts, ast) => decodeRow(row, ast),
   encode: (domain) => ParseResult.succeed(encodeDomain(domain))
-})`;
+})
+```
 
-    btn.addEventListener("click", function () {
-      navigator.clipboard.writeText(pre.textContent).then(function () {
-        btn.textContent = "Copied!";
-        setTimeout(function () { btn.textContent = "Copy"; }, 2000);
-      });
-    });
-  })();
-</script>
+</details>
