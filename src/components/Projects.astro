@@ -22,7 +22,6 @@ const { projects } = Astro.props;
       } = project;
       const { Content } = await render(project);
 
-      // First project = feature tile (full row on desktop)
       const isFeature = idx === 0;
       const tileClass = isFeature
         ? "md:col-span-6 md:flex-row"
@@ -31,7 +30,7 @@ const { projects } = Astro.props;
       return (
         <article
           data-spotlight
-          class={`spotlight-card group relative flex flex-col ${tileClass} gap-6 p-5 rounded-2xl border border-gray-200/60 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] backdrop-blur-xl shadow-sm hover:-translate-y-1 hover:shadow-2xl hover:border-violet-300/60 dark:hover:border-violet-400/30 overflow-hidden`}
+          class={`spotlight-card group relative flex flex-col ${tileClass} gap-6 p-5 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.02] backdrop-blur-sm shadow-sm hover:-translate-y-0.5 hover:shadow-lg hover:border-gray-300 dark:hover:border-white/20 overflow-hidden`}
         >
           <span class="spotlight-card-glow" aria-hidden="true" />
 
@@ -42,19 +41,18 @@ const { projects } = Astro.props;
           >
             <Image
               alt={title}
-              class={`object-cover object-top w-full transition duration-700 group-hover:scale-105 ${
+              class={`object-cover object-top w-full transition duration-700 group-hover:scale-[1.03] ${
                 isFeature ? "h-64 md:h-72" : "h-48"
               }`}
               loading="lazy"
               src={image}
             />
-            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
 
           <div class={`flex flex-col gap-3 ${isFeature ? "md:flex-1" : ""}`}>
             <h3
-              class={`display tracking-tight text-gray-900 dark:text-white ${
-                isFeature ? "text-3xl md:text-4xl" : "text-2xl"
+              class={`font-bold tracking-tight text-gray-800 dark:text-gray-100 ${
+                isFeature ? "text-3xl" : "text-2xl"
               }`}
             >
               {title}
@@ -69,7 +67,7 @@ const { projects } = Astro.props;
             </ul>
 
             <div
-              class={`text-gray-700 dark:text-gray-300 leading-relaxed ${
+              class={`text-gray-700 dark:text-gray-400 leading-relaxed ${
                 isFeature ? "text-base" : "text-sm line-clamp-4"
               }`}
             >
@@ -98,7 +96,6 @@ const { projects } = Astro.props;
 </div>
 
 <script>
-  // Cursor-tracking spotlight glow on each project card
   function bindSpotlights() {
     const cards = document.querySelectorAll<HTMLElement>("[data-spotlight]");
     cards.forEach((card) => {

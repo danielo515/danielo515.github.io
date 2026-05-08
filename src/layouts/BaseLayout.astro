@@ -1,7 +1,5 @@
 ---
 import "@fontsource-variable/onest";
-import "@fontsource/instrument-serif/400.css";
-import "@fontsource/instrument-serif/400-italic.css";
 import "@/styles/global.css";
 
 import { ClientRouter } from "astro:transitions";
@@ -31,33 +29,22 @@ const { title, description = "" } = Astro.props;
   </head>
 
   <body class="relative text-black dark:text-white">
-    <!-- Animated aurora backdrop -->
-    <div class="aurora-stage" aria-hidden="true">
-      <div
-        class="aurora-blob"
-        style="top:-12%; left:-8%; width:55vw; height:55vw; background:radial-gradient(circle at 30% 30%, var(--color-brand-blue), transparent 60%); animation: var(--animate-aurora-1);"
-      >
-      </div>
-      <div
-        class="aurora-blob"
-        style="top:10%; right:-12%; width:48vw; height:48vw; background:radial-gradient(circle at 70% 30%, var(--color-brand-violet), transparent 60%); animation: var(--animate-aurora-2);"
-      >
-      </div>
-      <div
-        class="aurora-blob"
-        style="bottom:-18%; left:20%; width:60vw; height:60vw; background:radial-gradient(circle at 50% 50%, var(--color-brand-amber), transparent 65%); animation: var(--animate-aurora-3); opacity:.35;"
-      >
-      </div>
-    </div>
-    <div class="noise-overlay" aria-hidden="true"></div>
-
-    <!-- Top scroll progress bar -->
+    <!-- Subtle background — restores the original quiet feel -->
     <div
-      class="fixed top-0 left-0 right-0 h-[3px] z-50 pointer-events-none"
+      class="absolute top-0 bottom-0 z-[-2] min-h-screen w-full bg-gray-50 dark:bg-gray-950
+      bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))]
+      dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"
+      aria-hidden="true"
+    >
+    </div>
+
+    <!-- Top scroll progress bar (single accent, no rainbow) -->
+    <div
+      class="fixed top-0 left-0 right-0 h-[2px] z-50 pointer-events-none"
       aria-hidden="true"
     >
       <div
-        class="scroll-progress-bar h-full w-full origin-left bg-gradient-to-r from-blue-500 via-violet-500 to-amber-400 shadow-[0_0_12px_rgba(99,102,241,0.6)]"
+        class="scroll-progress-bar h-full w-full origin-left bg-blue-500/80 dark:bg-blue-400/70"
       >
       </div>
     </div>
@@ -71,7 +58,7 @@ const { title, description = "" } = Astro.props;
       }
 
       html {
-        font-family: var(--font-sans);
+        font-family: "Onest Variable", system-ui, sans-serif;
         scroll-behavior: smooth;
       }
 
@@ -83,15 +70,6 @@ const { title, description = "" } = Astro.props;
         overscroll-behavior: none;
       }
 
-      /* Display-serif applied to top-level page headings */
-      h1.display,
-      h2.display,
-      h3.display {
-        font-family: var(--font-display);
-        font-weight: 400;
-        letter-spacing: -0.01em;
-      }
-
       .strong {
         @apply dark:text-yellow-200 text-yellow-500 font-semibold;
       }
@@ -99,9 +77,6 @@ const { title, description = "" } = Astro.props;
       @media (prefers-reduced-motion: reduce) {
         html {
           scroll-behavior: auto;
-        }
-        .aurora-blob {
-          animation: none !important;
         }
       }
 

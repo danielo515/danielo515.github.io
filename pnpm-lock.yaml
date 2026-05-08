@@ -17,9 +17,6 @@ importers:
       '@fontsource-variable/onest':
         specifier: 5.0.2
         version: 5.0.2
-      '@fontsource/instrument-serif':
-        specifier: ^5.2.8
-        version: 5.2.8
       '@tailwindcss/vite':
         specifier: ^4.1.18
         version: 4.1.18(vite@7.3.2(@types/node@24.0.7)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.3))
@@ -419,9 +416,6 @@ packages:
 
   '@fontsource-variable/onest@5.0.2':
     resolution: {integrity: sha512-XsH6q+/OyO0Oba4OB/NkiQu3ON93U2Kx+1YxKpNZMuS+a+WvxipwhO8Und2CC0mLI33xOZzTWUk4wtnsUJzjCQ==}
-
-  '@fontsource/instrument-serif@5.2.8':
-    resolution: {integrity: sha512-s+bkz+syj2rO00Rmq9g0P+PwuLig33DR1xDR8pTWmovH1pUjwnncrFk++q9mmOex8fUQ7oW80gPpPDaw7V1MMw==}
 
   '@hazae41/berith@1.2.6':
     resolution: {integrity: sha512-TQLkisoolGD2kdSQVtTVXNwmsotA9dLmUgXcpHTNzssmN11Mp+vHVf4Myn3+Q4U18Na3UzGi6DZqogZFqjPPvg==}
@@ -2799,8 +2793,6 @@ snapshots:
       '@expressive-code/core': 0.42.0
 
   '@fontsource-variable/onest@5.0.2': {}
-
-  '@fontsource/instrument-serif@5.2.8': {}
 
   '@hazae41/berith@1.2.6':
     dependencies:
