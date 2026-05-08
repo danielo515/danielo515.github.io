@@ -9,7 +9,7 @@ interface Props {
 ---
 
 <header
-  class="fixed top-0 z-10 flex items-center justify-center w-full mx-auto py-1 md:py-2"
+  class="@container fixed top-0 z-10 flex items-center justify-center w-full mx-auto py-1 md:py-2"
 >
   <nav
     class="flex px-3 text-sm font-medium text-gray-600 dark:text-gray-200 justify-center items-center"
@@ -22,15 +22,21 @@ interface Props {
       <HomeIcon />
     </a>
     {
-      Astro.props.navItems.map((link) => (
-        <a
-          class="relative block px-2 py-2 transition hover:text-blue-500 dark:hover:text-blue-500"
-          aria-label={link.label}
-          href={link.href}
-        >
-          {link.title}
-        </a>
-      ))
+      Astro.props.navItems.map((link) => {
+        const [head, ...tail] = link.title.split(" ");
+        return (
+          <a
+            class="relative block px-2 py-2 transition hover:text-blue-500 dark:hover:text-blue-500"
+            aria-label={link.label}
+            href={link.href}
+          >
+            {head}
+            {tail.length > 0 && (
+              <span class="@max-md:hidden"> {tail.join(" ")}</span>
+            )}
+          </a>
+        );
+      })
     }
     <ThemeToggle />
   </nav>
