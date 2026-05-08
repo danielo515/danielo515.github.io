@@ -21,3 +21,17 @@
     color: var(--color-blue-500);
   }
 }
+
+/* Shiki dual-theme: switch to the dark theme variables based on the user's
+   color-scheme preference. The site uses prefers-color-scheme for dark mode,
+   matching Tailwind v4's default `dark:` variant. */
+@media (prefers-color-scheme: dark) {
+  .astro-code,
+  .astro-code span {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+  }
+}

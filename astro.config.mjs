@@ -11,6 +11,15 @@ export default defineConfig({
   prefetch: {
     defaultStrategy: "viewport",
   },
+  markdown: {
+    shikiConfig: {
+      themes: {
+        light: "github-light",
+        dark: "github-dark-dimmed",
+      },
+      wrap: false,
+    },
+  },
   vite: {
     plugins: [tailwindcss()],
   },
