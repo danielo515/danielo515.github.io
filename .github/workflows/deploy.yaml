@@ -34,7 +34,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: latest
+          version: 10.33.0
           run_install: false
 
       - name: Setup Node
@@ -74,7 +74,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: latest
+          version: 10.33.0
           run_install: false
 
       - name: Setup Node
