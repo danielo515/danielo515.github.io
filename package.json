@@ -23,7 +23,7 @@
     "astro-expressive-code": "^0.42.0",
     "astro-robots-txt": "1.0.0",
     "jazz-react": "^0.9.16",
-    "jazz-tools": "^0.9.16",
+    "jazz-tools": "^0.14.28",
     "lucide-react": "0.559.0",
     "motion": "11.18.2",
     "react": "^19.0.0",
