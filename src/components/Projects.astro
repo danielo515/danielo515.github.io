@@ -225,34 +225,20 @@ const { projects } = Astro.props;
 
 <style is:global>
   .project-modal {
+    position: fixed;
+    inset: 0;
+    margin: auto;
     border: 0;
     padding: 0;
     background: transparent;
-    max-width: min(56rem, calc(100vw - 2rem));
-    width: 100%;
+    width: min(56rem, calc(100vw - 2rem));
     max-height: calc(100dvh - 2rem);
     color: inherit;
-
-    /* Animated entry/exit using @starting-style (modern browsers) */
-    opacity: 0;
-    transform: translateY(16px) scale(0.97);
+    /* Allow the dialog itself to participate in display/overlay transitions
+       so its inner panel can animate cleanly on open/close */
     transition:
-      opacity 0.25s ease-out,
-      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
       overlay 0.3s allow-discrete,
       display 0.3s allow-discrete;
-  }
-
-  .project-modal[open] {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-
-  @starting-style {
-    .project-modal[open] {
-      opacity: 0;
-      transform: translateY(16px) scale(0.97);
-    }
   }
 
   .project-modal::backdrop {
@@ -279,6 +265,23 @@ const { projects } = Astro.props;
 
   .project-modal__panel {
     max-height: calc(100dvh - 2rem);
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+    transition:
+      opacity 0.25s ease-out,
+      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .project-modal[open] .project-modal__panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  @starting-style {
+    .project-modal[open] .project-modal__panel {
+      opacity: 0;
+      transform: translateY(16px) scale(0.97);
+    }
   }
 
   /* Reduce motion */
