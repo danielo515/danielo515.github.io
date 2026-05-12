@@ -328,6 +328,182 @@ const weeklyExercisesB: WeeklyExercise[] = [
   { id: "wb-2", name: "ELEVACIÓN DE PIERNAS", sets: 4, reps: "FALLO", timesPerWeek: 2 },
 ];
 
+const workoutDataC: WorkoutDay[] = [
+  {
+    id: 1,
+    label: "DÍA 1",
+    title: "ESPALDA Y HOMBRO POST",
+    color: "#00E5FF",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "ESPALDA",
+        supersets: false,
+        exercises: [
+          { id: "c1-1", name: "REMO ANCHO GIRONDA AL DIAFRAGMA", sets: 4, reps: "10 (+1x15)" },
+          { id: "c1-2", name: "REMO EN PUNTA", sets: 5, reps: "6 (+2x12)" },
+          { id: "c1-3", name: "JALÓN ANCHO AL PECHO", sets: 4, reps: "10 (+2 DESC)" },
+          { id: "c1-4", name: "PULLOVER MANC ATRAVESADO EN BANCO", sets: 3, reps: "12" },
+        ],
+      },
+      {
+        name: "HOMBRO POSTERIOR",
+        supersets: true,
+        exercises: [
+          {
+            id: "c1-5",
+            name: "PÁJAROS MANCUERNAS",
+            pairedWith: "PESO MUERTO MANC",
+            pairedId: "c1-5b",
+            sets: 4,
+            reps: "12",
+            repsB: "8",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "DÍA 2",
+    title: "PECHO Y LATERAL",
+    color: "#FF6B35",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "PECHO",
+        supersets: false,
+        exercises: [
+          { id: "c2-1", name: "SUPERIOR MANCUERNAS", sets: 4, reps: "8 (+2 DESC)" },
+          { id: "c2-2", name: "APERTURAS SUPERIORES", sets: 4, reps: "12" },
+          { id: "c2-3", name: "PRESS PLANO MULTIPOWER", sets: 4, reps: "8" },
+          { id: "c2-4", name: "CRUCES", sets: 4, reps: "12" },
+        ],
+      },
+      {
+        name: "HOMBRO LATERAL",
+        supersets: false,
+        exercises: [
+          { id: "c2-5", name: "ELEVACIONES LATERALES EN MÁQUINA", sets: 4, reps: "15" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 3,
+    label: "DÍA 3",
+    title: "PIERNA",
+    color: "#B8FF3D",
+    restNote: "Sin descanso — Superseries",
+    groups: [
+      {
+        name: "SUPERSERIES",
+        supersets: true,
+        exercises: [
+          {
+            id: "c3-1",
+            name: "EXTENSIONES",
+            pairedWith: "PESO MUERTO MULTIPOWER",
+            pairedId: "c3-1b",
+            sets: 4,
+            reps: "15",
+            repsB: "12",
+          },
+          {
+            id: "c3-2",
+            name: "SISSY",
+            pairedWith: "FEMORAL TUMBADO",
+            pairedId: "c3-2b",
+            sets: 4,
+            reps: "15",
+            repsB: "10",
+          },
+        ],
+      },
+      {
+        name: "PIERNA",
+        supersets: false,
+        exercises: [
+          { id: "c3-3", name: "PÉNDULO", sets: 5, reps: "12 (+2x20)" },
+          { id: "c3-4", name: "ZANCADA LARGA PESADA", sets: 3, reps: "12" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 4,
+    label: "DÍA 4",
+    title: "BÍCEPS Y TRÍCEPS",
+    color: "#FFD23D",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "BÍCEPS",
+        supersets: false,
+        exercises: [
+          { id: "c4-1", name: "ALTERNO DE PIE", sets: 5, reps: "6 (+2x12)" },
+          { id: "c4-2", name: "PREDICADOR Z", sets: 6, reps: "6 CERR (+3x12 ABIERT)" },
+        ],
+      },
+      {
+        name: "TRÍCEPS",
+        supersets: false,
+        exercises: [
+          { id: "c4-3", name: "POLEA V EN GIRONDA", sets: 4, reps: "12 (+2 DESC)" },
+          { id: "c4-4", name: "FONDOS PARALELAS", sets: 4, reps: "FALLO" },
+          { id: "c4-5", name: "POLEA CUERDA", sets: 3, reps: "20" },
+        ],
+      },
+      {
+        name: "ANTEBRAZO",
+        supersets: false,
+        exercises: [
+          { id: "c4-6", name: "ANTEBRAZO POR DETRÁS CON BARRA", sets: 4, reps: "20 MÍN" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 5,
+    label: "DÍA 5",
+    title: "HOMBRO",
+    color: "#CF6BFF",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "HOMBRO",
+        supersets: false,
+        exercises: [
+          { id: "c5-1", name: "REMO ANCHO AL CUELLO", sets: 3, reps: "12" },
+          { id: "c5-2", name: "PRESS HAMMER", sets: 5, reps: "8 (+1x15)" },
+          { id: "c5-3", name: "TRAS NUCA MULTIPOWER", sets: 3, reps: "12 LIGERAS" },
+          { id: "c5-4", name: "LATERALES EN POLEA", sets: 3, reps: "12 SIN DESCANSO" },
+        ],
+      },
+      {
+        name: "SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "c5-5",
+            name: "LATERAL DE PIE",
+            pairedWith: "FRONTALES MANC",
+            pairedId: "c5-5b",
+            sets: 4,
+            reps: "8-12",
+            repsB: "8-12",
+          },
+        ],
+      },
+    ],
+  },
+];
+
+const weeklyExercisesC: WeeklyExercise[] = [
+  { id: "wc-1", name: "ENCOGIMIENTOS EN POLEA", sets: 4, reps: "20", timesPerWeek: 2 },
+  { id: "wc-2", name: "ELEVACIÓN DE PIERNAS", sets: 4, reps: "FALLO", timesPerWeek: 2 },
+];
+
 const routines: WorkoutRoutine[] = [
   {
     id: "a",
@@ -343,6 +519,16 @@ const routines: WorkoutRoutine[] = [
     name: "RUTINA B",
     workoutData: workoutDataB,
     weeklyExercises: weeklyExercisesB,
+    notes: [
+      "TODOS LOS DÍAS TRAS LAS PESAS: 10' DE CARDIO HIT + 10' DE LISS",
+      "DOS DÍAS EN SEMANA: ABDOMEN (incluido en ejercicios semanales)",
+    ],
+  },
+  {
+    id: "c",
+    name: "RUTINA C",
+    workoutData: workoutDataC,
+    weeklyExercises: weeklyExercisesC,
     notes: [
       "TODOS LOS DÍAS TRAS LAS PESAS: 10' DE CARDIO HIT + 10' DE LISS",
       "DOS DÍAS EN SEMANA: ABDOMEN (incluido en ejercicios semanales)",
@@ -845,7 +1031,7 @@ export default function WorkoutApp() {
     }
   };
 
-  // ── Routine selection (new routine "b" is default) ──
+  // ── Routine selection (new routine "c" is default) ──
   const [activeRoutineId, setActiveRoutineId] = useState(() => {
     try {
       // Migration: move old data to routine "a" namespace
@@ -856,16 +1042,16 @@ export default function WorkoutApp() {
         if (oldCompleted) localStorage.setItem("workout-a-completed", oldCompleted);
         if (oldActiveDay) localStorage.setItem("workout-a-active-day", oldActiveDay);
         if (oldWeekHistory) localStorage.setItem("workout-a-week-history", oldWeekHistory);
-        localStorage.setItem("workout-routine", "b");
-        return "b";
+        localStorage.setItem("workout-routine", "c");
+        return "c";
       }
-      return localStorage.getItem("workout-routine") || "b";
+      return localStorage.getItem("workout-routine") || "c";
     } catch {
-      return "b";
+      return "c";
     }
   });
 
-  const routine = routines.find((r) => r.id === activeRoutineId) ?? routines[1]!;
+  const routine = routines.find((r) => r.id === activeRoutineId) ?? routines[2]!;
   const workoutData = routine.workoutData;
   const weeklyExercises = routine.weeklyExercises;
 
