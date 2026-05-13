@@ -125,12 +125,16 @@ const { projects } = Astro.props;
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
               </button>
 
-              <Image
-                alt={title}
-                class="w-full h-auto max-h-[50dvh] object-cover object-top flex-shrink-0"
-                src={image}
-                loading="eager"
-              />
+              <div
+                class="w-full flex items-center justify-center max-h-[60dvh] flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-black/40"
+              >
+                <Image
+                  alt={title}
+                  class="w-auto h-auto max-w-full max-h-[60dvh] object-contain"
+                  src={image}
+                  loading="eager"
+                />
+              </div>
 
               <div class="px-7 py-7 overflow-y-auto">
                 <h2
