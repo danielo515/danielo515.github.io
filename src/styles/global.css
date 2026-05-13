@@ -1,24 +1,89 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* Custom theme extensions migrated from tailwind.config.mjs */
+/* Make the `.dark` class on <html> drive Tailwind's dark variant
+   (matches the ThemeToggle's class-toggling behavior) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --animate-bounce-right: slide-in 0.5s ease-in-out infinite alternate;
 
   @keyframes slide-in {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(1rem);
-    }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(1rem); }
+  }
+
+  @keyframes fade-up {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes word-rise {
+    0% { opacity: 0; transform: translateY(0.25em); }
+    100% { opacity: 1; transform: translateY(0); }
   }
 }
 
-/* Custom utility for visible links */
 @utility visible-links {
-  & a {
-    color: var(--color-blue-500);
+  & a { color: var(--color-blue-500); }
+}
+
+/* Cursor-tracking spotlight on cards — neutral white/black, not colorful */
+@utility spotlight-card {
+  position: relative;
+  isolation: isolate;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s;
+}
+
+@utility spotlight-card-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: radial-gradient(
+    320px circle at var(--x, 50%) var(--y, 50%),
+    rgba(0, 0, 0, 0.06),
+    transparent 65%
+  );
+}
+
+:where(.dark) .spotlight-card-glow {
+  background: radial-gradient(
+    320px circle at var(--x, 50%) var(--y, 50%),
+    rgba(255, 255, 255, 0.07),
+    transparent 65%
+  );
+}
+
+.spotlight-card:hover .spotlight-card-glow,
+.spotlight-card:focus-within .spotlight-card-glow {
+  opacity: 1;
+}
+
+/* Top scroll-progress bar — single accent, subtle */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-progress-bar {
+      transform-origin: 0 50%;
+      animation: progress-grow linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+}
+@keyframes progress-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Hero word fade — subtle, no blur, no color change */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-word {
+    display: inline-block;
+    opacity: 0;
+    animation: word-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: calc(var(--i, 0) * 60ms + 80ms);
   }
 }
 

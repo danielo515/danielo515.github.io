@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import { render } from "astro:content";
 import type { CollectionEntry } from "astro:content";
+import ArrowRightIcon from "./icons/ArrowRightIcon.astro";
 import GitHub from "./icons/GitHub.astro";
 import Link from "./icons/Link.astro";
 import LinkButton from "./LinkButton.astro";
@@ -11,69 +12,304 @@ interface Props {
   projects: Array<CollectionEntry<"projects">>;
 }
 
-const projects = Astro.props.projects;
+const { projects } = Astro.props;
 ---
 
-<div class="flex flex-col gap-y-16">
+<div class="grid grid-cols-1 md:grid-cols-6 gap-6 auto-rows-[minmax(0,_1fr)]">
   {
-    projects.map(
-      async (project) => {
-        const { data: { image, title, tags, url: link, github } } = project;
-        const { Content } = await render(project);
-        return (
-          <Fragment>
-            <article class="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">
-              <div class="w-full md:w-1/2">
-                <div class="relative flex flex-col items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50">
-                  <Image
-                    alt={title}
-                    class="object-cover object-top w-full h-56 transition duration-500 sm:h-full md:scale-110 md:group-hover:scale-105"
-                    loading="lazy"
-                    src={image}
-                  />
+    projects.map(async (project, idx) => {
+      const {
+        data: { image, title, tags, url: link, github, imageFit },
+      } = project;
+      const { Content } = await render(project);
+      const modalId = `project-modal-${idx}`;
+      const isFeature = idx === 0;
+      const tileClass = isFeature
+        ? "md:col-span-6 md:flex-row"
+        : "md:col-span-3 md:flex-col";
+
+      return (
+        <Fragment>
+          <article
+            data-spotlight
+            data-modal-target={modalId}
+            tabindex="0"
+            role="button"
+            aria-haspopup="dialog"
+            aria-label={`Open ${title} details`}
+            class={`spotlight-card group relative flex flex-col ${tileClass} gap-6 p-5 rounded-2xl border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/[0.02] backdrop-blur-sm shadow-sm hover:-translate-y-0.5 hover:shadow-lg hover:border-gray-300 dark:hover:border-white/20 overflow-hidden cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60`}
+          >
+            <span class="spotlight-card-glow" aria-hidden="true" />
+
+            <div
+              class={`relative overflow-hidden rounded-xl ring-1 ring-black/5 dark:ring-white/10 ${
+                isFeature ? "md:w-1/2 md:flex-shrink-0" : "w-full"
+              }`}
+            >
+              <Image
+                alt={title}
+                class={`object-cover object-top w-full transition duration-700 group-hover:scale-[1.03] ${
+                  isFeature ? "h-64 md:h-72" : "h-48"
+                }`}
+                loading="lazy"
+                src={image}
+              />
+            </div>
+
+            <div class={`flex flex-col gap-3 ${isFeature ? "md:flex-1" : ""}`}>
+              <h3
+                class={`font-bold tracking-tight text-gray-800 dark:text-gray-100 ${
+                  isFeature ? "text-3xl" : "text-2xl"
+                }`}
+              >
+                {title}
+              </h3>
+
+              <ul class="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <li>
+                    <TechTag tag={tag} />
+                  </li>
+                ))}
+              </ul>
+
+              <div class="relative">
+                <div
+                  class={`text-gray-700 dark:text-gray-400 leading-relaxed [mask-image:linear-gradient(to_bottom,black_60%,transparent_100%)] ${
+                    isFeature ? "text-base line-clamp-5" : "text-sm line-clamp-4"
+                  }`}
+                >
+                  <Content />
                 </div>
               </div>
 
-              <div class="w-full md:w-1/2 md:max-w-lg">
-                <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+              <span
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 transition-all group-hover:gap-2.5 group-hover:text-blue-700 dark:group-hover:text-blue-300 select-none"
+                aria-hidden="true"
+              >
+                Read more
+                <ArrowRightIcon class="size-4 transition-transform group-hover:translate-x-0.5" />
+              </span>
+
+              <footer class="flex items-center mt-auto pt-3 gap-3" data-modal-ignore>
+                {github && (
+                  <LinkButton href={github}>
+                    <GitHub class="size-5" />
+                    Code
+                  </LinkButton>
+                )}
+                {link && (
+                  <LinkButton href={link}>
+                    <Link class="size-4" />
+                    Preview
+                  </LinkButton>
+                )}
+              </footer>
+            </div>
+          </article>
+
+          <dialog
+            id={modalId}
+            class="project-modal"
+            aria-labelledby={`${modalId}-title`}
+          >
+            <div
+              class="project-modal__panel relative flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
+            >
+              <button
+                type="button"
+                data-modal-close
+                aria-label="Close"
+                class="absolute top-3 right-3 z-10 inline-flex items-center justify-center w-9 h-9 rounded-full bg-black/45 hover:bg-black/70 text-white border-0 cursor-pointer transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+              </button>
+
+              <div
+                class={`w-full flex items-center justify-center max-h-[60dvh] flex-shrink-0 overflow-hidden ${
+                  imageFit === "cover" ? "" : "bg-gray-100 dark:bg-black/40"
+                }`}
+              >
+                <Image
+                  alt={title}
+                  class={
+                    imageFit === "cover"
+                      ? "w-full h-full max-h-[60dvh] object-cover object-center"
+                      : "w-auto h-auto max-w-full max-h-[60dvh] object-contain"
+                  }
+                  src={image}
+                  loading="eager"
+                />
+              </div>
+
+              <div class="px-7 py-7 overflow-y-auto">
+                <h2
+                  id={`${modalId}-title`}
+                  class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white"
+                >
                   {title}
-                </h3>
-                <div class="flex flex-wrap mt-2">
-                  <ul class="flex flex-row mb-2 gap-x-2">
-                    {tags.map((tag) => (
-                      <li>
-                        <TechTag tag={tag} />
-                      </li>
-                    ))}
-                  </ul>
+                </h2>
 
-                  <div class="mt-2 text-gray-700 dark:text-gray-400">
-                    {<Content />}
-                  </div>
-                  <footer class="flex items-end justify-start mt-4 gap-x-4">
-                    {github && (
-                      <Fragment>
-                        <LinkButton href={github}>
-                          <GitHub class="size-6" />
-                          Code
-                        </LinkButton>
-                      </Fragment>
-                    )}
-                    {link && (
-                      <Fragment>
-                        <LinkButton href={link}>
-                          <Link class="size-4" />
-                          Preview
-                        </LinkButton>
-                      </Fragment>
-                    )}
-                  </footer>
+                <ul class="flex flex-wrap gap-2 mt-3">
+                  {tags.map((tag) => (
+                    <li>
+                      <TechTag tag={tag} />
+                    </li>
+                  ))}
+                </ul>
+
+                <div class="mt-5 prose prose-neutral dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                  <Content />
                 </div>
+
+                <footer class="flex items-center pt-6 gap-3">
+                  {github && (
+                    <LinkButton href={github}>
+                      <GitHub class="size-5" />
+                      Code
+                    </LinkButton>
+                  )}
+                  {link && (
+                    <LinkButton href={link}>
+                      <Link class="size-4" />
+                      Preview
+                    </LinkButton>
+                  )}
+                </footer>
               </div>
-            </article>
-          </Fragment>
-        );
-      }
-    )
+            </div>
+          </dialog>
+        </Fragment>
+      );
+    })
   }
 </div>
+
+<script>
+  function bindProjectInteractions() {
+    // Cursor-tracking spotlight on each card
+    const cards = document.querySelectorAll<HTMLElement>("[data-spotlight]");
+    cards.forEach((card) => {
+      if (card.dataset.bound) return;
+      card.dataset.bound = "true";
+
+      card.addEventListener("pointermove", (e) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty("--x", `${e.clientX - rect.left}px`);
+        card.style.setProperty("--y", `${e.clientY - rect.top}px`);
+      });
+
+      // Open modal on card click (but not if user clicked a link or the footer)
+      card.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest("a, button, [data-modal-ignore]")) return;
+        const id = card.getAttribute("data-modal-target");
+        if (!id) return;
+        const dialog = document.getElementById(id) as HTMLDialogElement | null;
+        dialog?.showModal();
+      });
+
+      // Keyboard: Enter / Space opens
+      card.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const target = e.target as HTMLElement;
+        if (target.closest("a, button")) return;
+        e.preventDefault();
+        const id = card.getAttribute("data-modal-target");
+        if (!id) return;
+        const dialog = document.getElementById(id) as HTMLDialogElement | null;
+        dialog?.showModal();
+      });
+    });
+
+    // Close handlers (close button + click on backdrop)
+    const dialogs = document.querySelectorAll<HTMLDialogElement>(".project-modal");
+    dialogs.forEach((d) => {
+      if (d.dataset.bound) return;
+      d.dataset.bound = "true";
+
+      d.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest("[data-modal-close]")) {
+          d.close();
+          return;
+        }
+        // Click on the dialog element itself = backdrop click
+        if (target === d) d.close();
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", bindProjectInteractions);
+  bindProjectInteractions();
+</script>
+
+<style is:global>
+  .project-modal {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    width: min(56rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    color: inherit;
+    /* Allow the dialog itself to participate in display/overlay transitions
+       so its inner panel can animate cleanly on open/close */
+    transition:
+      overlay 0.3s allow-discrete,
+      display 0.3s allow-discrete;
+  }
+
+  .project-modal::backdrop {
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0);
+    transition:
+      background-color 0.25s ease-out,
+      backdrop-filter 0.25s ease-out,
+      overlay 0.3s allow-discrete,
+      display 0.3s allow-discrete;
+  }
+
+  .project-modal[open]::backdrop {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(6px);
+  }
+
+  @starting-style {
+    .project-modal[open]::backdrop {
+      background: rgba(15, 23, 42, 0);
+      backdrop-filter: blur(0);
+    }
+  }
+
+  .project-modal__panel {
+    max-height: calc(100dvh - 2rem);
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+    transition:
+      opacity 0.25s ease-out,
+      transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .project-modal[open] .project-modal__panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  @starting-style {
+    .project-modal[open] .project-modal__panel {
+      opacity: 0;
+      transform: translateY(16px) scale(0.97);
+    }
+  }
+
+  /* Reduce motion */
+  @media (prefers-reduced-motion: reduce) {
+    .project-modal,
+    .project-modal::backdrop {
+      transition: none;
+    }
+  }
+</style>
