@@ -19,7 +19,7 @@ const { projects } = Astro.props;
   {
     projects.map(async (project, idx) => {
       const {
-        data: { image, title, tags, url: link, github },
+        data: { image, title, tags, url: link, github, imageFit },
       } = project;
       const { Content } = await render(project);
       const modalId = `project-modal-${idx}`;
@@ -126,11 +126,17 @@ const { projects } = Astro.props;
               </button>
 
               <div
-                class="w-full flex items-center justify-center max-h-[60dvh] flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-black/40"
+                class={`w-full flex items-center justify-center max-h-[60dvh] flex-shrink-0 overflow-hidden ${
+                  imageFit === "cover" ? "" : "bg-gray-100 dark:bg-black/40"
+                }`}
               >
                 <Image
                   alt={title}
-                  class="w-auto h-auto max-w-full max-h-[60dvh] object-contain"
+                  class={
+                    imageFit === "cover"
+                      ? "w-full h-full max-h-[60dvh] object-cover object-center"
+                      : "w-auto h-auto max-w-full max-h-[60dvh] object-contain"
+                  }
                   src={image}
                   loading="eager"
                 />

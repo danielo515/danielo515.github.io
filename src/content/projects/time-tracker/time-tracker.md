@@ -2,6 +2,7 @@
 title: Time tracker
 description: An app to track the usage of my ti
 image: ./shot-1.png
+imageFit: cover
 technologies: 
 - React
 - Redux

@@ -39,6 +39,11 @@ export const collections = {
         url: z.string().optional(),
         github: z.string().optional(),
         tags: z.array(tag),
+        // How the project image is fit inside the detail modal.
+        // - "contain" (default): show the full image, letterboxed if needed
+        // - "cover": crop the image to fill the modal frame — use when the
+        //   source has wide empty padding around the subject
+        imageFit: z.enum(["cover", "contain"]).default("contain"),
       }),
   }),
   experience: defineCollection({
