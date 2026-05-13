@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import { render } from "astro:content";
 import type { CollectionEntry } from "astro:content";
+import ArrowRightIcon from "./icons/ArrowRightIcon.astro";
 import GitHub from "./icons/GitHub.astro";
 import Link from "./icons/Link.astro";
 import LinkButton from "./LinkButton.astro";
@@ -72,13 +73,23 @@ const { projects } = Astro.props;
                 ))}
               </ul>
 
-              <div
-                class={`text-gray-700 dark:text-gray-400 leading-relaxed ${
-                  isFeature ? "text-base line-clamp-5" : "text-sm line-clamp-4"
-                }`}
-              >
-                <Content />
+              <div class="relative">
+                <div
+                  class={`text-gray-700 dark:text-gray-400 leading-relaxed [mask-image:linear-gradient(to_bottom,black_60%,transparent_100%)] ${
+                    isFeature ? "text-base line-clamp-5" : "text-sm line-clamp-4"
+                  }`}
+                >
+                  <Content />
+                </div>
               </div>
+
+              <span
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 transition-all group-hover:gap-2.5 group-hover:text-blue-700 dark:group-hover:text-blue-300 select-none"
+                aria-hidden="true"
+              >
+                Read more
+                <ArrowRightIcon class="size-4 transition-transform group-hover:translate-x-0.5" />
+              </span>
 
               <footer class="flex items-center mt-auto pt-3 gap-3" data-modal-ignore>
                 {github && (
