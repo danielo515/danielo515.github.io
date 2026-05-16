@@ -1,4 +1,25 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type CSSProperties,
+} from "react";
+import {
+  JazzReactProvider,
+  useAccount,
+  usePassphraseAuth,
+} from "jazz-tools/react";
+import { wordlist } from "@scure/bip39/wordlists/spanish.js";
+import {
+  WorkoutAccount,
+  createRoutineState,
+  legacyRoutineId,
+  loadLegacyRoutine,
+} from "./schema/Workout";
+
+const SYNC_PEER =
+  "wss://cloud.jazz.tools/?key=workout-tracker@danielo515.github.io";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -1004,91 +1025,73 @@ function RestTimerBar({
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
-export default function WorkoutApp() {
-  // ── Helpers for per-routine localStorage ──
-  const loadActiveDay = (rid: string) => {
-    try {
-      const saved = localStorage.getItem(`workout-${rid}-active-day`);
-      return saved ? Number(saved) : 0;
-    } catch {
-      return 0;
-    }
-  };
-  const loadCompleted = (rid: string): Record<string, number> => {
-    try {
-      const saved = localStorage.getItem(`workout-${rid}-completed`);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  };
-  const loadWeekHistory = (rid: string): number[] => {
-    try {
-      const saved = localStorage.getItem(`workout-${rid}-week-history`);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  };
+const ROUTINE_IDS = ["a", "b", "c"];
 
-  // ── Routine selection (new routine "c" is default) ──
-  const [activeRoutineId, setActiveRoutineId] = useState(() => {
-    try {
-      // Migration: move old data to routine "a" namespace
-      if (!localStorage.getItem("workout-routine")) {
-        const oldCompleted = localStorage.getItem("workout-completed");
-        const oldActiveDay = localStorage.getItem("workout-active-day");
-        const oldWeekHistory = localStorage.getItem("workout-week-history");
-        if (oldCompleted) localStorage.setItem("workout-a-completed", oldCompleted);
-        if (oldActiveDay) localStorage.setItem("workout-a-active-day", oldActiveDay);
-        if (oldWeekHistory) localStorage.setItem("workout-a-week-history", oldWeekHistory);
-        localStorage.setItem("workout-routine", "c");
-        return "c";
-      }
-      return localStorage.getItem("workout-routine") || "c";
-    } catch {
-      return "c";
-    }
+function WorkoutTracker() {
+  const me = useAccount(WorkoutAccount, {
+    resolve: {
+      root: { routines: { $each: { completed: true, weekHistory: true } } },
+    },
   });
+  const { secondsLeft, running, start, stop } = useRestTimer();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Seed any missing routine state from the pre-Jazz localStorage data.
+  useEffect(() => {
+    if (!me.$isLoaded) return;
+    const root = me.root;
+    const wasEmpty = ROUTINE_IDS.every((id) => !root.routines.$jazz.has(id));
+    for (const rid of ROUTINE_IDS) {
+      if (!root.routines.$jazz.has(rid)) {
+        root.routines.$jazz.set(rid, createRoutineState(loadLegacyRoutine(rid)));
+      }
+    }
+    if (wasEmpty) {
+      const legacy = legacyRoutineId();
+      if (legacy && ROUTINE_IDS.includes(legacy)) {
+        root.$jazz.set("activeRoutineId", legacy);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me.$isLoaded]);
+
+  if (!me.$isLoaded) return <LoadingScreen />;
+
+  const appRoot = me.root;
+  const activeRoutineId = appRoot.activeRoutineId;
+  const routineState = appRoot.routines[activeRoutineId];
+  if (!routineState?.$isLoaded) return <LoadingScreen />;
 
   const routine = routines.find((r) => r.id === activeRoutineId) ?? routines[2]!;
   const workoutData = routine.workoutData;
   const weeklyExercises = routine.weeklyExercises;
 
-  const [activeDay, setActiveDay] = useState(() => loadActiveDay(activeRoutineId));
-  const [completed, setCompleted] = useState<Record<string, number>>(() => loadCompleted(activeRoutineId));
-  const [weekHistory, setWeekHistory] = useState<number[]>(() => loadWeekHistory(activeRoutineId));
-  const { secondsLeft, running, start, stop } = useRestTimer();
+  const completed = routineState.completed;
+  const weekHistory = routineState.weekHistory;
+  const activeDay = Math.max(
+    0,
+    Math.min(routineState.activeDay, workoutData.length - 1),
+  );
+
+  const setActiveDay = (i: number) => routineState.$jazz.set("activeDay", i);
 
   const switchRoutine = (newId: string) => {
-    setActiveRoutineId(newId);
-    localStorage.setItem("workout-routine", newId);
-    setActiveDay(loadActiveDay(newId));
-    setCompleted(loadCompleted(newId));
-    setWeekHistory(loadWeekHistory(newId));
+    if (!appRoot.routines.$jazz.has(newId)) {
+      appRoot.routines.$jazz.set(
+        newId,
+        createRoutineState(loadLegacyRoutine(newId)),
+      );
+    }
+    appRoot.$jazz.set("activeRoutineId", newId);
   };
-
-  useEffect(() => {
-    localStorage.setItem(`workout-${activeRoutineId}-active-day`, String(activeDay));
-  }, [activeDay, activeRoutineId]);
-
-  useEffect(() => {
-    localStorage.setItem(`workout-${activeRoutineId}-completed`, JSON.stringify(completed));
-  }, [completed, activeRoutineId]);
-
-  useEffect(() => {
-    localStorage.setItem(`workout-${activeRoutineId}-week-history`, JSON.stringify(weekHistory));
-  }, [weekHistory, activeRoutineId]);
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const day = workoutData[activeDay]!;
 
   const handleSetDone = (exerciseId: string, setNum: number) => {
-    setCompleted((prev) => {
-      const current = prev[exerciseId] ?? 0;
-      const newVal = current === setNum ? setNum - 1 : setNum;
-      return { ...prev, [exerciseId]: newVal };
-    });
+    const current = completed[exerciseId] ?? 0;
+    const newVal = current === setNum ? setNum - 1 : setNum;
+    completed.$jazz.set(exerciseId, newVal);
   };
 
   const getTotalSets = (d: WorkoutDay) =>
@@ -1106,12 +1109,9 @@ export default function WorkoutApp() {
   const progressPct = dayTotal > 0 ? (dayProgress / dayTotal) * 100 : 0;
 
   const resetDay = () => {
-    const ids = day.groups.flatMap((g) => g.exercises.map((e) => e.id));
-    setCompleted((prev) => {
-      const next = { ...prev };
-      ids.forEach((id) => delete next[id]);
-      return next;
-    });
+    day.groups
+      .flatMap((g) => g.exercises.map((e) => e.id))
+      .forEach((id) => completed.$jazz.delete(id));
   };
 
   const allDaysComplete = workoutData.every(
@@ -1129,20 +1129,18 @@ export default function WorkoutApp() {
 
   const completeWeek = () => {
     if (!allWeekComplete) return;
-    setWeekHistory((prev) => [...prev, Date.now()]);
-    setCompleted({});
-    setActiveDay(0);
+    weekHistory.$jazz.push(Date.now());
+    Object.keys(completed).forEach((key) => completed.$jazz.delete(key));
+    routineState.$jazz.set("activeDay", 0);
   };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const exportData = () => {
     const data = {
       version: 1,
       exportedAt: new Date().toISOString(),
       activeDay,
-      completed,
-      weekHistory,
+      completed: { ...completed },
+      weekHistory: [...weekHistory],
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: "application/json",
@@ -1160,9 +1158,22 @@ export default function WorkoutApp() {
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
-        if (data.completed) setCompleted(data.completed);
-        if (data.weekHistory) setWeekHistory(data.weekHistory);
-        if (typeof data.activeDay === "number") setActiveDay(data.activeDay);
+        if (data.completed && typeof data.completed === "object") {
+          Object.keys(completed).forEach((key) => completed.$jazz.delete(key));
+          for (const [key, value] of Object.entries(data.completed)) {
+            completed.$jazz.set(key, Number(value));
+          }
+        }
+        if (Array.isArray(data.weekHistory)) {
+          weekHistory.$jazz.splice(
+            0,
+            weekHistory.length,
+            ...data.weekHistory.map(Number),
+          );
+        }
+        if (typeof data.activeDay === "number") {
+          routineState.$jazz.set("activeDay", data.activeDay);
+        }
       } catch {
         alert("Error al leer el archivo de backup");
       }
@@ -1748,6 +1759,9 @@ export default function WorkoutApp() {
         </button>
       </div>
 
+      {/* Sync */}
+      <SyncPanel color={day.color} />
+
       {/* Rest timer */}
       <RestTimerBar
         secondsLeft={secondsLeft}
@@ -1757,5 +1771,279 @@ export default function WorkoutApp() {
         color={day.color}
       />
     </div>
+  );
+}
+
+// ─── LOADING ─────────────────────────────────────────────────────────────────
+
+function LoadingScreen() {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#0a0a0a",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 13,
+          letterSpacing: "0.14em",
+          color: "#444",
+          textTransform: "uppercase",
+        }}
+      >
+        Cargando…
+      </span>
+    </div>
+  );
+}
+
+// ─── SYNC PANEL ──────────────────────────────────────────────────────────────
+
+function SyncPanel({ color }: { color: string }) {
+  const auth = usePassphraseAuth({ wordlist });
+  const [showPhrase, setShowPhrase] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginPhrase, setLoginPhrase] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const signedIn = auth.state === "signedIn";
+
+  const enableSync = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await auth.signUp();
+      setShowPhrase(true);
+    } catch {
+      setError("No se pudo activar la sincronización. Inténtalo de nuevo.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const logIn = async () => {
+    const phrase = loginPhrase.trim().replace(/\s+/g, " ");
+    if (!phrase) return;
+    setBusy(true);
+    setError("");
+    try {
+      await auth.logIn(phrase);
+      setShowLogin(false);
+      setLoginPhrase("");
+    } catch {
+      setError("La frase no es válida. Revísala e inténtalo de nuevo.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const copyPhrase = async () => {
+    try {
+      await navigator.clipboard.writeText(auth.passphrase);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+
+  const sectionLabel: CSSProperties = {
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 10,
+    fontWeight: 700,
+    color: "#444",
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    marginBottom: 8,
+  };
+  const bodyText: CSSProperties = {
+    fontFamily: "'Barlow', sans-serif",
+    fontSize: 12,
+    color: "#888",
+    lineHeight: 1.5,
+  };
+  const primaryBtn: CSSProperties = {
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 12,
+    fontWeight: 800,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    width: "100%",
+    padding: "11px 14px",
+    background: busy ? "#1a1a1a" : color,
+    color: busy ? "#444" : "#000",
+    border: `1px solid ${busy ? "#222" : color}`,
+    borderRadius: 6,
+    cursor: busy ? "default" : "pointer",
+  };
+  const ghostBtn: CSSProperties = {
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    background: "transparent",
+    color: "#666",
+    border: "none",
+    padding: "8px 0 0",
+    cursor: "pointer",
+  };
+
+  return (
+    <div style={{ padding: "16px 20px 0" }}>
+      <div style={sectionLabel}>Sincronización</div>
+      <div
+        style={{
+          background: "#111",
+          border: "1px solid #1a1a1a",
+          borderRadius: 8,
+          padding: 14,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
+        {signedIn ? (
+          <>
+            <div
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                color: "#22c55e",
+                textTransform: "uppercase",
+              }}
+            >
+              ✓ Sincronización activa
+            </div>
+            <div style={bodyText}>
+              Tu progreso se sincroniza entre tus dispositivos.
+            </div>
+            <button
+              type="button"
+              style={ghostBtn}
+              onClick={() => setShowPhrase((v) => !v)}
+            >
+              {showPhrase ? "Ocultar frase" : "Ver frase de recuperación"}
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={bodyText}>
+              Tus datos se guardan solo en este dispositivo. Activa la
+              sincronización para acceder a tu progreso desde otros
+              dispositivos.
+            </div>
+            <button
+              type="button"
+              style={primaryBtn}
+              disabled={busy}
+              onClick={enableSync}
+            >
+              {busy ? "Activando…" : "Activar sincronización"}
+            </button>
+            <button
+              type="button"
+              style={ghostBtn}
+              onClick={() => {
+                setShowLogin((v) => !v);
+                setError("");
+              }}
+            >
+              {showLogin ? "Cancelar" : "Ya tengo una frase de recuperación"}
+            </button>
+            {showLogin && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <textarea
+                  value={loginPhrase}
+                  onChange={(e) => setLoginPhrase(e.target.value)}
+                  placeholder="Escribe aquí tu frase de recuperación"
+                  rows={3}
+                  style={{
+                    fontFamily: "'Barlow', sans-serif",
+                    fontSize: 13,
+                    color: "#fff",
+                    background: "#0a0a0a",
+                    border: "1px solid #222",
+                    borderRadius: 6,
+                    padding: "8px 10px",
+                    resize: "vertical",
+                  }}
+                />
+                <button
+                  type="button"
+                  style={primaryBtn}
+                  disabled={busy || !loginPhrase.trim()}
+                  onClick={logIn}
+                >
+                  {busy ? "Entrando…" : "Entrar"}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {showPhrase && signedIn && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div
+              style={{
+                fontFamily: "'Barlow', sans-serif",
+                fontSize: 14,
+                color: "#fff",
+                lineHeight: 1.6,
+                background: "#0a0a0a",
+                border: `1px solid ${color}44`,
+                borderRadius: 6,
+                padding: "10px 12px",
+                wordSpacing: "0.15em",
+              }}
+            >
+              {auth.passphrase}
+            </div>
+            <button type="button" style={primaryBtn} onClick={copyPhrase}>
+              {copied ? "✓ Copiada" : "Copiar frase"}
+            </button>
+            <div style={{ ...bodyText, color: "#666", fontSize: 11 }}>
+              Guárdala en un lugar seguro. La necesitarás para acceder a tu
+              progreso desde otro dispositivo.
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div
+            style={{
+              fontFamily: "'Barlow', sans-serif",
+              fontSize: 12,
+              color: "#ef4444",
+            }}
+          >
+            {error}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── ROOT (Jazz provider) ────────────────────────────────────────────────────
+
+export default function WorkoutApp() {
+  return (
+    <JazzReactProvider
+      sync={{ peer: SYNC_PEER }}
+      AccountSchema={WorkoutAccount}
+      fallback={<LoadingScreen />}
+    >
+      <WorkoutTracker />
+    </JazzReactProvider>
   );
 }
