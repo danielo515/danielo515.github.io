@@ -1036,6 +1036,10 @@ function WorkoutTracker() {
   const { secondsLeft, running, start, stop } = useRestTimer();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Re-runs when the active account changes (e.g. after logging in with a
+  // recovery phrase), so a freshly switched-to account is seeded too.
+  const accountId = me.$isLoaded ? me.$jazz.id : null;
+
   // Seed any missing routine state from the pre-Jazz localStorage data.
   useEffect(() => {
     if (!me.$isLoaded) return;
@@ -1053,9 +1057,15 @@ function WorkoutTracker() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [me.$isLoaded]);
+  }, [accountId]);
 
-  if (!me.$isLoaded) return <LoadingScreen />;
+  if (!me.$isLoaded) {
+    if (me.$jazz.loadingState === "unauthorized")
+      return <LoadingScreen message="No tienes acceso a esta cuenta." />;
+    if (me.$jazz.loadingState === "unavailable")
+      return <LoadingScreen message="No se pudo cargar tu cuenta." />;
+    return <LoadingScreen />;
+  }
 
   const appRoot = me.root;
   const activeRoutineId = appRoot.activeRoutineId;
@@ -1079,7 +1089,7 @@ function WorkoutTracker() {
     if (!appRoot.routines.$jazz.has(newId)) {
       appRoot.routines.$jazz.set(
         newId,
-        createRoutineState(loadLegacyRoutine(newId)),
+        createRoutineState({ activeDay: 0, completed: {}, weekHistory: [] }),
       );
     }
     appRoot.$jazz.set("activeRoutineId", newId);
@@ -1776,7 +1786,7 @@ function WorkoutTracker() {
 
 // ─── LOADING ─────────────────────────────────────────────────────────────────
 
-function LoadingScreen() {
+function LoadingScreen({ message = "Cargando…" }: { message?: string }) {
   return (
     <div
       style={{
@@ -1796,7 +1806,7 @@ function LoadingScreen() {
           textTransform: "uppercase",
         }}
       >
-        Cargando…
+        {message}
       </span>
     </div>
   );
