@@ -33,7 +33,6 @@ type VoiceProfile = {
 type CharacterDef = {
   emoji: string;
   name: string;
-  tagline: string;
   hue: number;
   voice: VoiceProfile;
 };
@@ -44,7 +43,6 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🦜",
     name: "Loro",
-    tagline: "¡Soy un loro! Cuéntame algo",
     hue: 0.12,
     voice: {
       playbackRate: 1.55,
@@ -54,7 +52,6 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🐸",
     name: "Rana",
-    tagline: "Croac… habla y croaré tus palabras",
     hue: 0.3,
     voice: {
       playbackRate: 0.7,
@@ -65,7 +62,6 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🦊",
     name: "Zorro",
-    tagline: "Susúrrame y lo repetiré",
     hue: 0.04,
     voice: {
       playbackRate: 1.15,
@@ -75,7 +71,6 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🐵",
     name: "Mono",
-    tagline: "¡Uh ah! Dime algo gracioso",
     hue: 0.08,
     voice: {
       playbackRate: 1.85,
@@ -85,7 +80,6 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🐼",
     name: "Panda",
-    tagline: "Sin prisa… te escucho",
     hue: 0.58,
     voice: {
       playbackRate: 0.78,
@@ -95,7 +89,6 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🦄",
     name: "Unicornio",
-    tagline: "Dime un secreto mágico ✨",
     hue: 0.85,
     voice: {
       playbackRate: 1.3,
@@ -104,14 +97,6 @@ const CHARACTERS: readonly CharacterDef[] = [
     },
   },
 ] as const;
-
-const STATE_LABELS: Partial<Record<EchoState, string>> = {
-  permission: "Permite el micrófono…",
-  listening: "Te escucho…",
-  recording: "¡Habla, habla!",
-  playing: "¡Te lo repito!",
-  error: "Ups, algo falló",
-};
 
 type PastEcho = {
   id: number;
@@ -766,19 +751,8 @@ export default function EchoSimulator() {
           </>
         )}
 
-        {/* State label / tagline + countdown */}
-        <div className="mb-2 flex h-9 items-center gap-2">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={state === "idle" ? `tag-${character.emoji}` : state}
-              initial={{ y: 6, opacity: 0, scale: 0.9 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: -6, opacity: 0, scale: 0.9 }}
-              className="rounded-full bg-white/85 px-4 py-1 text-base font-extrabold text-purple-700 shadow"
-            >
-              {state === "idle" ? character.tagline : STATE_LABELS[state]}
-            </motion.div>
-          </AnimatePresence>
+        {/* Silence countdown */}
+        <div className="mb-2 flex h-8 items-center">
           <AnimatePresence>
             {silenceCountdown !== null && silenceCountdown > 0 && (
               <motion.div
