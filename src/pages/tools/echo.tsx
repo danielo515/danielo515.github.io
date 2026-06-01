@@ -1,3 +1,4 @@
+import EchoAura from "@/components/EchoAura";
 import EchoEqualizer from "@/components/EchoEqualizer";
 import { Mic, MicOff, Play, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -32,14 +33,18 @@ type VoiceProfile = {
 type CharacterDef = {
   emoji: string;
   name: string;
+  tagline: string;
   hue: number;
   voice: VoiceProfile;
 };
+
+type VisualMode = "aura" | "equalizer";
 
 const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🦜",
     name: "Loro",
+    tagline: "¡Soy un loro! Cuéntame algo",
     hue: 0.12,
     voice: {
       playbackRate: 1.55,
@@ -49,6 +54,7 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🐸",
     name: "Rana",
+    tagline: "Croac… habla y croaré tus palabras",
     hue: 0.3,
     voice: {
       playbackRate: 0.7,
@@ -59,6 +65,7 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🦊",
     name: "Zorro",
+    tagline: "Susúrrame y lo repetiré",
     hue: 0.04,
     voice: {
       playbackRate: 1.15,
@@ -68,6 +75,7 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🐵",
     name: "Mono",
+    tagline: "¡Uh ah! Dime algo gracioso",
     hue: 0.08,
     voice: {
       playbackRate: 1.85,
@@ -77,6 +85,7 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🐼",
     name: "Panda",
+    tagline: "Sin prisa… te escucho",
     hue: 0.58,
     voice: {
       playbackRate: 0.78,
@@ -86,6 +95,7 @@ const CHARACTERS: readonly CharacterDef[] = [
   {
     emoji: "🦄",
     name: "Unicornio",
+    tagline: "Dime un secreto mágico ✨",
     hue: 0.85,
     voice: {
       playbackRate: 1.3,
@@ -95,8 +105,7 @@ const CHARACTERS: readonly CharacterDef[] = [
   },
 ] as const;
 
-const STATE_LABELS: Record<EchoState, string> = {
-  idle: "¡Pulsa para empezar!",
+const STATE_LABELS: Partial<Record<EchoState, string>> = {
   permission: "Permite el micrófono…",
   listening: "Te escucho…",
   recording: "¡Habla, habla!",
@@ -326,6 +335,7 @@ export default function EchoSimulator() {
   const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null);
   const [pastEchoes, setPastEchoes] = useState<PastEcho[]>([]);
   const [playingEchoId, setPlayingEchoId] = useState<number | null>(null);
+  const [mode, setMode] = useState<VisualMode>("aura");
 
   const character = CHARACTERS[characterIdx]!;
 
@@ -697,39 +707,76 @@ export default function EchoSimulator() {
           🎤 Eco Mágico
         </h1>
 
-        {/* Character */}
-        <div className="relative mb-1 flex h-44 w-44 items-center justify-center">
-          <motion.div
-            key={character.emoji}
-            className="relative select-none text-[6.5rem] leading-none drop-shadow-2xl"
-            animate={{
-              scale: characterScale,
-              rotate: state === "playing" ? [0, -8, 8, -6, 6, 0] : 0,
-              y: state === "recording" ? [0, -6, 0] : 0,
-            }}
-            transition={
-              state === "playing"
-                ? { duration: 0.8, repeat: Infinity }
-                : state === "recording"
-                  ? { duration: 0.4, repeat: Infinity }
-                  : { type: "spring", stiffness: 200, damping: 15 }
-            }
-          >
-            {character.emoji}
-          </motion.div>
-        </div>
+        {/* Character + visualizer */}
+        {mode === "aura" ? (
+          <div className="relative mb-2 flex h-72 w-full items-center justify-center overflow-hidden rounded-3xl">
+            <EchoAura
+              freqDataRef={freqDataRef}
+              hue={character.hue}
+              active={isActive}
+            />
+            <motion.div
+              key={character.emoji}
+              className="relative z-10 select-none text-[7rem] leading-none drop-shadow-2xl"
+              animate={{
+                scale: characterScale,
+                rotate: state === "playing" ? [0, -8, 8, -6, 6, 0] : 0,
+                y: state === "recording" ? [0, -6, 0] : 0,
+              }}
+              transition={
+                state === "playing"
+                  ? { duration: 0.8, repeat: Infinity }
+                  : state === "recording"
+                    ? { duration: 0.4, repeat: Infinity }
+                    : { type: "spring", stiffness: 200, damping: 15 }
+              }
+            >
+              {character.emoji}
+            </motion.div>
+          </div>
+        ) : (
+          <>
+            <div className="relative mb-1 flex h-44 w-44 items-center justify-center">
+              <motion.div
+                key={character.emoji}
+                className="relative select-none text-[6.5rem] leading-none drop-shadow-2xl"
+                animate={{
+                  scale: characterScale,
+                  rotate: state === "playing" ? [0, -8, 8, -6, 6, 0] : 0,
+                  y: state === "recording" ? [0, -6, 0] : 0,
+                }}
+                transition={
+                  state === "playing"
+                    ? { duration: 0.8, repeat: Infinity }
+                    : state === "recording"
+                      ? { duration: 0.4, repeat: Infinity }
+                      : { type: "spring", stiffness: 200, damping: 15 }
+                }
+              >
+                {character.emoji}
+              </motion.div>
+            </div>
+            <div className="mb-3 w-full overflow-hidden rounded-2xl bg-black/15 shadow-inner ring-1 ring-white/30 backdrop-blur-sm">
+              <EchoEqualizer
+                freqDataRef={freqDataRef}
+                hue={character.hue}
+                active={isActive}
+              />
+            </div>
+          </>
+        )}
 
-        {/* State label + countdown */}
+        {/* State label / tagline + countdown */}
         <div className="mb-2 flex h-9 items-center gap-2">
           <AnimatePresence mode="wait">
             <motion.div
-              key={state}
+              key={state === "idle" ? `tag-${character.emoji}` : state}
               initial={{ y: 6, opacity: 0, scale: 0.9 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: -6, opacity: 0, scale: 0.9 }}
               className="rounded-full bg-white/85 px-4 py-1 text-base font-extrabold text-purple-700 shadow"
             >
-              {STATE_LABELS[state]}
+              {state === "idle" ? character.tagline : STATE_LABELS[state]}
             </motion.div>
           </AnimatePresence>
           <AnimatePresence>
@@ -745,15 +792,6 @@ export default function EchoSimulator() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-
-        {/* GPU equalizer */}
-        <div className="mb-3 w-full overflow-hidden rounded-2xl bg-black/15 shadow-inner ring-1 ring-white/30 backdrop-blur-sm">
-          <EchoEqualizer
-            freqDataRef={freqDataRef}
-            hue={character.hue}
-            active={isActive}
-          />
         </div>
 
         {/* Main control */}
@@ -862,6 +900,33 @@ export default function EchoSimulator() {
             {errorMsg}
           </div>
         )}
+
+        {/* Visual mode toggle (temporary) */}
+        <div className="mt-4 mb-2 flex items-center gap-2 rounded-full bg-white/40 p-1 text-xs font-bold text-purple-800 shadow">
+          <span className="px-2 text-[10px] uppercase tracking-wide opacity-70">
+            Visual
+          </span>
+          <button
+            onClick={() => setMode("aura")}
+            className={`rounded-full px-4 py-1.5 transition ${
+              mode === "aura"
+                ? "bg-purple-600 text-white shadow"
+                : "text-purple-700 hover:bg-white/60"
+            }`}
+          >
+            Aura
+          </button>
+          <button
+            onClick={() => setMode("equalizer")}
+            className={`rounded-full px-4 py-1.5 transition ${
+              mode === "equalizer"
+                ? "bg-purple-600 text-white shadow"
+                : "text-purple-700 hover:bg-white/60"
+            }`}
+          >
+            Ecualizador
+          </button>
+        </div>
       </div>
     </div>
   );
