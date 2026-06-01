@@ -351,13 +351,41 @@ export default function EchoSimulator() {
   const bufferRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const freqBufferRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const freqDataRef = useRef<Uint8Array>(new Uint8Array(EQ_BINS));
+  const goIdleAfterPlaybackRef = useRef<boolean>(false);
   const nextEchoIdRef = useRef<number>(1);
 
-  const cleanup = useCallback(() => {
+  const stopInput = useCallback(() => {
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
+    segmentSilenceStartRef.current = null;
+    if (sourceRef.current) {
+      try {
+        sourceRef.current.disconnect();
+      } catch {}
+      sourceRef.current = null;
+    }
+    analyserRef.current = null;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+  }, []);
+
+  const closePlayback = useCallback(() => {
+    if (stopPlaybackRef.current) {
+      stopPlaybackRef.current();
+      stopPlaybackRef.current = null;
+    }
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(() => {});
+      audioCtxRef.current = null;
+    }
+    setPlayingEchoId(null);
+  }, []);
+
+  const cleanup = useCallback(() => {
     if (recorderRef.current && recorderRef.current.state !== "inactive") {
       try {
         recorderRef.current.stop();
@@ -367,28 +395,10 @@ export default function EchoSimulator() {
     pendingSegmentsRef.current = [];
     pendingDurationRef.current = 0;
     triggerPlaybackRef.current = false;
-    segmentSilenceStartRef.current = null;
-    if (stopPlaybackRef.current) {
-      stopPlaybackRef.current();
-      stopPlaybackRef.current = null;
-    }
-    if (sourceRef.current) {
-      try {
-        sourceRef.current.disconnect();
-      } catch {}
-      sourceRef.current = null;
-    }
-    analyserRef.current = null;
-    if (audioCtxRef.current) {
-      audioCtxRef.current.close().catch(() => {});
-      audioCtxRef.current = null;
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-    setPlayingEchoId(null);
-  }, []);
+    goIdleAfterPlaybackRef.current = false;
+    stopInput();
+    closePlayback();
+  }, [stopInput, closePlayback]);
 
   useEffect(() => {
     return () => cleanup();
@@ -427,6 +437,13 @@ export default function EchoSimulator() {
         () => {
           stopPlaybackRef.current = null;
           setPlayingEchoId(null);
+          if (goIdleAfterPlaybackRef.current) {
+            goIdleAfterPlaybackRef.current = false;
+            closePlayback();
+            setState("idle");
+            setLevel(0);
+            return;
+          }
           if (returnToListening && stateRef.current === "playing") {
             lastSoundRef.current = performance.now();
             segmentSilenceStartRef.current = null;
@@ -437,7 +454,7 @@ export default function EchoSimulator() {
         }
       );
     },
-    [ensurePlaybackContext]
+    [closePlayback, ensurePlaybackContext]
   );
 
   const finishAndPlay = useCallback(() => {
@@ -448,6 +465,13 @@ export default function EchoSimulator() {
     triggerPlaybackRef.current = false;
     setSilenceCountdown(null);
     if (segments.length === 0) {
+      if (goIdleAfterPlaybackRef.current) {
+        goIdleAfterPlaybackRef.current = false;
+        closePlayback();
+        setState("idle");
+        setLevel(0);
+        return;
+      }
       setState("listening");
       lastSoundRef.current = performance.now();
       segmentSilenceStartRef.current = null;
@@ -461,7 +485,7 @@ export default function EchoSimulator() {
     };
     setPastEchoes((prev) => [echo, ...prev].slice(0, MAX_PAST_ECHOES));
     playEchoSegments(echo, true);
-  }, [playEchoSegments]);
+  }, [closePlayback, playEchoSegments]);
 
   const startRecorder = useCallback(() => {
     if (!streamRef.current) return;
@@ -631,11 +655,29 @@ export default function EchoSimulator() {
   }, [cleanup, ensurePlaybackContext, tick]);
 
   const stop = useCallback(() => {
-    cleanup();
-    setState("idle");
-    setLevel(0);
+    const recorder = recorderRef.current;
+    const hasRecorder = !!recorder && recorder.state === "recording";
+    const hasPending = pendingSegmentsRef.current.length > 0;
+
+    stopInput();
     setSilenceCountdown(null);
-  }, [cleanup]);
+
+    if (hasRecorder) {
+      goIdleAfterPlaybackRef.current = true;
+      triggerPlaybackRef.current = true;
+      try {
+        recorder!.stop();
+      } catch {}
+      recorderRef.current = null;
+    } else if (hasPending) {
+      goIdleAfterPlaybackRef.current = true;
+      finishAndPlay();
+    } else {
+      closePlayback();
+      setState("idle");
+      setLevel(0);
+    }
+  }, [closePlayback, finishAndPlay, stopInput]);
 
   const stopCurrentPlayback = useCallback(() => {
     if (stopPlaybackRef.current) {
