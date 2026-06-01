@@ -1,4 +1,4 @@
-import { Mic, MicOff, Volume2, Play, RefreshCw, Sparkles } from "lucide-react";
+import { Mic, MicOff, Play, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -11,7 +11,8 @@ type EchoState =
   | "error";
 
 const SILENCE_THRESHOLD = 0.02;
-const MIN_RECORDING_MS = 400;
+const SHORT_SILENCE_MS = 600;
+const MAX_PAST_ECHOES = 12;
 
 const CHARACTERS = ["🦜", "🐸", "🦊", "🐵", "🐼", "🦄"] as const;
 
@@ -22,6 +23,13 @@ const STATE_LABELS: Record<EchoState, string> = {
   recording: "¡Habla, habla!",
   playing: "¡Te lo repito!",
   error: "Ups, algo falló",
+};
+
+type PastEcho = {
+  id: number;
+  segments: Blob[];
+  durationMs: number;
+  createdAt: number;
 };
 
 function getRMS(analyser: AnalyserNode, buffer: Uint8Array<ArrayBuffer>): number {
@@ -47,6 +55,55 @@ function pickMimeType(): string | undefined {
     }
   }
   return undefined;
+}
+
+function playSegmentChain(
+  segments: Blob[],
+  onEnd: () => void,
+  setPlayer: (a: HTMLAudioElement | null) => void
+): () => void {
+  let cancelled = false;
+  let current: HTMLAudioElement | null = null;
+  let idx = 0;
+
+  const playNext = () => {
+    if (cancelled) return;
+    if (idx >= segments.length) {
+      setPlayer(null);
+      onEnd();
+      return;
+    }
+    const blob = segments[idx++]!;
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    current = audio;
+    setPlayer(audio);
+    const cleanup = () => URL.revokeObjectURL(url);
+    audio.onended = () => {
+      cleanup();
+      playNext();
+    };
+    audio.onerror = () => {
+      cleanup();
+      playNext();
+    };
+    audio.play().catch(() => {
+      cleanup();
+      playNext();
+    });
+  };
+
+  playNext();
+
+  return () => {
+    cancelled = true;
+    if (current) {
+      try {
+        current.pause();
+      } catch {}
+    }
+    setPlayer(null);
+  };
 }
 
 function WaveBars({ level, active }: { level: number; active: boolean }) {
@@ -101,14 +158,80 @@ function FloatingSparkles({ playing }: { playing: boolean }) {
   );
 }
 
+function formatDuration(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 100) / 10);
+  return `${total.toFixed(1)}s`;
+}
+
+function PastEchoItem({
+  echo,
+  index,
+  isPlayingThis,
+  onPlay,
+  onStop,
+  onDelete,
+}: {
+  echo: PastEcho;
+  index: number;
+  isPlayingThis: boolean;
+  onPlay: () => void;
+  onStop: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8, scale: 0.95 }}
+      className="flex items-center gap-2 rounded-full bg-white/85 px-2 py-1.5 shadow"
+    >
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={isPlayingThis ? onStop : onPlay}
+        className={`flex h-10 w-10 items-center justify-center rounded-full text-white shadow ${
+          isPlayingThis
+            ? "bg-rose-500"
+            : "bg-gradient-to-br from-purple-500 to-pink-500"
+        }`}
+        aria-label={isPlayingThis ? "Parar eco" : "Reproducir eco"}
+      >
+        {isPlayingThis ? (
+          <span className="block h-3 w-3 rounded-sm bg-white" />
+        ) : (
+          <Play className="ml-0.5 h-5 w-5" fill="currentColor" />
+        )}
+      </motion.button>
+      <div className="flex-1 text-left">
+        <div className="text-sm font-bold text-purple-800">
+          Eco #{index + 1}
+        </div>
+        <div className="text-xs text-purple-600">
+          {formatDuration(echo.durationMs)}
+        </div>
+      </div>
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onDelete}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-purple-500 hover:bg-rose-100 hover:text-rose-600"
+        aria-label="Borrar eco"
+      >
+        <Trash2 className="h-4 w-4" />
+      </motion.button>
+    </motion.div>
+  );
+}
+
 export default function EchoSimulator() {
   const [state, setState] = useState<EchoState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [character, setCharacter] = useState<string>(CHARACTERS[0]);
-  const [silenceSeconds, setSilenceSeconds] = useState<number>(5);
+  const [silenceSeconds, setSilenceSeconds] = useState<number>(3);
   const [level, setLevel] = useState<number>(0);
   const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null);
-  const [echoesCount, setEchoesCount] = useState<number>(0);
+  const [pastEchoes, setPastEchoes] = useState<PastEcho[]>([]);
+  const [playingEchoId, setPlayingEchoId] = useState<number | null>(null);
 
   const stateRef = useRef<EchoState>("idle");
   stateRef.current = state;
@@ -120,12 +243,17 @@ export default function EchoSimulator() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const recorderStartRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
-  const recordStartRef = useRef<number>(0);
   const lastSoundRef = useRef<number>(0);
+  const segmentSilenceStartRef = useRef<number | null>(null);
+  const pendingSegmentsRef = useRef<Blob[]>([]);
+  const pendingDurationRef = useRef<number>(0);
+  const triggerPlaybackRef = useRef<boolean>(false);
+  const stopPlaybackRef = useRef<(() => void) | null>(null);
   const playerRef = useRef<HTMLAudioElement | null>(null);
   const bufferRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const nextEchoIdRef = useRef<number>(1);
 
   const cleanup = useCallback(() => {
     if (rafRef.current !== null) {
@@ -138,7 +266,14 @@ export default function EchoSimulator() {
       } catch {}
     }
     recorderRef.current = null;
-    chunksRef.current = [];
+    pendingSegmentsRef.current = [];
+    pendingDurationRef.current = 0;
+    triggerPlaybackRef.current = false;
+    segmentSilenceStartRef.current = null;
+    if (stopPlaybackRef.current) {
+      stopPlaybackRef.current();
+      stopPlaybackRef.current = null;
+    }
     if (sourceRef.current) {
       try {
         sourceRef.current.disconnect();
@@ -154,16 +289,70 @@ export default function EchoSimulator() {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-    if (playerRef.current) {
-      playerRef.current.pause();
-      playerRef.current.src = "";
-      playerRef.current = null;
-    }
+    playerRef.current = null;
+    setPlayingEchoId(null);
   }, []);
 
   useEffect(() => {
     return () => cleanup();
   }, [cleanup]);
+
+  const playEchoSegments = useCallback(
+    (echo: PastEcho, returnToListening: boolean) => {
+      if (stopPlaybackRef.current) {
+        stopPlaybackRef.current();
+        stopPlaybackRef.current = null;
+      }
+      setState("playing");
+      setSilenceCountdown(null);
+      setPlayingEchoId(echo.id);
+      stopPlaybackRef.current = playSegmentChain(
+        echo.segments,
+        () => {
+          stopPlaybackRef.current = null;
+          setPlayingEchoId(null);
+          playerRef.current = null;
+          if (returnToListening && stateRef.current === "playing") {
+            lastSoundRef.current = performance.now();
+            segmentSilenceStartRef.current = null;
+            setState("listening");
+          } else if (!returnToListening) {
+            // came from past echo manual play; restore prior state
+            if (stateRef.current === "playing") {
+              setState("listening");
+            }
+          }
+        },
+        (a) => {
+          playerRef.current = a;
+        }
+      );
+    },
+    []
+  );
+
+  const finishAndPlay = useCallback(() => {
+    const segments = pendingSegmentsRef.current;
+    const duration = pendingDurationRef.current;
+    pendingSegmentsRef.current = [];
+    pendingDurationRef.current = 0;
+    triggerPlaybackRef.current = false;
+    setSilenceCountdown(null);
+    if (segments.length === 0) {
+      setState("listening");
+      lastSoundRef.current = performance.now();
+      segmentSilenceStartRef.current = null;
+      return;
+    }
+    const echo: PastEcho = {
+      id: nextEchoIdRef.current++,
+      segments,
+      durationMs: duration,
+      createdAt: Date.now(),
+    };
+    setPastEchoes((prev) => [echo, ...prev].slice(0, MAX_PAST_ECHOES));
+    playEchoSegments(echo, true);
+  }, [playEchoSegments]);
 
   const startRecorder = useCallback(() => {
     if (!streamRef.current) return;
@@ -172,91 +361,96 @@ export default function EchoSimulator() {
       streamRef.current,
       mimeType ? { mimeType } : undefined
     );
-    chunksRef.current = [];
+    const chunks: Blob[] = [];
+    const startedAt = performance.now();
     recorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      if (e.data && e.data.size > 0) chunks.push(e.data);
     };
     recorder.onstop = () => {
-      const duration = performance.now() - recordStartRef.current;
-      const blob = new Blob(chunksRef.current, {
-        type: mimeType || "audio/webm",
-      });
-      chunksRef.current = [];
-      if (duration < MIN_RECORDING_MS || blob.size < 1000) {
-        // Too short — keep listening
-        setState("listening");
-        startRecorder();
-        return;
+      const blob = new Blob(chunks, { type: mimeType || "audio/webm" });
+      const dur = performance.now() - startedAt;
+      if (blob.size >= 800 && dur >= 200) {
+        pendingSegmentsRef.current.push(blob);
+        pendingDurationRef.current += dur;
       }
-      playBack(blob);
+      if (triggerPlaybackRef.current) {
+        finishAndPlay();
+      }
     };
     recorder.start();
     recorderRef.current = recorder;
-    recordStartRef.current = performance.now();
-  }, []);
-
-  const playBack = useCallback((blob: Blob) => {
-    setState("playing");
-    setSilenceCountdown(null);
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    playerRef.current = audio;
-    audio.onended = () => {
-      URL.revokeObjectURL(url);
-      setEchoesCount((c) => c + 1);
-      if (stateRef.current !== "idle" && stateRef.current !== "error") {
-        setState("listening");
-        startRecorder();
-      }
-    };
-    audio.onerror = () => {
-      URL.revokeObjectURL(url);
-      setState("listening");
-      startRecorder();
-    };
-    audio.play().catch(() => {
-      URL.revokeObjectURL(url);
-      setState("listening");
-      startRecorder();
-    });
-  }, [startRecorder]);
+    recorderStartRef.current = startedAt;
+  }, [finishAndPlay]);
 
   const tick = useCallback(() => {
     const analyser = analyserRef.current;
     const buf = bufferRef.current;
-    if (!analyser || !buf) return;
+    if (!analyser || !buf) {
+      rafRef.current = requestAnimationFrame(tick);
+      return;
+    }
 
     const rms = getRMS(analyser, buf);
     setLevel(rms);
 
     const now = performance.now();
     const current = stateRef.current;
+    const isSound = rms > SILENCE_THRESHOLD;
 
-    if (current === "listening") {
-      if (rms > SILENCE_THRESHOLD) {
+    if (current === "listening" || current === "recording") {
+      if (isSound) {
         lastSoundRef.current = now;
-        setState("recording");
-      }
-    } else if (current === "recording") {
-      if (rms > SILENCE_THRESHOLD) {
-        lastSoundRef.current = now;
+        segmentSilenceStartRef.current = null;
         setSilenceCountdown(null);
+        if (current === "listening") {
+          setState("recording");
+          startRecorder();
+        }
       } else {
-        const silenceFor = (now - lastSoundRef.current) / 1000;
-        const remaining = silenceSecondsRef.current - silenceFor;
-        setSilenceCountdown(Math.max(0, remaining));
-        if (silenceFor >= silenceSecondsRef.current) {
-          setSilenceCountdown(null);
-          const rec = recorderRef.current;
-          if (rec && rec.state === "recording") {
-            rec.stop();
+        if (current === "recording") {
+          if (segmentSilenceStartRef.current === null) {
+            segmentSilenceStartRef.current = now;
           }
+          const segSilence = now - segmentSilenceStartRef.current;
+          if (segSilence >= SHORT_SILENCE_MS) {
+            const r = recorderRef.current;
+            if (r && r.state === "recording") {
+              try {
+                r.stop();
+              } catch {}
+            }
+            recorderRef.current = null;
+            segmentSilenceStartRef.current = null;
+            setState("listening");
+          }
+        }
+
+        const hasContent =
+          pendingSegmentsRef.current.length > 0 || recorderRef.current !== null;
+        if (hasContent) {
+          const totalSilence = (now - lastSoundRef.current) / 1000;
+          const remaining = silenceSecondsRef.current - totalSilence;
+          setSilenceCountdown(Math.max(0, remaining));
+          if (totalSilence >= silenceSecondsRef.current) {
+            const r = recorderRef.current;
+            if (r && r.state === "recording") {
+              triggerPlaybackRef.current = true;
+              try {
+                r.stop();
+              } catch {}
+              recorderRef.current = null;
+            } else {
+              finishAndPlay();
+            }
+          }
+        } else {
+          setSilenceCountdown(null);
         }
       }
     }
 
     rafRef.current = requestAnimationFrame(tick);
-  }, []);
+  }, [finishAndPlay, startRecorder]);
 
   const start = useCallback(async () => {
     setErrorMsg(null);
@@ -289,8 +483,11 @@ export default function EchoSimulator() {
       bufferRef.current = new Uint8Array(new ArrayBuffer(analyser.fftSize));
 
       lastSoundRef.current = performance.now();
+      segmentSilenceStartRef.current = null;
+      pendingSegmentsRef.current = [];
+      pendingDurationRef.current = 0;
+      triggerPlaybackRef.current = false;
       setState("listening");
-      startRecorder();
       rafRef.current = requestAnimationFrame(tick);
     } catch (err) {
       const msg =
@@ -301,7 +498,7 @@ export default function EchoSimulator() {
       setState("error");
       cleanup();
     }
-  }, [cleanup, startRecorder, tick]);
+  }, [cleanup, tick]);
 
   const stop = useCallback(() => {
     cleanup();
@@ -309,6 +506,42 @@ export default function EchoSimulator() {
     setLevel(0);
     setSilenceCountdown(null);
   }, [cleanup]);
+
+  const stopCurrentPlayback = useCallback(() => {
+    if (stopPlaybackRef.current) {
+      stopPlaybackRef.current();
+      stopPlaybackRef.current = null;
+    }
+    setPlayingEchoId(null);
+    if (stateRef.current === "playing") {
+      lastSoundRef.current = performance.now();
+      segmentSilenceStartRef.current = null;
+      setState("listening");
+    }
+  }, []);
+
+  const playPastEcho = useCallback(
+    (echo: PastEcho) => {
+      const wasIdle = stateRef.current === "idle" || stateRef.current === "error";
+      playEchoSegments(echo, !wasIdle);
+    },
+    [playEchoSegments]
+  );
+
+  const deletePastEcho = useCallback(
+    (id: number) => {
+      setPastEchoes((prev) => prev.filter((e) => e.id !== id));
+      if (playingEchoId === id) {
+        stopCurrentPlayback();
+      }
+    },
+    [playingEchoId, stopCurrentPlayback]
+  );
+
+  const clearPastEchoes = useCallback(() => {
+    stopCurrentPlayback();
+    setPastEchoes([]);
+  }, [stopCurrentPlayback]);
 
   const isActive =
     state === "listening" || state === "recording" || state === "playing";
@@ -497,16 +730,36 @@ export default function EchoSimulator() {
           />
         </div>
 
-        {/* Counter */}
-        {echoesCount > 0 && (
-          <motion.div
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="mb-4 flex items-center gap-2 rounded-full bg-yellow-300/90 px-4 py-2 text-sm font-bold text-purple-800 shadow"
-          >
-            <Volume2 className="h-4 w-4" />
-            {echoesCount} {echoesCount === 1 ? "eco" : "ecos"} mágicos
-          </motion.div>
+        {/* Past echoes list */}
+        {pastEchoes.length > 0 && (
+          <div className="mb-6 w-full max-w-md rounded-2xl bg-white/60 p-4 shadow-md">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-extrabold text-purple-800">
+                Tus ecos guardados
+              </h2>
+              <button
+                onClick={clearPastEchoes}
+                className="rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-rose-600 hover:bg-rose-100"
+              >
+                Borrar todos
+              </button>
+            </div>
+            <div className="space-y-2">
+              <AnimatePresence initial={false}>
+                {pastEchoes.map((echo, i) => (
+                  <PastEchoItem
+                    key={echo.id}
+                    echo={echo}
+                    index={i}
+                    isPlayingThis={playingEchoId === echo.id}
+                    onPlay={() => playPastEcho(echo)}
+                    onStop={stopCurrentPlayback}
+                    onDelete={() => deletePastEcho(echo.id)}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
         )}
 
         {/* Error */}
@@ -521,7 +774,7 @@ export default function EchoSimulator() {
         )}
 
         {/* Quick help */}
-        {state === "idle" && (
+        {state === "idle" && pastEchoes.length === 0 && (
           <div className="mt-2 max-w-md rounded-2xl bg-white/70 px-5 py-4 text-sm text-purple-900 shadow">
             <p className="mb-2 font-bold">¿Cómo se juega?</p>
             <ol className="list-decimal space-y-1 pl-5">
