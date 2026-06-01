@@ -1,4 +1,4 @@
-import EchoVisualizer from "@/components/EchoVisualizer";
+import EchoEqualizer from "@/components/EchoEqualizer";
 import { Mic, MicOff, Play, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -14,6 +14,8 @@ type EchoState =
 const SILENCE_THRESHOLD = 0.02;
 const SHORT_SILENCE_MS = 600;
 const MAX_PAST_ECHOES = 12;
+const FFT_SIZE = 512;
+const EQ_BINS = 64;
 
 type VoiceProfile = {
   playbackRate: number;
@@ -250,31 +252,6 @@ function playSegmentsWithVoice(
   };
 }
 
-function WaveBars({ level, active }: { level: number; active: boolean }) {
-  const bars = 14;
-  const items = Array.from({ length: bars }, (_, i) => {
-    const center = (bars - 1) / 2;
-    const dist = Math.abs(i - center) / center;
-    const wave = (1 - dist * 0.6) * level * 100;
-    const height = Math.max(4, Math.min(50, wave + (active ? 6 : 0)));
-    return { i, height };
-  });
-
-  return (
-    <div className="flex items-end justify-center gap-1 h-12 w-full max-w-xs">
-      {items.map(({ i, height }) => (
-        <motion.div
-          key={i}
-          animate={{ height }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="w-2 rounded-full bg-gradient-to-t from-fuchsia-500 via-pink-400 to-yellow-300 shadow"
-          style={{ height }}
-        />
-      ))}
-    </div>
-  );
-}
-
 function formatDuration(ms: number): string {
   const total = Math.max(0, Math.round(ms / 100) / 10);
   return `${total.toFixed(1)}s`;
@@ -358,8 +335,6 @@ export default function EchoSimulator() {
   silenceSecondsRef.current = silenceSeconds;
   const characterRef = useRef<CharacterDef>(character);
   characterRef.current = character;
-  const levelRef = useRef<number>(0);
-  levelRef.current = level;
 
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -374,6 +349,8 @@ export default function EchoSimulator() {
   const triggerPlaybackRef = useRef<boolean>(false);
   const stopPlaybackRef = useRef<(() => void) | null>(null);
   const bufferRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const freqBufferRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const freqDataRef = useRef<Uint8Array>(new Uint8Array(EQ_BINS));
   const nextEchoIdRef = useRef<number>(1);
 
   const cleanup = useCallback(() => {
@@ -524,6 +501,17 @@ export default function EchoSimulator() {
     const rms = getRMS(analyser, buf);
     setLevel(rms);
 
+    const fbuf = freqBufferRef.current;
+    if (fbuf) {
+      analyser.getByteFrequencyData(fbuf);
+      const out = freqDataRef.current;
+      const total = fbuf.length;
+      for (let i = 0; i < EQ_BINS; i++) {
+        const idx = Math.min(total - 1, Math.floor((i * total) / (EQ_BINS * 2)));
+        out[i] = fbuf[idx]!;
+      }
+    }
+
     const now = performance.now();
     const current = stateRef.current;
     const isSound = rms > SILENCE_THRESHOLD;
@@ -604,10 +592,14 @@ export default function EchoSimulator() {
       sourceRef.current = source;
 
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 2048;
+      analyser.fftSize = FFT_SIZE;
+      analyser.smoothingTimeConstant = 0.7;
       source.connect(analyser);
       analyserRef.current = analyser;
       bufferRef.current = new Uint8Array(new ArrayBuffer(analyser.fftSize));
+      freqBufferRef.current = new Uint8Array(
+        new ArrayBuffer(analyser.frequencyBinCount)
+      );
 
       lastSoundRef.current = performance.now();
       segmentSilenceStartRef.current = null;
@@ -674,7 +666,6 @@ export default function EchoSimulator() {
     state === "listening" || state === "recording" || state === "playing";
   const characterScale =
     state === "playing" ? 1.18 : state === "recording" ? 1 + level * 3.5 : 1;
-  const visualizerPulse = state === "playing" ? 1 : 0;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-sky-300 via-fuchsia-300 to-amber-200">
@@ -706,13 +697,8 @@ export default function EchoSimulator() {
           🎤 Eco Mágico
         </h1>
 
-        {/* Character + WebGPU visualizer */}
-        <div className="relative mb-1 flex h-52 w-52 items-center justify-center">
-          <EchoVisualizer
-            levelRef={levelRef}
-            hue={character.hue}
-            pulse={visualizerPulse}
-          />
+        {/* Character */}
+        <div className="relative mb-1 flex h-44 w-44 items-center justify-center">
           <motion.div
             key={character.emoji}
             className="relative select-none text-[6.5rem] leading-none drop-shadow-2xl"
@@ -761,9 +747,13 @@ export default function EchoSimulator() {
           </AnimatePresence>
         </div>
 
-        {/* Waveform */}
-        <div className="mb-3 w-full">
-          <WaveBars level={level} active={isActive} />
+        {/* GPU equalizer */}
+        <div className="mb-3 w-full overflow-hidden rounded-2xl bg-black/15 shadow-inner ring-1 ring-white/30 backdrop-blur-sm">
+          <EchoEqualizer
+            freqDataRef={freqDataRef}
+            hue={character.hue}
+            active={isActive}
+          />
         </div>
 
         {/* Main control */}

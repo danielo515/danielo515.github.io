@@ -2,27 +2,24 @@ import { useEffect, useRef } from "react";
 import tgpu from "typegpu";
 import * as d from "typegpu/data";
 
+const NUM_BINS = 64;
+const NUM_VEC4 = NUM_BINS / 4; // 16
+
 const Uniforms = d.struct({
   time: d.f32,
-  level: d.f32,
   hue: d.f32,
   aspect: d.f32,
-  pulse: d.f32,
-  _pad1: d.f32,
-  _pad2: d.f32,
-  _pad3: d.f32,
+  active: d.f32,
+  bins: d.arrayOf(d.vec4f, NUM_VEC4),
 });
 
 const SHADER = /* wgsl */ `
 struct Uniforms {
   time: f32,
-  level: f32,
   hue: f32,
   aspect: f32,
-  pulse: f32,
-  _pad1: f32,
-  _pad2: f32,
-  _pad3: f32,
+  active: f32,
+  bins: array<vec4f, 16>,
 };
 
 @group(0) @binding(0) var<uniform> u: Uniforms;
@@ -46,6 +43,27 @@ fn vs(@builtin(vertex_index) i: u32) -> VsOut {
   return out;
 }
 
+fn getBin(i: u32) -> f32 {
+  let g = i / 4u;
+  let s = i % 4u;
+  let v = u.bins[g];
+  if (s == 0u) { return v.x; }
+  if (s == 1u) { return v.y; }
+  if (s == 2u) { return v.z; }
+  return v.w;
+}
+
+fn sampleBins(x: f32) -> f32 {
+  let nb = f32(64);
+  let f = clamp(x, 0.0, 1.0) * (nb - 1.0);
+  let i0 = u32(floor(f));
+  let i1 = min(i0 + 1u, u32(nb - 1.0));
+  let t = fract(f);
+  let v0 = getBin(i0);
+  let v1 = getBin(i1);
+  return mix(v0, v1, smoothstep(0.0, 1.0, t));
+}
+
 fn hash21(p: vec2f) -> f32 {
   let q = fract(p * vec2f(123.34, 456.21));
   let r = q + dot(q, q + 45.32);
@@ -58,74 +76,96 @@ fn hsv2rgb(h: f32, s: f32, v: f32) -> vec3f {
   return v * mix(vec3f(1.0), clamp(p - vec3f(1.0), vec3f(0.0), vec3f(1.0)), s);
 }
 
-fn rot(a: f32) -> mat2x2f {
-  let c = cos(a); let s = sin(a);
-  return mat2x2f(c, -s, s, c);
-}
-
 @fragment
 fn fs(in: VsOut) -> @location(0) vec4f {
-  var p = in.uv * 2.0 - vec2f(1.0);
-  p.x = p.x * u.aspect;
-
-  let r = length(p);
-  let a = atan2(p.y, p.x);
+  let uv = in.uv;
+  let p = uv * 2.0 - vec2f(1.0);
   let t = u.time;
-  let lv = clamp(u.level * 12.0, 0.0, 1.4);
 
-  // Wobbly blob radius
-  let petals = 5.0 + floor(u.hue * 4.0);
-  let wob = sin(a * petals + t * 1.8) * (0.05 + lv * 0.15)
-          + sin(a * (petals + 2.0) - t * 1.1) * (0.03 + lv * 0.08);
-  let baseR = 0.45 + lv * 0.20 + u.pulse * 0.06;
-  let radius = baseR + wob;
+  // Sample current bar height (smooth interpolation across bins)
+  let baseH = sampleBins(uv.x);
+  // Slight horizontal smoothing by averaging a small window
+  let h = baseH * 0.85;
 
-  let core = smoothstep(radius, radius - 0.10, r);
-  let halo = smoothstep(radius + 0.55, radius, r) * (0.6 + lv * 0.4);
+  let distY = abs(p.y);
 
-  // Swirling color
-  let hue = fract(u.hue + t * 0.06 + r * 0.4 + a * 0.05);
+  // Filled mirrored waveform region
+  let fillEdge = smoothstep(h + 0.02, h - 0.02, distY);
+
+  // Glowing top/bottom line on the silhouette
+  let lineW = 0.025 + h * 0.025;
+  let line = exp(-pow((distY - h) / lineW, 2.0));
+
+  // Soft halo above the waveform
+  let halo = exp(-pow(max(distY - h, 0.0) / 0.18, 2.0)) * 0.45;
+
+  // Color: hue cycles with bar position + time
+  let hue = fract(u.hue + uv.x * 0.6 + t * 0.08);
   let col = hsv2rgb(hue, 0.85, 1.0);
+  let colTop = hsv2rgb(fract(hue + 0.07), 0.6, 1.0);
 
-  // Sparkles
-  var sparkles = 0.0;
-  let sp = p * 6.0;
-  let cell = floor(sp);
-  let local = fract(sp) - 0.5;
-  let h = hash21(cell + vec2f(floor(t * 0.5)));
-  if (h > 0.93) {
-    let d2 = length(local);
-    let twinkle = 0.5 + 0.5 * sin(t * 6.0 + h * 40.0);
-    sparkles = smoothstep(0.12, 0.0, d2) * twinkle * (0.7 + lv * 0.6);
+  // Vertical gradient inside the fill
+  let yGrad = 1.0 - smoothstep(0.0, h, distY) * 0.5;
+  let fillCol = mix(col, colTop, smoothstep(0.0, h, distY)) * yGrad;
+
+  // Sparkles that follow the waveform crest
+  let sx = floor(uv.x * 48.0);
+  let crest = sampleBins(sx / 48.0);
+  let sparkSeed = hash21(vec2f(sx, floor(t * 6.0 + sx * 0.3)));
+  let sparkY = crest + 0.04 + sparkSeed * 0.06;
+  let sparkXf = fract(uv.x * 48.0) - 0.5;
+  let sparkDist = vec2f(sparkXf * 0.6, (distY - sparkY) * 1.4);
+  let sparkR = length(sparkDist);
+  let sparkOn = step(0.88, sparkSeed) * step(0.08, crest);
+  let spark = exp(-pow(sparkR / 0.07, 2.0)) * sparkOn;
+
+  // Background scrolling stars (subtle)
+  let bgUv = vec2f(uv.x + t * 0.05, uv.y);
+  let bgCell = floor(bgUv * vec2f(60.0, 30.0));
+  let bgLocal = fract(bgUv * vec2f(60.0, 30.0)) - 0.5;
+  let bgH = hash21(bgCell);
+  var bg = 0.0;
+  if (bgH > 0.985) {
+    bg = exp(-pow(length(bgLocal) / 0.18, 2.0)) * 0.4;
   }
 
-  // Concentric ripples reacting to level
-  let ripple = sin(r * 14.0 - t * 4.0) * 0.5 + 0.5;
-  let rippleMask = smoothstep(0.0, 0.5, lv) * smoothstep(radius + 0.4, radius - 0.05, r);
+  // Idle pulse: gentle line at y=0 when not active
+  let idleLine = exp(-pow(p.y / 0.018, 2.0)) * (1.0 - u.active) * 0.4;
 
-  let finalCol = col * core
-               + col * halo * 0.7
-               + vec3f(1.0) * sparkles * 0.9
-               + col * ripple * rippleMask * 0.25;
+  let totalCol = fillCol * fillEdge
+               + col * line * 1.6
+               + col * halo
+               + vec3f(1.0) * spark * 1.2
+               + col * idleLine
+               + vec3f(0.9, 0.9, 1.0) * bg;
 
-  let alpha = clamp(core + halo * 0.7 + sparkles * 0.5, 0.0, 1.0);
+  let alpha = clamp(
+    fillEdge * 0.85
+    + line * 0.95
+    + halo * 0.7
+    + spark
+    + idleLine * 0.6
+    + bg,
+    0.0, 1.0
+  );
 
-  return vec4f(finalCol, alpha);
+  let fade = mix(0.45, 1.0, u.active);
+  return vec4f(totalCol * fade, alpha * fade);
 }
 `;
 
 type Props = {
-  levelRef: { current: number };
+  freqDataRef: { current: Uint8Array };
   hue: number;
-  pulse: number;
+  active: boolean;
 };
 
-export default function EchoVisualizer({ levelRef, hue, pulse }: Props) {
+export default function EchoEqualizer({ freqDataRef, hue, active }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hueRef = useRef(hue);
-  const pulseRef = useRef(pulse);
+  const activeRef = useRef(active ? 1 : 0);
   hueRef.current = hue;
-  pulseRef.current = pulse;
+  activeRef.current = active ? 1 : 0;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -152,9 +192,7 @@ export default function EchoVisualizer({ levelRef, hue, pulse }: Props) {
         const format = navigator.gpu!.getPreferredCanvasFormat();
         ctx.configure({ device, format, alphaMode: "premultiplied" });
 
-        const uniformBuffer = root
-          .createBuffer(Uniforms)
-          .$usage("uniform");
+        const uniformBuffer = root.createBuffer(Uniforms).$usage("uniform");
 
         const module = device.createShaderModule({ code: SHADER });
         const pipeline = device.createRenderPipeline({
@@ -207,20 +245,40 @@ export default function EchoVisualizer({ levelRef, hue, pulse }: Props) {
         const ro = new ResizeObserver(resize);
         ro.observe(canvas);
 
+        // Smoothed bins (decay)
+        const smoothed = new Float32Array(NUM_BINS);
         const start = performance.now();
+
         const frame = () => {
           if (cancelled) return;
           const t = (performance.now() - start) / 1000;
           const aspect = canvas.width / Math.max(1, canvas.height);
+
+          const raw = freqDataRef.current;
+          for (let i = 0; i < NUM_BINS; i++) {
+            const v = (raw[i] ?? 0) / 255;
+            const prev = smoothed[i]!;
+            smoothed[i] = v > prev ? v : prev * 0.85 + v * 0.15;
+          }
+
+          const bins: ReturnType<typeof d.vec4f>[] = [];
+          for (let i = 0; i < NUM_VEC4; i++) {
+            bins.push(
+              d.vec4f(
+                smoothed[i * 4]!,
+                smoothed[i * 4 + 1]!,
+                smoothed[i * 4 + 2]!,
+                smoothed[i * 4 + 3]!
+              )
+            );
+          }
+
           uniformBuffer.write({
             time: t,
-            level: levelRef.current,
             hue: hueRef.current,
             aspect,
-            pulse: pulseRef.current,
-            _pad1: 0,
-            _pad2: 0,
-            _pad3: 0,
+            active: activeRef.current,
+            bins,
           });
 
           const encoder = device.createCommandEncoder();
@@ -253,7 +311,7 @@ export default function EchoVisualizer({ levelRef, hue, pulse }: Props) {
         };
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.warn("[EchoVisualizer] WebGPU init failed:", e);
+        console.warn("[EchoEqualizer] WebGPU init failed:", e);
       }
     })();
 
@@ -261,12 +319,12 @@ export default function EchoVisualizer({ levelRef, hue, pulse }: Props) {
       cancelled = true;
       cleanup();
     };
-  }, [levelRef]);
+  }, [freqDataRef]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none absolute inset-0 h-full w-full"
+      className="block h-20 w-full"
       aria-hidden="true"
     />
   );
