@@ -9,7 +9,7 @@ const Uniforms = d.struct({
   time: d.f32,
   hue: d.f32,
   aspect: d.f32,
-  active: d.f32,
+  liveness: d.f32,
   bins: d.arrayOf(d.vec4f, NUM_VEC4),
 });
 
@@ -18,7 +18,7 @@ struct Uniforms {
   time: f32,
   hue: f32,
   aspect: f32,
-  active: f32,
+  liveness: f32,
   bins: array<vec4f, 16>,
 };
 
@@ -130,7 +130,7 @@ fn fs(in: VsOut) -> @location(0) vec4f {
   }
 
   // Idle pulse: gentle line at y=0 when not active
-  let idleLine = exp(-pow(p.y / 0.018, 2.0)) * (1.0 - u.active) * 0.4;
+  let idleLine = exp(-pow(p.y / 0.018, 2.0)) * (1.0 - u.liveness) * 0.4;
 
   let totalCol = fillCol * fillEdge
                + col * line * 1.6
@@ -149,7 +149,7 @@ fn fs(in: VsOut) -> @location(0) vec4f {
     0.0, 1.0
   );
 
-  let fade = mix(0.45, 1.0, u.active);
+  let fade = mix(0.45, 1.0, u.liveness);
   return vec4f(totalCol * fade, alpha * fade);
 }
 `;
@@ -277,7 +277,7 @@ export default function EchoEqualizer({ freqDataRef, hue, active }: Props) {
             time: t,
             hue: hueRef.current,
             aspect,
-            active: activeRef.current,
+            liveness: activeRef.current,
             bins,
           });
 
