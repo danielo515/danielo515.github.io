@@ -1,3 +1,4 @@
+import EchoVisualizer from "@/components/EchoVisualizer";
 import { Mic, MicOff, Play, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -14,7 +15,83 @@ const SILENCE_THRESHOLD = 0.02;
 const SHORT_SILENCE_MS = 600;
 const MAX_PAST_ECHOES = 12;
 
-const CHARACTERS = ["🦜", "🐸", "🦊", "🐵", "🐼", "🦄"] as const;
+type VoiceProfile = {
+  playbackRate: number;
+  filter?: {
+    type: BiquadFilterType;
+    frequency: number;
+    Q?: number;
+    gain?: number;
+  };
+  distortion?: number;
+  reverbAmount?: number;
+};
+
+type CharacterDef = {
+  emoji: string;
+  name: string;
+  hue: number;
+  voice: VoiceProfile;
+};
+
+const CHARACTERS: readonly CharacterDef[] = [
+  {
+    emoji: "🦜",
+    name: "Loro",
+    hue: 0.12,
+    voice: {
+      playbackRate: 1.55,
+      filter: { type: "highpass", frequency: 500 },
+    },
+  },
+  {
+    emoji: "🐸",
+    name: "Rana",
+    hue: 0.3,
+    voice: {
+      playbackRate: 0.7,
+      filter: { type: "lowpass", frequency: 1300 },
+      distortion: 0.4,
+    },
+  },
+  {
+    emoji: "🦊",
+    name: "Zorro",
+    hue: 0.04,
+    voice: {
+      playbackRate: 1.15,
+      filter: { type: "bandpass", frequency: 1500, Q: 0.6 },
+    },
+  },
+  {
+    emoji: "🐵",
+    name: "Mono",
+    hue: 0.08,
+    voice: {
+      playbackRate: 1.85,
+      filter: { type: "lowpass", frequency: 4000 },
+    },
+  },
+  {
+    emoji: "🐼",
+    name: "Panda",
+    hue: 0.58,
+    voice: {
+      playbackRate: 0.78,
+      filter: { type: "lowpass", frequency: 2200 },
+    },
+  },
+  {
+    emoji: "🦄",
+    name: "Unicornio",
+    hue: 0.85,
+    voice: {
+      playbackRate: 1.3,
+      filter: { type: "highshelf", frequency: 2000, gain: 8 },
+      reverbAmount: 0.55,
+    },
+  },
+] as const;
 
 const STATE_LABELS: Record<EchoState, string> = {
   idle: "¡Pulsa para empezar!",
@@ -57,103 +134,143 @@ function pickMimeType(): string | undefined {
   return undefined;
 }
 
-function playSegmentChain(
+function makeDistortionCurve(amount: number): Float32Array<ArrayBuffer> {
+  const n = 1024;
+  const curve = new Float32Array(new ArrayBuffer(n * 4));
+  const k = amount * 100;
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / n - 1;
+    curve[i] =
+      ((3 + k) * x * 20 * (Math.PI / 180)) / (Math.PI + k * Math.abs(x));
+  }
+  return curve;
+}
+
+function makeReverbBuffer(
+  ctx: AudioContext,
+  seconds: number,
+  decay: number
+): AudioBuffer {
+  const rate = ctx.sampleRate;
+  const length = Math.max(1, Math.floor(rate * seconds));
+  const buffer = ctx.createBuffer(2, length, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buffer.getChannelData(ch);
+    for (let i = 0; i < length; i++) {
+      data[i] =
+        (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+    }
+  }
+  return buffer;
+}
+
+function playSegmentsWithVoice(
+  ctx: AudioContext,
   segments: Blob[],
-  onEnd: () => void,
-  setPlayer: (a: HTMLAudioElement | null) => void
+  profile: VoiceProfile,
+  onEnd: () => void
 ): () => void {
   let cancelled = false;
-  let current: HTMLAudioElement | null = null;
-  let idx = 0;
+  let currentSource: AudioBufferSourceNode | null = null;
+  const reverbBuffer =
+    profile.reverbAmount && profile.reverbAmount > 0
+      ? makeReverbBuffer(ctx, 1.5, 2.5)
+      : null;
 
-  const playNext = () => {
+  const playOne = async (i: number) => {
     if (cancelled) return;
-    if (idx >= segments.length) {
-      setPlayer(null);
+    if (i >= segments.length) {
       onEnd();
       return;
     }
-    const blob = segments[idx++]!;
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    current = audio;
-    setPlayer(audio);
-    const cleanup = () => URL.revokeObjectURL(url);
-    audio.onended = () => {
-      cleanup();
-      playNext();
-    };
-    audio.onerror = () => {
-      cleanup();
-      playNext();
-    };
-    audio.play().catch(() => {
-      cleanup();
-      playNext();
-    });
+    try {
+      const segment = segments[i]!;
+      const ab = await segment.arrayBuffer();
+      if (cancelled) return;
+      const audioBuffer = await ctx.decodeAudioData(ab.slice(0));
+      if (cancelled) return;
+
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.playbackRate.value = profile.playbackRate;
+
+      let node: AudioNode = source;
+      if (profile.filter) {
+        const f = ctx.createBiquadFilter();
+        f.type = profile.filter.type;
+        f.frequency.value = profile.filter.frequency;
+        if (profile.filter.Q !== undefined) f.Q.value = profile.filter.Q;
+        if (profile.filter.gain !== undefined) f.gain.value = profile.filter.gain;
+        node.connect(f);
+        node = f;
+      }
+      if (profile.distortion && profile.distortion > 0) {
+        const w = ctx.createWaveShaper();
+        w.curve = makeDistortionCurve(profile.distortion);
+        w.oversample = "4x";
+        node.connect(w);
+        node = w;
+      }
+      const dryGain = ctx.createGain();
+      dryGain.gain.value = 1.0;
+      node.connect(dryGain);
+      dryGain.connect(ctx.destination);
+
+      if (reverbBuffer && profile.reverbAmount) {
+        const wet = ctx.createGain();
+        wet.gain.value = profile.reverbAmount;
+        const convolver = ctx.createConvolver();
+        convolver.buffer = reverbBuffer;
+        node.connect(convolver);
+        convolver.connect(wet);
+        wet.connect(ctx.destination);
+      }
+
+      currentSource = source;
+      source.onended = () => {
+        currentSource = null;
+        playOne(i + 1);
+      };
+      source.start(0);
+    } catch {
+      playOne(i + 1);
+    }
   };
 
-  playNext();
+  playOne(0);
 
   return () => {
     cancelled = true;
-    if (current) {
+    if (currentSource) {
       try {
-        current.pause();
+        currentSource.stop();
       } catch {}
+      currentSource = null;
     }
-    setPlayer(null);
   };
 }
 
 function WaveBars({ level, active }: { level: number; active: boolean }) {
-  const bars = 16;
+  const bars = 14;
   const items = Array.from({ length: bars }, (_, i) => {
     const center = (bars - 1) / 2;
     const dist = Math.abs(i - center) / center;
     const wave = (1 - dist * 0.6) * level * 100;
-    const height = Math.max(6, Math.min(72, wave + (active ? 8 : 0)));
+    const height = Math.max(4, Math.min(50, wave + (active ? 6 : 0)));
     return { i, height };
   });
 
   return (
-    <div className="flex items-end justify-center gap-1.5 h-20 w-full max-w-md">
+    <div className="flex items-end justify-center gap-1 h-12 w-full max-w-xs">
       {items.map(({ i, height }) => (
         <motion.div
           key={i}
           animate={{ height }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="w-3 rounded-full bg-gradient-to-t from-fuchsia-500 via-pink-400 to-yellow-300 shadow-md"
+          className="w-2 rounded-full bg-gradient-to-t from-fuchsia-500 via-pink-400 to-yellow-300 shadow"
           style={{ height }}
         />
       ))}
-    </div>
-  );
-}
-
-function FloatingSparkles({ playing }: { playing: boolean }) {
-  if (!playing) return null;
-  const sparkles = Array.from({ length: 12 });
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {sparkles.map((_, i) => {
-        const left = Math.random() * 100;
-        const delay = Math.random() * 0.8;
-        const duration = 1.2 + Math.random() * 1.5;
-        const size = 18 + Math.random() * 18;
-        return (
-          <motion.div
-            key={i}
-            initial={{ y: "110%", opacity: 0, rotate: 0 }}
-            animate={{ y: "-20%", opacity: [0, 1, 1, 0], rotate: 360 }}
-            transition={{ duration, delay, repeat: Infinity, ease: "easeOut" }}
-            className="absolute text-yellow-300"
-            style={{ left: `${left}%`, fontSize: size }}
-          >
-            ✨
-          </motion.div>
-        );
-      })}
     </div>
   );
 }
@@ -189,7 +306,7 @@ function PastEchoItem({
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={isPlayingThis ? onStop : onPlay}
-        className={`flex h-10 w-10 items-center justify-center rounded-full text-white shadow ${
+        className={`flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg ${
           isPlayingThis
             ? "bg-rose-500"
             : "bg-gradient-to-br from-purple-500 to-pink-500"
@@ -197,9 +314,9 @@ function PastEchoItem({
         aria-label={isPlayingThis ? "Parar eco" : "Reproducir eco"}
       >
         {isPlayingThis ? (
-          <span className="block h-3 w-3 rounded-sm bg-white" />
+          <span className="block h-4 w-4 rounded-sm bg-white" />
         ) : (
-          <Play className="ml-0.5 h-5 w-5" fill="currentColor" />
+          <Play className="ml-0.5 h-6 w-6" fill="currentColor" />
         )}
       </motion.button>
       <div className="flex-1 text-left">
@@ -214,10 +331,10 @@ function PastEchoItem({
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={onDelete}
-        className="flex h-8 w-8 items-center justify-center rounded-full text-purple-500 hover:bg-rose-100 hover:text-rose-600"
+        className="flex h-9 w-9 items-center justify-center rounded-full text-purple-500 hover:bg-rose-100 hover:text-rose-600"
         aria-label="Borrar eco"
       >
-        <Trash2 className="h-4 w-4" />
+        <Trash2 className="h-5 w-5" />
       </motion.button>
     </motion.div>
   );
@@ -226,24 +343,29 @@ function PastEchoItem({
 export default function EchoSimulator() {
   const [state, setState] = useState<EchoState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [character, setCharacter] = useState<string>(CHARACTERS[0]);
-  const [silenceSeconds, setSilenceSeconds] = useState<number>(3);
+  const [characterIdx, setCharacterIdx] = useState<number>(0);
+  const [silenceSeconds, setSilenceSeconds] = useState<number>(2);
   const [level, setLevel] = useState<number>(0);
   const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null);
   const [pastEchoes, setPastEchoes] = useState<PastEcho[]>([]);
   const [playingEchoId, setPlayingEchoId] = useState<number | null>(null);
 
+  const character = CHARACTERS[characterIdx]!;
+
   const stateRef = useRef<EchoState>("idle");
   stateRef.current = state;
   const silenceSecondsRef = useRef<number>(silenceSeconds);
   silenceSecondsRef.current = silenceSeconds;
+  const characterRef = useRef<CharacterDef>(character);
+  characterRef.current = character;
+  const levelRef = useRef<number>(0);
+  levelRef.current = level;
 
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
-  const recorderStartRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
   const lastSoundRef = useRef<number>(0);
   const segmentSilenceStartRef = useRef<number | null>(null);
@@ -251,7 +373,6 @@ export default function EchoSimulator() {
   const pendingDurationRef = useRef<number>(0);
   const triggerPlaybackRef = useRef<boolean>(false);
   const stopPlaybackRef = useRef<(() => void) | null>(null);
-  const playerRef = useRef<HTMLAudioElement | null>(null);
   const bufferRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const nextEchoIdRef = useRef<number>(1);
 
@@ -289,7 +410,6 @@ export default function EchoSimulator() {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-    playerRef.current = null;
     setPlayingEchoId(null);
   }, []);
 
@@ -297,38 +417,50 @@ export default function EchoSimulator() {
     return () => cleanup();
   }, [cleanup]);
 
+  const ensurePlaybackContext = useCallback((): AudioContext | null => {
+    if (audioCtxRef.current) return audioCtxRef.current;
+    try {
+      const Ctx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
+      const ctx = new Ctx();
+      audioCtxRef.current = ctx;
+      return ctx;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const playEchoSegments = useCallback(
     (echo: PastEcho, returnToListening: boolean) => {
       if (stopPlaybackRef.current) {
         stopPlaybackRef.current();
         stopPlaybackRef.current = null;
       }
+      const ctx = ensurePlaybackContext();
+      if (!ctx) return;
       setState("playing");
       setSilenceCountdown(null);
       setPlayingEchoId(echo.id);
-      stopPlaybackRef.current = playSegmentChain(
+      stopPlaybackRef.current = playSegmentsWithVoice(
+        ctx,
         echo.segments,
+        characterRef.current.voice,
         () => {
           stopPlaybackRef.current = null;
           setPlayingEchoId(null);
-          playerRef.current = null;
           if (returnToListening && stateRef.current === "playing") {
             lastSoundRef.current = performance.now();
             segmentSilenceStartRef.current = null;
             setState("listening");
-          } else if (!returnToListening) {
-            // came from past echo manual play; restore prior state
-            if (stateRef.current === "playing") {
-              setState("listening");
-            }
+          } else if (!returnToListening && stateRef.current === "playing") {
+            setState("listening");
           }
-        },
-        (a) => {
-          playerRef.current = a;
         }
       );
     },
-    []
+    [ensurePlaybackContext]
   );
 
   const finishAndPlay = useCallback(() => {
@@ -379,7 +511,6 @@ export default function EchoSimulator() {
     };
     recorder.start();
     recorderRef.current = recorder;
-    recorderStartRef.current = startedAt;
   }, [finishAndPlay]);
 
   const tick = useCallback(() => {
@@ -465,12 +596,8 @@ export default function EchoSimulator() {
       });
       streamRef.current = stream;
 
-      const Ctx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
-      const ctx = new Ctx();
-      audioCtxRef.current = ctx;
+      const ctx = ensurePlaybackContext();
+      if (!ctx) throw new Error("Sin soporte de audio");
       if (ctx.state === "suspended") await ctx.resume();
 
       const source = ctx.createMediaStreamSource(stream);
@@ -498,7 +625,7 @@ export default function EchoSimulator() {
       setState("error");
       cleanup();
     }
-  }, [cleanup, tick]);
+  }, [cleanup, ensurePlaybackContext, tick]);
 
   const stop = useCallback(() => {
     cleanup();
@@ -546,16 +673,17 @@ export default function EchoSimulator() {
   const isActive =
     state === "listening" || state === "recording" || state === "playing";
   const characterScale =
-    state === "playing" ? 1.2 : state === "recording" ? 1 + level * 4 : 1;
+    state === "playing" ? 1.18 : state === "recording" ? 1 + level * 3.5 : 1;
+  const visualizerPulse = state === "playing" ? 1 : 0;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-sky-300 via-fuchsia-300 to-amber-200">
-      {/* Floating background bubbles */}
+      {/* Floating bubbles */}
       <div className="pointer-events-none absolute inset-0">
-        {Array.from({ length: 8 }).map((_, i) => {
-          const left = (i * 13) % 100;
-          const size = 80 + ((i * 37) % 120);
-          const delay = i * 0.7;
+        {Array.from({ length: 6 }).map((_, i) => {
+          const left = (i * 17) % 100;
+          const size = 80 + ((i * 41) % 120);
+          const delay = i * 0.8;
           return (
             <motion.div
               key={i}
@@ -563,7 +691,7 @@ export default function EchoSimulator() {
               style={{ left: `${left}%`, width: size, height: size, top: "110%" }}
               animate={{ y: ["0%", "-1200%"] }}
               transition={{
-                duration: 18 + i * 2,
+                duration: 20 + i * 2,
                 repeat: Infinity,
                 delay,
                 ease: "linear",
@@ -573,40 +701,21 @@ export default function EchoSimulator() {
         })}
       </div>
 
-      <FloatingSparkles playing={state === "playing"} />
+      <div className="relative z-10 mx-auto flex max-w-md flex-col items-center px-3 py-3">
+        <h1 className="mb-1 text-center text-2xl font-black text-white drop-shadow-lg">
+          🎤 Eco Mágico
+        </h1>
 
-      <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center px-4 py-8">
-        <motion.h1
-          className="mb-2 text-center text-4xl font-black text-white drop-shadow-lg sm:text-5xl"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-        >
-          🎤 Eco Mágico 🎤
-        </motion.h1>
-        <p className="mb-6 text-center text-base font-semibold text-white/90 drop-shadow">
-          Habla y espera… ¡el eco repetirá lo que digas!
-        </p>
-
-        {/* Character */}
-        <div className="relative mb-4 flex h-56 w-56 items-center justify-center">
-          <motion.div
-            className="absolute inset-0 rounded-full bg-white/40 blur-2xl"
-            animate={{
-              scale: state === "recording" ? 1 + level * 3 : 1,
-              opacity: isActive ? 0.8 : 0.3,
-            }}
-            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+        {/* Character + WebGPU visualizer */}
+        <div className="relative mb-1 flex h-52 w-52 items-center justify-center">
+          <EchoVisualizer
+            levelRef={levelRef}
+            hue={character.hue}
+            pulse={visualizerPulse}
           />
           <motion.div
-            className="absolute inset-2 rounded-full bg-white/70 shadow-2xl"
-            animate={{
-              scale: state === "recording" ? 1 + level * 1.5 : 1,
-            }}
-            transition={{ type: "spring", stiffness: 200, damping: 15 }}
-          />
-          <motion.div
-            key={character}
-            className="relative select-none text-[8rem] leading-none"
+            key={character.emoji}
+            className="relative select-none text-[6.5rem] leading-none drop-shadow-2xl"
             animate={{
               scale: characterScale,
               rotate: state === "playing" ? [0, -8, 8, -6, 6, 0] : 0,
@@ -620,57 +729,53 @@ export default function EchoSimulator() {
                   : { type: "spring", stiffness: 200, damping: 15 }
             }
           >
-            {character}
+            {character.emoji}
           </motion.div>
         </div>
 
-        {/* State label */}
-        <div className="relative mb-2 h-10">
+        {/* State label + countdown */}
+        <div className="mb-2 flex h-9 items-center gap-2">
           <AnimatePresence mode="wait">
             <motion.div
               key={state}
-              initial={{ y: 8, opacity: 0, scale: 0.9 }}
+              initial={{ y: 6, opacity: 0, scale: 0.9 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: -8, opacity: 0, scale: 0.9 }}
-              className="rounded-full bg-white/80 px-5 py-1.5 text-xl font-extrabold text-purple-700 shadow-md"
+              exit={{ y: -6, opacity: 0, scale: 0.9 }}
+              className="rounded-full bg-white/85 px-4 py-1 text-base font-extrabold text-purple-700 shadow"
             >
               {STATE_LABELS[state]}
             </motion.div>
           </AnimatePresence>
-        </div>
-
-        {/* Silence countdown */}
-        <div className="mb-3 h-8">
           <AnimatePresence>
             {silenceCountdown !== null && silenceCountdown > 0 && (
               <motion.div
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.5, opacity: 0 }}
-                className="flex items-center gap-2 text-lg font-bold text-white drop-shadow"
+                className="flex items-center gap-1 rounded-full bg-purple-600 px-3 py-1 text-sm font-bold text-white shadow"
               >
-                <Sparkles className="h-5 w-5" />
-                {Math.ceil(silenceCountdown)}s para el eco…
+                <Sparkles className="h-4 w-4" />
+                {Math.ceil(silenceCountdown)}s
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
         {/* Waveform */}
-        <div className="mb-6 w-full">
+        <div className="mb-3 w-full">
           <WaveBars level={level} active={isActive} />
         </div>
 
-        {/* Controls */}
-        <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
+        {/* Main control */}
+        <div className="mb-3 flex w-full items-center justify-center">
           {state === "idle" || state === "error" ? (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={start}
-              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 px-8 py-4 text-xl font-bold text-white shadow-xl hover:shadow-2xl"
+              className="flex items-center gap-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 px-10 py-5 text-2xl font-black text-white shadow-2xl ring-4 ring-white/40 hover:shadow-pink-500/50"
             >
-              <Mic className="h-7 w-7" />
+              <Mic className="h-8 w-8" />
               ¡Empezar!
             </motion.button>
           ) : (
@@ -678,64 +783,60 @@ export default function EchoSimulator() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={stop}
-              className="flex items-center gap-2 rounded-full bg-white/90 px-6 py-3 text-lg font-bold text-rose-600 shadow-xl hover:bg-white"
+              className="flex items-center gap-3 rounded-full bg-white px-8 py-4 text-xl font-black text-rose-600 shadow-2xl ring-4 ring-rose-200"
             >
-              <MicOff className="h-6 w-6" />
+              <MicOff className="h-7 w-7" />
               Parar
             </motion.button>
           )}
         </div>
 
-        {/* Character picker */}
-        <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
-          <span className="text-sm font-semibold text-white drop-shadow">
-            Elige tu amigo:
-          </span>
-          {CHARACTERS.map((c) => (
+        {/* Character picker — larger buttons */}
+        <div className="mb-3 grid w-full max-w-sm grid-cols-6 gap-2">
+          {CHARACTERS.map((c, i) => (
             <motion.button
-              key={c}
-              whileHover={{ scale: 1.2, rotate: 8 }}
+              key={c.emoji}
+              whileHover={{ scale: 1.15, rotate: 6 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => setCharacter(c)}
-              className={`flex h-12 w-12 items-center justify-center rounded-full text-3xl shadow-md transition-colors ${
-                character === c
+              onClick={() => setCharacterIdx(i)}
+              className={`flex aspect-square items-center justify-center rounded-2xl text-3xl shadow-lg transition-colors ${
+                characterIdx === i
                   ? "bg-yellow-300 ring-4 ring-white"
-                  : "bg-white/70 hover:bg-white"
+                  : "bg-white/75 hover:bg-white"
               }`}
-              aria-label={`Elegir ${c}`}
+              aria-label={`Elegir ${c.name}`}
+              title={c.name}
             >
-              {c}
+              {c.emoji}
             </motion.button>
           ))}
         </div>
 
-        {/* Silence slider */}
-        <div className="mb-6 w-full max-w-xs rounded-2xl bg-white/70 p-4 shadow-md">
-          <div className="mb-2 flex items-center justify-between">
-            <label className="text-sm font-semibold text-purple-700">
-              Silencio para el eco
-            </label>
-            <span className="rounded-full bg-purple-600 px-3 py-0.5 text-sm font-bold text-white">
-              {silenceSeconds}s
-            </span>
-          </div>
+        {/* Silence slider — compact */}
+        <div className="mb-3 flex w-full max-w-sm items-center gap-3 rounded-2xl bg-white/75 px-4 py-2 shadow">
+          <label className="shrink-0 text-xs font-bold text-purple-700">
+            Silencio
+          </label>
           <input
             type="range"
-            min={2}
+            min={1}
             max={10}
             step={1}
             value={silenceSeconds}
             onChange={(e) => setSilenceSeconds(Number(e.target.value))}
-            className="w-full accent-purple-600"
+            className="flex-1 accent-purple-600"
           />
+          <span className="w-10 shrink-0 rounded-full bg-purple-600 px-2 py-0.5 text-center text-xs font-bold text-white">
+            {silenceSeconds}s
+          </span>
         </div>
 
-        {/* Past echoes list */}
+        {/* Past echoes */}
         {pastEchoes.length > 0 && (
-          <div className="mb-6 w-full max-w-md rounded-2xl bg-white/60 p-4 shadow-md">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-purple-800">
-                Tus ecos guardados
+          <div className="mb-3 w-full max-w-sm rounded-2xl bg-white/60 p-3 shadow">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-sm font-extrabold text-purple-800">
+                Tus ecos
               </h2>
               <button
                 onClick={clearPastEchoes}
@@ -762,29 +863,13 @@ export default function EchoSimulator() {
           </div>
         )}
 
-        {/* Error */}
         {state === "error" && errorMsg && (
-          <div className="w-full max-w-md rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700 shadow">
+          <div className="w-full max-w-sm rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 shadow">
             <div className="mb-1 flex items-center gap-2 font-bold">
               <RefreshCw className="h-4 w-4" />
               ¡Vaya!
             </div>
             {errorMsg}
-          </div>
-        )}
-
-        {/* Quick help */}
-        {state === "idle" && pastEchoes.length === 0 && (
-          <div className="mt-2 max-w-md rounded-2xl bg-white/70 px-5 py-4 text-sm text-purple-900 shadow">
-            <p className="mb-2 font-bold">¿Cómo se juega?</p>
-            <ol className="list-decimal space-y-1 pl-5">
-              <li>Pulsa el botón gigante de “¡Empezar!”.</li>
-              <li>Di algo divertido al micro 🎙️.</li>
-              <li>Quédate en silencio y el eco lo repetirá. ¡Magia!</li>
-            </ol>
-            <p className="mt-3 flex items-center gap-1 text-xs text-purple-700">
-              <Play className="h-3 w-3" /> Necesita permiso del micrófono.
-            </p>
           </div>
         )}
       </div>

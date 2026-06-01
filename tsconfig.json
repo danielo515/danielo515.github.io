@@ -12,6 +12,7 @@
     },
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "exactOptionalPropertyTypes": false
+    "exactOptionalPropertyTypes": false,
+    "types": ["@webgpu/types"]
   }
 }

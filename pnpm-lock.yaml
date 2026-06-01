@@ -56,6 +56,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.18
         version: 4.1.18
+      typegpu:
+        specifier: ^0.11.8
+        version: 0.11.8
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -66,6 +69,9 @@ importers:
       '@types/node':
         specifier: ^24.0.7
         version: 24.0.7
+      '@webgpu/types':
+        specifier: ^0.1.70
+        version: 0.1.70
       playwright:
         specifier: ^1.55.1
         version: 1.55.1
@@ -1062,6 +1068,9 @@ packages:
 
   '@vscode/l10n@0.0.18':
     resolution: {integrity: sha512-KYSIHVmslkaCDyw013pphY+d7x1qV8IZupYfeIfzNA+nsaWHbn5uPuQRvdRFsa9zFzGeudPuoGoZ1Op4jrJXIQ==}
+
+  '@webgpu/types@0.1.70':
+    resolution: {integrity: sha512-LFiNHHKMvmAEvwVew3JLJmTdShhbdwRFSImUshGhE2mGE8ybQzIo63l5uRp+YKnNx+8Qno8Kf6gN+DKMreIJCA==}
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -2741,6 +2750,10 @@ packages:
     resolution: {integrity: sha512-Ae3OVUqifDw0wBriIBS7yVaW44Dp6eSHQcyq4Igc7eN2TJH/2YsicswaW+J/OuMvhpDPOKEgpAZCjkb4hpoyeA==}
     engines: {node: ^16.14.0 || >= 17.3.0}
 
+  tinyest@0.3.2:
+    resolution: {integrity: sha512-1wqSt97RLezWzeogLSVXHr+E3jpYO8jxyaK2AIdJeGoZZTCubwNxQ9IqU5gbQpJVcxlbPugPAsII+m9/gqpPSA==}
+    engines: {node: '>=12.20.0'}
+
   tinyexec@1.1.1:
     resolution: {integrity: sha512-VKS/ZaQhhkKFMANmAOhhXVoIfBXblQxGX1myCQ2faQrfmobMftXeJPcZGp0gS07ocvGJWDLZGyOZDadDBqYIJg==}
     engines: {node: '>=18'}
@@ -2779,9 +2792,20 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
+  tsover-runtime@0.0.7:
+    resolution: {integrity: sha512-FHHwMJzZbnP23+fU1PxXljy7j0RRRosL2r1/CRUNTqfW+l7m35JsUkM615x/cAzw4GqRdXPIl3axKMj9qzpZtQ==}
+
   type-fest@0.7.1:
     resolution: {integrity: sha512-Ne2YiiGN8bmrmJJEuTWTLJR32nh/JdL1+PSicowtNb0WFpn59GK8/lfD61bVtzguz7b3PBt74nxpv/Pw5po5Rg==}
     engines: {node: '>=8'}
+
+  typed-binary@4.3.3:
+    resolution: {integrity: sha512-W2hLsSzt3k/tg38gDE4Fn/QiwcoqGuUHBc2cb3mXuH7KcYxe/GM57vzW14s2/bawB4R5knGgGq8Xb57vsaJ4Sg==}
+
+  typegpu@0.11.8:
+    resolution: {integrity: sha512-aEVdtGDTWrXB5yVCwriM84iyfnw8dHWiXVTA2Hr9hnJN2F4IXKainTVKd3HP2/lPHqDg5iYjt7yL//p2sJAWBg==}
+    engines: {node: '>=12.20.0'}
+    hasBin: true
 
   typesafe-path@0.2.2:
     resolution: {integrity: sha512-OJabfkAg1WLZSqJAJ0Z6Sdt3utnbzr/jh+NAHoyWHJe8CMSy79Gm085094M9nvTPy22KzTVn5Zq5mbapCI/hPA==}
@@ -4133,6 +4157,8 @@ snapshots:
       vscode-uri: 3.1.0
 
   '@vscode/l10n@0.0.18': {}
+
+  '@webgpu/types@0.1.70': {}
 
   abort-controller@3.0.0:
     dependencies:
@@ -6284,6 +6310,8 @@ snapshots:
 
   tinyclip@0.1.12: {}
 
+  tinyest@0.3.2: {}
+
   tinyexec@1.1.1: {}
 
   tinyglobby@0.2.16:
@@ -6309,7 +6337,17 @@ snapshots:
 
   tslib@2.8.1: {}
 
+  tsover-runtime@0.0.7: {}
+
   type-fest@0.7.1: {}
+
+  typed-binary@4.3.3: {}
+
+  typegpu@0.11.8:
+    dependencies:
+      tinyest: 0.3.2
+      tsover-runtime: 0.0.7
+      typed-binary: 4.3.3
 
   typesafe-path@0.2.2: {}
 
