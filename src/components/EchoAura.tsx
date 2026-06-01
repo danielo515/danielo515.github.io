@@ -108,17 +108,19 @@ fn fs(in: VsOut) -> @location(0) vec4f {
 
   // FFT-driven petal radius
   let bin = sampleBinsSym(aN);
-  let baseR = 0.55 + energy * 0.05;
-  let wob = sin(aN * TAU * 5.0 + t * 1.6) * (0.02 + live * 0.025)
-          + sin(aN * TAU * 9.0 - t * 1.1) * (0.012);
-  let radius = baseR + bin * 0.22 + wob;
+  let breathe = energy * 0.22 + sin(t * 1.2) * 0.03 * live;
+  let baseR = 0.42 + breathe;
+  let wobAmp = 0.018 + energy * 0.09 + live * 0.02;
+  let wob = sin(aN * TAU * 5.0 + t * 1.6) * wobAmp
+          + sin(aN * TAU * 9.0 - t * 1.1) * wobAmp * 0.55;
+  let radius = baseR + bin * 0.38 + wob;
 
   // Main blob silhouette
   let core = smoothstep(radius, radius - 0.10, r);
   let halo = smoothstep(radius + 0.55, radius, r) * (0.55 + live * 0.4);
 
   // Bright inner pulse
-  let innerR = 0.20 + bin * 0.08 + sin(t * 2.0) * 0.01 * live;
+  let innerR = 0.18 + bin * 0.14 + energy * 0.10 + sin(t * 2.4) * 0.018 * live;
   let innerCore = smoothstep(innerR, innerR - 0.10, r);
 
   // Concentric rings driven by FFT
@@ -132,8 +134,9 @@ fn fs(in: VsOut) -> @location(0) vec4f {
     rings = rings + exp(-pow((r - rr) / rw, 2.0)) * (0.25 + ringBin * 0.75);
   }
 
-  // Color
-  let hue = fract(u.hue + r * 0.35 + t * 0.07 + aN * 0.08);
+  // Color — use sin(aN * TAU) instead of raw aN so hue stays continuous
+  // across the angle-wrap (it was producing a seam on the -x axis).
+  let hue = fract(u.hue + r * 0.35 + t * 0.07 + sin(aN * TAU) * 0.05);
   let col = hsv2rgb(hue, 0.85, 1.0);
   let innerCol = hsv2rgb(fract(hue + 0.1), 0.45, 1.0);
 
