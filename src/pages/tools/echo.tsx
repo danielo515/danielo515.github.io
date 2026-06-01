@@ -12,11 +12,12 @@ type EchoState =
   | "playing"
   | "error";
 
-const SILENCE_THRESHOLD = 0.02;
 const SHORT_SILENCE_MS = 600;
 const MAX_PAST_ECHOES = 12;
 const FFT_SIZE = 512;
 const EQ_BINS = 64;
+const NOISE_GATE_LEVELS = [0.02, 0.04, 0.06, 0.09, 0.13] as const;
+const DEFAULT_NOISE_GATE_INDEX = 2;
 
 type VoiceProfile = {
   playbackRate: number;
@@ -316,6 +317,7 @@ export default function EchoSimulator() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [characterIdx, setCharacterIdx] = useState<number>(0);
   const [silenceSeconds, setSilenceSeconds] = useState<number>(2);
+  const [noiseGate, setNoiseGate] = useState<number>(DEFAULT_NOISE_GATE_INDEX);
   const [level, setLevel] = useState<number>(0);
   const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null);
   const [pastEchoes, setPastEchoes] = useState<PastEcho[]>([]);
@@ -328,6 +330,9 @@ export default function EchoSimulator() {
   stateRef.current = state;
   const silenceSecondsRef = useRef<number>(silenceSeconds);
   silenceSecondsRef.current = silenceSeconds;
+  const noiseGateRef = useRef<number>(NOISE_GATE_LEVELS[noiseGate]!);
+  noiseGateRef.current =
+    NOISE_GATE_LEVELS[noiseGate] ?? NOISE_GATE_LEVELS[DEFAULT_NOISE_GATE_INDEX]!;
   const characterRef = useRef<CharacterDef>(character);
   characterRef.current = character;
 
@@ -520,7 +525,7 @@ export default function EchoSimulator() {
 
     const now = performance.now();
     const current = stateRef.current;
-    const isSound = rms > SILENCE_THRESHOLD;
+    const isSound = rms > noiseGateRef.current;
 
     if (current === "listening" || current === "recording") {
       if (isSound) {
@@ -827,23 +832,45 @@ export default function EchoSimulator() {
           ))}
         </div>
 
-        {/* Silence slider — compact */}
-        <div className="mb-3 flex w-full max-w-sm items-center gap-3 rounded-2xl bg-white/75 px-4 py-2 shadow">
-          <label className="shrink-0 text-xs font-bold text-purple-700">
-            Silencio
-          </label>
-          <input
-            type="range"
-            min={1}
-            max={10}
-            step={1}
-            value={silenceSeconds}
-            onChange={(e) => setSilenceSeconds(Number(e.target.value))}
-            className="flex-1 accent-purple-600"
-          />
-          <span className="w-10 shrink-0 rounded-full bg-purple-600 px-2 py-0.5 text-center text-xs font-bold text-white">
-            {silenceSeconds}s
-          </span>
+        {/* Sliders — compact */}
+        <div className="mb-3 w-full max-w-sm space-y-1 rounded-2xl bg-white/75 px-4 py-2 shadow">
+          <div className="flex items-center gap-3">
+            <label className="w-16 shrink-0 text-xs font-bold text-purple-700">
+              Silencio
+            </label>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              step={1}
+              value={silenceSeconds}
+              onChange={(e) => setSilenceSeconds(Number(e.target.value))}
+              className="flex-1 accent-purple-600"
+            />
+            <span className="w-10 shrink-0 rounded-full bg-purple-600 px-2 py-0.5 text-center text-xs font-bold text-white">
+              {silenceSeconds}s
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <label
+              className="w-16 shrink-0 text-xs font-bold text-purple-700"
+              title="Ignora ruido por debajo de este umbral"
+            >
+              Ruido
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={NOISE_GATE_LEVELS.length - 1}
+              step={1}
+              value={noiseGate}
+              onChange={(e) => setNoiseGate(Number(e.target.value))}
+              className="flex-1 accent-purple-600"
+            />
+            <span className="w-10 shrink-0 rounded-full bg-purple-600 px-2 py-0.5 text-center text-xs font-bold text-white">
+              {noiseGate + 1}
+            </span>
+          </div>
         </div>
 
         {/* Past echoes */}
