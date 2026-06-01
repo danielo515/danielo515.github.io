@@ -82,9 +82,9 @@ fn fs(in: VsOut) -> @location(0) vec4f {
   let p = uv * 2.0 - vec2f(1.0);
   let t = u.time;
 
-  // Sample current bar height (smooth interpolation across bins)
-  let baseH = sampleBins(uv.x);
-  // Slight horizontal smoothing by averaging a small window
+  // Mirror so lows live in the center, highs at the edges
+  let xc = abs(uv.x - 0.5) * 2.0;
+  let baseH = sampleBins(xc);
   let h = baseH * 0.85;
 
   let distY = abs(p.y);
@@ -108,9 +108,10 @@ fn fs(in: VsOut) -> @location(0) vec4f {
   let yGrad = 1.0 - smoothstep(0.0, h, distY) * 0.5;
   let fillCol = mix(col, colTop, smoothstep(0.0, h, distY)) * yGrad;
 
-  // Sparkles that follow the waveform crest
+  // Sparkles that follow the waveform crest (also mirrored)
   let sx = floor(uv.x * 48.0);
-  let crest = sampleBins(sx / 48.0);
+  let sxc = abs((sx / 48.0) - 0.5) * 2.0;
+  let crest = sampleBins(sxc);
   let sparkSeed = hash21(vec2f(sx, floor(t * 6.0 + sx * 0.3)));
   let sparkY = crest + 0.04 + sparkSeed * 0.06;
   let sparkXf = fract(uv.x * 48.0) - 0.5;

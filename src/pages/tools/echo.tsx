@@ -501,9 +501,20 @@ export default function EchoSimulator() {
       analyser.getByteFrequencyData(fbuf);
       const out = freqDataRef.current;
       const total = fbuf.length;
+      // Log-spaced sampling so low-end bands don't hog all the energy
+      // visually, plus a tilt that boosts the highs to compensate the
+      // natural ~1/f roll-off of speech.
+      const minIdx = 1;
+      const maxIdx = total - 1;
+      const span = Math.log(maxIdx / minIdx);
       for (let i = 0; i < EQ_BINS; i++) {
-        const idx = Math.min(total - 1, Math.floor((i * total) / (EQ_BINS * 2)));
-        out[i] = fbuf[idx]!;
+        const f = i / (EQ_BINS - 1);
+        const idx = Math.min(
+          maxIdx,
+          Math.max(minIdx, Math.round(minIdx * Math.exp(f * span)))
+        );
+        const boost = 1 + f * 1.8;
+        out[i] = Math.min(255, (fbuf[idx] ?? 0) * boost);
       }
     }
 
@@ -694,15 +705,17 @@ export default function EchoSimulator() {
 
         {/* Character + visualizer */}
         {mode === "aura" ? (
-          <div className="relative mb-2 flex h-72 w-full items-center justify-center overflow-hidden rounded-3xl">
-            <EchoAura
-              freqDataRef={freqDataRef}
-              hue={character.hue}
-              active={isActive}
-            />
+          <div className="relative -my-4 mb-2 flex h-80 w-full items-center justify-center sm:h-96">
+            <div className="pointer-events-none absolute -inset-x-10 -inset-y-8 z-0">
+              <EchoAura
+                freqDataRef={freqDataRef}
+                hue={character.hue}
+                active={isActive}
+              />
+            </div>
             <motion.div
               key={character.emoji}
-              className="relative z-10 select-none text-[7rem] leading-none drop-shadow-2xl"
+              className="relative z-10 select-none text-[7.5rem] leading-none drop-shadow-2xl"
               animate={{
                 scale: characterScale,
                 rotate: state === "playing" ? [0, -8, 8, -6, 6, 0] : 0,
