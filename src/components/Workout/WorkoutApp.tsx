@@ -1171,17 +1171,22 @@ function WorkoutTracker() {
         if (data.completed && typeof data.completed === "object") {
           Object.keys(completed).forEach((key) => completed.$jazz.delete(key));
           for (const [key, value] of Object.entries(data.completed)) {
-            completed.$jazz.set(key, Number(value));
+            if (key === "__proto__" || key === "constructor") continue;
+            const num = Number(value);
+            if (!Number.isFinite(num)) continue;
+            completed.$jazz.set(key, num);
           }
         }
         if (Array.isArray(data.weekHistory)) {
-          weekHistory.$jazz.splice(
-            0,
-            weekHistory.length,
-            ...data.weekHistory.map(Number),
-          );
+          const ts = data.weekHistory
+            .map(Number)
+            .filter((n: number) => Number.isFinite(n));
+          weekHistory.$jazz.splice(0, weekHistory.length, ...ts);
         }
-        if (typeof data.activeDay === "number") {
+        if (
+          typeof data.activeDay === "number" &&
+          Number.isFinite(data.activeDay)
+        ) {
           routineState.$jazz.set("activeDay", data.activeDay);
         }
       } catch {
@@ -1977,6 +1982,10 @@ function SyncPanel({ color }: { color: string }) {
                   onChange={(e) => setLoginPhrase(e.target.value)}
                   placeholder="Escribe aquí tu frase de recuperación"
                   rows={3}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  autoComplete="off"
                   style={{
                     fontFamily: "'Barlow', sans-serif",
                     fontSize: 13,
