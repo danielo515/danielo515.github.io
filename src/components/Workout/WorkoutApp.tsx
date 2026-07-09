@@ -2189,6 +2189,16 @@ function SyncPanel({ color }: { color: string }) {
             >
               {showPhrase ? "Ocultar frase" : "Ver frase de recuperación"}
             </button>
+            <button
+              type="button"
+              style={ghostBtn}
+              onClick={() => {
+                setShowLogin((v) => !v);
+                setError("");
+              }}
+            >
+              {showLogin ? "Cancelar" : "Entrar con otra frase"}
+            </button>
           </>
         ) : (
           <>
@@ -2215,39 +2225,46 @@ function SyncPanel({ color }: { color: string }) {
             >
               {showLogin ? "Cancelar" : "Ya tengo una frase de recuperación"}
             </button>
-            {showLogin && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <textarea
-                  value={loginPhrase}
-                  onChange={(e) => setLoginPhrase(e.target.value)}
-                  placeholder="Escribe aquí tu frase de recuperación"
-                  rows={3}
-                  spellCheck={false}
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  autoComplete="off"
-                  style={{
-                    fontFamily: "'Barlow', sans-serif",
-                    fontSize: 13,
-                    color: "#fff",
-                    background: "#0a0a0a",
-                    border: "1px solid #222",
-                    borderRadius: 6,
-                    padding: "8px 10px",
-                    resize: "vertical",
-                  }}
-                />
-                <button
-                  type="button"
-                  style={primaryBtn}
-                  disabled={busy || !loginPhrase.trim()}
-                  onClick={logIn}
-                >
-                  {busy ? "Entrando…" : "Entrar"}
-                </button>
+          </>
+        )}
+
+        {showLogin && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {signedIn && (
+              <div style={{ ...bodyText, color: "#666", fontSize: 11 }}>
+                Entrarás con la cuenta de esa frase. El progreso guardado solo
+                en este dispositivo dejará de mostrarse.
               </div>
             )}
-          </>
+            <textarea
+              value={loginPhrase}
+              onChange={(e) => setLoginPhrase(e.target.value)}
+              placeholder="Escribe aquí tu frase de recuperación"
+              rows={3}
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
+              autoComplete="off"
+              style={{
+                fontFamily: "'Barlow', sans-serif",
+                fontSize: 13,
+                color: "#fff",
+                background: "#0a0a0a",
+                border: "1px solid #222",
+                borderRadius: 6,
+                padding: "8px 10px",
+                resize: "vertical",
+              }}
+            />
+            <button
+              type="button"
+              style={primaryBtn}
+              disabled={busy || !loginPhrase.trim()}
+              onClick={logIn}
+            >
+              {busy ? "Entrando…" : "Entrar"}
+            </button>
+          </div>
         )}
 
         {showPhrase && signedIn && (
