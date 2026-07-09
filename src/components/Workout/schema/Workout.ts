@@ -33,7 +33,7 @@ export const WorkoutAccount = co
       account.$jazz.set(
         "root",
         WorkoutRoot.create({
-          activeRoutineId: "c",
+          activeRoutineId: "d",
           routines: RoutineStates.create({}),
         }),
       );

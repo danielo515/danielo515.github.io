@@ -525,6 +525,234 @@ const weeklyExercisesC: WeeklyExercise[] = [
   { id: "wc-2", name: "ELEVACIÓN DE PIERNAS", sets: 4, reps: "FALLO", timesPerWeek: 2 },
 ];
 
+const workoutDataD: WorkoutDay[] = [
+  {
+    id: 1,
+    label: "DÍA 1",
+    title: "ESPALDA Y ANTEBRAZO",
+    color: "#00E5FF",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "ESPALDA",
+        supersets: true,
+        exercises: [
+          {
+            id: "d1-1",
+            name: "PULLOVER CUERDA",
+            pairedWith: "INVERTIDO AL PECHO",
+            pairedId: "d1-1b",
+            sets: 3,
+            reps: "12",
+            repsB: "12",
+          },
+        ],
+      },
+      {
+        name: "ESPALDA",
+        supersets: false,
+        exercises: [
+          { id: "d1-2", name: "JALÓN ANCHO AL PECHO", sets: 5, reps: "6 (+2x12)" },
+          { id: "d1-3", name: "REMO MANCUERNA SUPINO", sets: 4, reps: "8" },
+        ],
+      },
+      {
+        name: "ESPALDA",
+        supersets: true,
+        exercises: [
+          {
+            id: "d1-4",
+            name: "REMO EN PUNTA",
+            pairedWith: "REMO EN BANCO A DOS MANOS",
+            pairedId: "d1-4b",
+            sets: 4,
+            reps: "8",
+            repsB: "12",
+          },
+        ],
+      },
+      {
+        name: "LUMBAR Y ANTEBRAZO",
+        supersets: false,
+        exercises: [
+          {
+            id: "d1-5",
+            name: "HIPEREXTENSIONES",
+            sets: 3,
+            reps: "FALLO (SIN PESO Y LENTAS)",
+          },
+          {
+            id: "d1-6",
+            name: "SUPINACIÓN Y PRONACIÓN MUÑECA",
+            sets: 4,
+            reps: "20",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "DÍA 2",
+    title: "HOMBRO",
+    color: "#CF6BFF",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "HOMBRO",
+        supersets: false,
+        exercises: [
+          { id: "d2-1", name: "MILITAR POR DELANTE", sets: 6, reps: "8 (+2 DESC)" },
+          { id: "d2-2", name: "PRESS HAMMER", sets: 3, reps: "20" },
+          { id: "d2-3", name: "LATERALES DE PIE", sets: 6, reps: "6 (+3x12)" },
+          { id: "d2-4", name: "REMO ANCHO AL CUELLO", sets: 3, reps: "12" },
+        ],
+      },
+      {
+        name: "HOMBRO",
+        supersets: true,
+        exercises: [
+          {
+            id: "d2-5",
+            name: "PÁJAROS MANCUERNAS",
+            pairedWith: "ENCOGIMIENTOS",
+            pairedId: "d2-5b",
+            sets: 4,
+            reps: "12",
+            repsB: "15",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 3,
+    label: "DÍA 3",
+    title: "PIERNA",
+    color: "#B8FF3D",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "PIERNA",
+        supersets: false,
+        exercises: [
+          { id: "d3-1", name: "HACK", sets: 6, reps: "12 (+2x20)" },
+          {
+            id: "d3-2",
+            name: "PRENSA A UNA PIERNA",
+            sets: 3,
+            reps: "12 SIN DESCANSO",
+          },
+          { id: "d3-3", name: "PRENSA", sets: 4, reps: "12" },
+          { id: "d3-4", name: "EXTENSIONES", sets: 4, reps: "15" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 4,
+    label: "DÍA 4",
+    title: "PECHO Y TRÍCEPS",
+    color: "#FF6B35",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "PECHO",
+        supersets: false,
+        exercises: [
+          { id: "d4-1", name: "PLANO MULTIPOWER", sets: 6, reps: "6 (+3x12)" },
+        ],
+      },
+      {
+        name: "PECHO",
+        supersets: true,
+        exercises: [
+          {
+            id: "d4-2",
+            name: "APERTURAS SUPERIORES",
+            pairedWith: "PRESS SUPERIOR",
+            pairedId: "d4-2b",
+            sets: 4,
+            reps: "10",
+            repsB: "6",
+          },
+        ],
+      },
+      {
+        name: "TRÍCEPS",
+        supersets: true,
+        exercises: [
+          {
+            id: "d4-3",
+            name: "CRUCES EN POLEA",
+            pairedWith: "PRESS CERRADO TRÍCEPS",
+            pairedId: "d4-3b",
+            sets: 4,
+            reps: "12",
+            repsB: "12",
+          },
+          {
+            id: "d4-4",
+            name: "POLEA V",
+            pairedWith: "FONDOS PARALELAS TRÍCEPS",
+            pairedId: "d4-4b",
+            sets: 4,
+            reps: "15",
+            repsB: "FALLO",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 5,
+    label: "DÍA 5",
+    title: "FEMORAL Y BÍCEPS",
+    color: "#FFD23D",
+    restNote: "1' entre series",
+    groups: [
+      {
+        name: "FEMORAL",
+        supersets: false,
+        exercises: [
+          {
+            id: "d5-1",
+            name: "FEMORAL TUMBADO",
+            sets: 6,
+            reps: "6 (+2x10 +2x15)",
+          },
+          { id: "d5-2", name: "ABDUCTOR", sets: 4, reps: "8-15" },
+          {
+            id: "d5-3",
+            name: "FEMORAL A UNA PIERNA",
+            sets: 5,
+            reps: "8 (+3x12) SIN DESCANSO",
+          },
+        ],
+      },
+      {
+        name: "BÍCEPS",
+        supersets: false,
+        exercises: [
+          {
+            id: "d5-4",
+            name: "ALTERNO SENTADO",
+            sets: 6,
+            reps: "8 (+2x12 A DOS MANOS)",
+          },
+          { id: "d5-5", name: "CURL BARRA RECTA", sets: 5, reps: "6 (+2x12)" },
+        ],
+      },
+    ],
+  },
+];
+
+const weeklyExercisesD: WeeklyExercise[] = [
+  { id: "wd-1", name: "ENCOGIMIENTOS EN POLEA", sets: 4, reps: "20", timesPerWeek: 2 },
+  { id: "wd-2", name: "ELEVACIÓN DE PIERNAS", sets: 4, reps: "FALLO", timesPerWeek: 2 },
+  { id: "wd-3", name: "GEMELO EN PRENSA", sets: 4, reps: "20", timesPerWeek: 2 },
+];
+
 const routines: WorkoutRoutine[] = [
   {
     id: "a",
@@ -553,6 +781,16 @@ const routines: WorkoutRoutine[] = [
     notes: [
       "TODOS LOS DÍAS TRAS LAS PESAS: 10' DE CARDIO HIT + 10' DE LISS",
       "DOS DÍAS EN SEMANA: ABDOMEN (incluido en ejercicios semanales)",
+    ],
+  },
+  {
+    id: "d",
+    name: "RUTINA D",
+    workoutData: workoutDataD,
+    weeklyExercises: weeklyExercisesD,
+    notes: [
+      "TODOS LOS DÍAS TRAS LAS PESAS: 10' DE CARDIO HIT + 10' DE LISS",
+      "DOS DÍAS EN SEMANA: ABDOMEN Y GEMELO EN PRENSA (incluido en ejercicios semanales)",
     ],
   },
 ];
@@ -1025,7 +1263,7 @@ function RestTimerBar({
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
-const ROUTINE_IDS = ["a", "b", "c"];
+const ROUTINE_IDS = ["a", "b", "c", "d"];
 
 function WorkoutTracker() {
   const me = useAccount(WorkoutAccount, {
@@ -1072,7 +1310,9 @@ function WorkoutTracker() {
   const routineState = appRoot.routines[activeRoutineId];
   if (!routineState?.$isLoaded) return <LoadingScreen />;
 
-  const routine = routines.find((r) => r.id === activeRoutineId) ?? routines[2]!;
+  const routine =
+    routines.find((r) => r.id === activeRoutineId) ??
+    routines[routines.length - 1]!;
   const workoutData = routine.workoutData;
   const weeklyExercises = routine.weeklyExercises;
 
