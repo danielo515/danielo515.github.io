@@ -2138,16 +2138,18 @@ function SyncPanel({ color }: { color: string }) {
     borderRadius: 6,
     cursor: busy ? "default" : "pointer",
   };
-  const ghostBtn: CSSProperties = {
+  const secondaryBtn: CSSProperties = {
     fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 700,
     letterSpacing: "0.08em",
     textTransform: "uppercase",
-    background: "transparent",
-    color: "#666",
-    border: "none",
-    padding: "8px 0 0",
+    width: "100%",
+    padding: "10px 14px",
+    background: color + "18",
+    color,
+    border: `1px solid ${color}55`,
+    borderRadius: 6,
     cursor: "pointer",
   };
 
@@ -2184,16 +2186,20 @@ function SyncPanel({ color }: { color: string }) {
             </div>
             <button
               type="button"
-              style={ghostBtn}
-              onClick={() => setShowPhrase((v) => !v)}
+              style={secondaryBtn}
+              onClick={() => {
+                setShowPhrase((v) => !v);
+                setShowLogin(false);
+              }}
             >
               {showPhrase ? "Ocultar frase" : "Ver frase de recuperación"}
             </button>
             <button
               type="button"
-              style={ghostBtn}
+              style={secondaryBtn}
               onClick={() => {
                 setShowLogin((v) => !v);
+                setShowPhrase(false);
                 setError("");
               }}
             >
@@ -2217,9 +2223,10 @@ function SyncPanel({ color }: { color: string }) {
             </button>
             <button
               type="button"
-              style={ghostBtn}
+              style={secondaryBtn}
               onClick={() => {
                 setShowLogin((v) => !v);
+                setShowPhrase(false);
                 setError("");
               }}
             >
