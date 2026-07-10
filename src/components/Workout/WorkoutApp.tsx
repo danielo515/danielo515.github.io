@@ -2138,16 +2138,18 @@ function SyncPanel({ color }: { color: string }) {
     borderRadius: 6,
     cursor: busy ? "default" : "pointer",
   };
-  const ghostBtn: CSSProperties = {
+  const secondaryBtn: CSSProperties = {
     fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 700,
     letterSpacing: "0.08em",
     textTransform: "uppercase",
-    background: "transparent",
-    color: "#666",
-    border: "none",
-    padding: "8px 0 0",
+    width: "100%",
+    padding: "10px 14px",
+    background: color + "18",
+    color,
+    border: `1px solid ${color}55`,
+    borderRadius: 6,
     cursor: "pointer",
   };
 
@@ -2184,10 +2186,24 @@ function SyncPanel({ color }: { color: string }) {
             </div>
             <button
               type="button"
-              style={ghostBtn}
-              onClick={() => setShowPhrase((v) => !v)}
+              style={secondaryBtn}
+              onClick={() => {
+                setShowPhrase((v) => !v);
+                setShowLogin(false);
+              }}
             >
               {showPhrase ? "Ocultar frase" : "Ver frase de recuperación"}
+            </button>
+            <button
+              type="button"
+              style={secondaryBtn}
+              onClick={() => {
+                setShowLogin((v) => !v);
+                setShowPhrase(false);
+                setError("");
+              }}
+            >
+              {showLogin ? "Cancelar" : "Entrar con otra frase"}
             </button>
           </>
         ) : (
@@ -2207,47 +2223,55 @@ function SyncPanel({ color }: { color: string }) {
             </button>
             <button
               type="button"
-              style={ghostBtn}
+              style={secondaryBtn}
               onClick={() => {
                 setShowLogin((v) => !v);
+                setShowPhrase(false);
                 setError("");
               }}
             >
               {showLogin ? "Cancelar" : "Ya tengo una frase de recuperación"}
             </button>
-            {showLogin && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <textarea
-                  value={loginPhrase}
-                  onChange={(e) => setLoginPhrase(e.target.value)}
-                  placeholder="Escribe aquí tu frase de recuperación"
-                  rows={3}
-                  spellCheck={false}
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  autoComplete="off"
-                  style={{
-                    fontFamily: "'Barlow', sans-serif",
-                    fontSize: 13,
-                    color: "#fff",
-                    background: "#0a0a0a",
-                    border: "1px solid #222",
-                    borderRadius: 6,
-                    padding: "8px 10px",
-                    resize: "vertical",
-                  }}
-                />
-                <button
-                  type="button"
-                  style={primaryBtn}
-                  disabled={busy || !loginPhrase.trim()}
-                  onClick={logIn}
-                >
-                  {busy ? "Entrando…" : "Entrar"}
-                </button>
+          </>
+        )}
+
+        {showLogin && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {signedIn && (
+              <div style={{ ...bodyText, color: "#666", fontSize: 11 }}>
+                Entrarás con la cuenta de esa frase. El progreso guardado solo
+                en este dispositivo dejará de mostrarse.
               </div>
             )}
-          </>
+            <textarea
+              value={loginPhrase}
+              onChange={(e) => setLoginPhrase(e.target.value)}
+              placeholder="Escribe aquí tu frase de recuperación"
+              rows={3}
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
+              autoComplete="off"
+              style={{
+                fontFamily: "'Barlow', sans-serif",
+                fontSize: 13,
+                color: "#fff",
+                background: "#0a0a0a",
+                border: "1px solid #222",
+                borderRadius: 6,
+                padding: "8px 10px",
+                resize: "vertical",
+              }}
+            />
+            <button
+              type="button"
+              style={primaryBtn}
+              disabled={busy || !loginPhrase.trim()}
+              onClick={logIn}
+            >
+              {busy ? "Entrando…" : "Entrar"}
+            </button>
+          </div>
         )}
 
         {showPhrase && signedIn && (
