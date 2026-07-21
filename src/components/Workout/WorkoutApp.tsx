@@ -753,6 +753,134 @@ const weeklyExercisesD: WeeklyExercise[] = [
   { id: "wd-3", name: "GEMELO EN PRENSA", sets: 4, reps: "20", timesPerWeek: 2 },
 ];
 
+const workoutDataE: WorkoutDay[] = [
+  {
+    id: 1,
+    label: "DÍA 1",
+    title: "PECHO, HOMBRO Y TRÍCEPS",
+    color: "#FF6B35",
+    restNote: "40'' entre series · 12' por ejercicio",
+    groups: [
+      {
+        name: "PECHO",
+        supersets: false,
+        exercises: [
+          { id: "e1-1", name: "PRESS PLANO MANCUERNAS", sets: 4, reps: "12" },
+          { id: "e1-2", name: "CONTRACTOR", sets: 4, reps: "12" },
+          { id: "e1-3", name: "PRESS SUPERIOR MULTIPOWER", sets: 4, reps: "12" },
+        ],
+      },
+      {
+        name: "HOMBRO",
+        supersets: false,
+        exercises: [
+          { id: "e1-4", name: "ELEVACIONES LATERALES", sets: 4, reps: "12" },
+          {
+            id: "e1-5",
+            name: "ELEVACIONES FRONTALES CON CUERDA",
+            sets: 4,
+            reps: "12",
+          },
+        ],
+      },
+      {
+        name: "TRÍCEPS",
+        supersets: true,
+        exercises: [
+          {
+            id: "e1-6",
+            name: "FRANCÉS Z",
+            pairedWith: "POLEA CON CUERDA",
+            pairedId: "e1-6b",
+            sets: 4,
+            reps: "12",
+            repsB: "12",
+          },
+        ],
+      },
+      {
+        name: "ABDOMEN — TRISERIE",
+        supersets: false,
+        exercises: [
+          {
+            id: "e1-7",
+            name: "GEMELO DE PIE · ELEVACIÓN TRONCO · ELEVACIÓN PIERNAS",
+            sets: 4,
+            reps: "20",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "DÍA 2",
+    title: "PIERNA",
+    color: "#B8FF3D",
+    restNote: "1' entre series · 15' por ejercicio",
+    groups: [
+      {
+        name: "PIERNA",
+        supersets: false,
+        exercises: [
+          { id: "e2-1", name: "EXTENSIONES DE PIERNAS", sets: 4, reps: "12" },
+          { id: "e2-2", name: "PRENSA INCLINADA", sets: 4, reps: "12" },
+          { id: "e2-3", name: "ZANCADA LARGA", sets: 4, reps: "12" },
+          { id: "e2-4", name: "FEMORAL TUMBADO", sets: 4, reps: "12" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 3,
+    label: "DÍA 3",
+    title: "ESPALDA, BÍCEPS Y ABDOMEN",
+    color: "#00E5FF",
+    restNote: "40'' entre series · 12' por ejercicio (* 30'' · 10')",
+    groups: [
+      {
+        name: "ESPALDA",
+        supersets: false,
+        exercises: [
+          { id: "e3-1", name: "POLEA ESTRECHA AL PECHO", sets: 4, reps: "12" },
+          {
+            id: "e3-2",
+            name: "REMO GIRONDA ANCHURA DE HOMBROS",
+            sets: 4,
+            reps: "12",
+          },
+          { id: "e3-3", name: "REMO HAMMER", sets: 4, reps: "12" },
+        ],
+      },
+      {
+        name: "BÍCEPS",
+        supersets: false,
+        exercises: [
+          { id: "e3-4", name: "* CURL BARRA RECTA POLEA", sets: 4, reps: "12" },
+          { id: "e3-5", name: "* MARTILLO EN POLEA", sets: 4, reps: "12" },
+        ],
+      },
+      {
+        name: "ABDOMEN — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "e3-6",
+            name: "ELEVACIÓN DE TRONCO",
+            pairedWith: "ELEVACIÓN DE PIERNAS",
+            pairedId: "e3-6b",
+            sets: 4,
+            reps: "20",
+            repsB: "20",
+          },
+        ],
+      },
+    ],
+  },
+];
+
+const weeklyExercisesE: WeeklyExercise[] = [];
+
 const routines: WorkoutRoutine[] = [
   {
     id: "a",
@@ -791,6 +919,19 @@ const routines: WorkoutRoutine[] = [
     notes: [
       "TODOS LOS DÍAS TRAS LAS PESAS: 10' DE CARDIO HIT + 10' DE LISS",
       "DOS DÍAS EN SEMANA: ABDOMEN Y GEMELO EN PRENSA (incluido en ejercicios semanales)",
+    ],
+  },
+  {
+    id: "e",
+    name: "RUTINA E",
+    workoutData: workoutDataE,
+    weeklyExercises: weeklyExercisesE,
+    notes: [
+      "TODAS LAS SERIES A 12 REPS. SI NO LLEGAS A 12, BAJA EL PESO Y CONTINÚA. SIEMPRE QUE LLEGUES, SUBE EL PESO.",
+      "CADA EJERCICIO DURA 12' CON 40'' DE DESCANSO ENTRE SERIES. LOS DE PIERNA 15' POR EJERCICIO.",
+      "EJERCICIOS MARCADOS (*): SOLO 10' Y 30'' DE DESCANSO.",
+      "TRES DÍAS EN SEMANA: 20' DE CARDIO TRAS LAS PESAS (NUNCA EL DÍA DE PIERNA).",
+      "TRAS EL TERCER DÍA, UN DÍA DE DESCANSO CON UN PASEO DE 1H. LUEGO VUELTA AL DÍA 1.",
     ],
   },
 ];
@@ -1263,7 +1404,7 @@ function RestTimerBar({
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
-const ROUTINE_IDS = ["a", "b", "c", "d"];
+const ROUTINE_IDS = ["a", "b", "c", "d", "e"];
 
 function WorkoutTracker() {
   const me = useAccount(WorkoutAccount, {
