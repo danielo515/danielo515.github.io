@@ -2,8 +2,9 @@ import { Schema, ParseResult, Either } from "effect";
 
 // ─── EFFECT SCHEMA: ROUTINE DEFINITION ───────────────────────────────────────
 // Validates a routine pasted as JSON before it is stored. Every constraint
-// carries an explicit Spanish message and every type carries a description so
-// the errors surfaced to the user are easy to understand.
+// carries an explicit Spanish message, and types carry `description` +
+// `examples` annotations so the errors surfaced to the user are easy to
+// understand.
 //
 // The shape mirrors the `WorkoutRoutine` interface used by the tracker:
 //   routine -> workoutData[] (days) -> groups[] -> exercises[]
@@ -12,27 +13,28 @@ import { Schema, ParseResult, Either } from "effect";
 
 // ─── PRIMITIVES ──────────────────────────────────────────────────────────────
 
-const NonEmptyString = Schema.String.pipe(
-  Schema.minLength(1, { message: () => "no puede estar vacío" }),
-);
+// Native non-empty string schema with a Spanish message.
+const NonEmptyString = Schema.NonEmptyString.annotations({
+  message: () => "no puede estar vacío",
+});
 
 const PositiveInt = Schema.Number.pipe(
   Schema.int({ message: () => "debe ser un número entero (sin decimales)" }),
   Schema.positive({ message: () => "debe ser mayor que 0" }),
-).annotations({ description: "Número entero mayor que 0" });
+).annotations({ description: "Número entero mayor que 0", examples: [3, 4] });
 
 const HexColor = Schema.String.pipe(
   Schema.pattern(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, {
-    message: () =>
-      'debe ser un color hexadecimal de 3 o 6 dígitos, p. ej. "#00E5FF"',
+    message: () => "debe ser un color hexadecimal de 3 o 6 dígitos",
   }),
 ).annotations({
-  description: 'Color hexadecimal usado como acento del día, p. ej. "#00E5FF"',
+  description: "Color hexadecimal usado como acento del día",
+  examples: ["#00E5FF", "#FFD600", "#FF6B6B"],
 });
 
 const Reps = NonEmptyString.annotations({
-  description:
-    'Repeticiones como texto: número ("12"), rango ("8-10") o palabra ("FALLO")',
+  description: "Repeticiones como texto: número, rango o palabra",
+  examples: ["12", "8-10", "FALLO", "30 seg"],
 });
 
 // Reserved ids belong to the built-in routines and must not be reused. The app
@@ -46,18 +48,25 @@ const RESERVED_ROUTINE_IDS = ["a", "b", "c", "d"];
 const Exercise = Schema.Struct({
   id: NonEmptyString.annotations({
     description: "Identificador único del ejercicio dentro de la rutina",
+    examples: ["d1-1", "d1-2"],
   }),
-  name: NonEmptyString.annotations({ description: "Nombre del ejercicio" }),
+  name: NonEmptyString.annotations({
+    description: "Nombre del ejercicio",
+    examples: ["PRESS BANCA", "JALÓN AL PECHO"],
+  }),
   sets: PositiveInt.annotations({ description: "Número de series" }),
   reps: Reps,
   pairedWith: Schema.optional(NonEmptyString).annotations({
     description: "Superserie: nombre del segundo ejercicio emparejado",
+    examples: ["FONDOS"],
   }),
   pairedId: Schema.optional(NonEmptyString).annotations({
     description: "Superserie: id único del segundo ejercicio emparejado",
+    examples: ["d1-1b"],
   }),
   repsB: Schema.optional(NonEmptyString).annotations({
     description: "Superserie: repeticiones del segundo ejercicio emparejado",
+    examples: ["10", "FALLO"],
   }),
 })
   .pipe(
@@ -83,7 +92,8 @@ const Exercise = Schema.Struct({
 
 const ExerciseGroup = Schema.Struct({
   name: NonEmptyString.annotations({
-    description: 'Nombre del grupo muscular, p. ej. "ESPALDA"',
+    description: "Nombre del grupo muscular",
+    examples: ["ESPALDA", "PECHO", "PIERNA"],
   }),
   supersets: Schema.Boolean.annotations({
     description: "Indica si el grupo se entrena como superseries",
@@ -100,16 +110,22 @@ const ExerciseGroup = Schema.Struct({
 const WorkoutDay = Schema.Struct({
   id: Schema.Number.pipe(
     Schema.int({ message: () => "debe ser un número entero" }),
-  ).annotations({ description: "Identificador numérico del día" }),
+  ).annotations({
+    description: "Identificador numérico del día",
+    examples: [1, 2, 3],
+  }),
   label: NonEmptyString.annotations({
-    description: 'Etiqueta corta del día, p. ej. "DÍA 1"',
+    description: "Etiqueta corta del día",
+    examples: ["DÍA 1", "DÍA 2"],
   }),
   title: NonEmptyString.annotations({
-    description: 'Título del día, normalmente el foco muscular, p. ej. "ESPALDA"',
+    description: "Título del día, normalmente el foco muscular",
+    examples: ["ESPALDA", "EMPUJE"],
   }),
   color: HexColor,
   restNote: Schema.String.annotations({
-    description: 'Nota de descanso, p. ej. "1\' entre series" (puede ir vacía)',
+    description: "Nota de descanso (puede ir vacía)",
+    examples: ["1' entre series", '90" entre series', ""],
   }),
   groups: Schema.Array(ExerciseGroup).pipe(
     Schema.minItems(1, {
@@ -123,12 +139,14 @@ const WorkoutDay = Schema.Struct({
 const WeeklyExercise = Schema.Struct({
   id: NonEmptyString.annotations({
     description: "Identificador único del ejercicio semanal",
+    examples: ["w-1", "w-2"],
   }),
-  name: NonEmptyString,
+  name: NonEmptyString.annotations({ examples: ["ABDOMINALES"] }),
   sets: PositiveInt,
   reps: Reps,
   timesPerWeek: PositiveInt.annotations({
     description: "Veces por semana que se realiza el ejercicio",
+    examples: [2, 3],
   }),
 }).annotations({ identifier: "EjercicioSemanal" });
 
@@ -145,10 +163,12 @@ const Routine = Schema.Struct({
         : true,
     ),
   ).annotations({
-    description: 'Identificador único de la rutina, p. ej. "fuerza-2026"',
+    description: "Identificador único de la rutina",
+    examples: ["fuerza-2026", "hipertrofia-verano"],
   }),
   name: NonEmptyString.annotations({
-    description: 'Nombre visible de la rutina, p. ej. "RUTINA FUERZA"',
+    description: "Nombre visible de la rutina",
+    examples: ["RUTINA FUERZA"],
   }),
   workoutData: Schema.Array(WorkoutDay).pipe(
     Schema.minItems(1, {
@@ -168,27 +188,23 @@ const Routine = Schema.Struct({
     Schema.filter((routine) => {
       // Every exercise id (including the paired ids of supersets and the
       // weekly exercises) must be unique: completion progress is tracked by id.
-      const ids: string[] = [];
-      for (const day of routine.workoutData) {
-        for (const group of day.groups) {
-          for (const ex of group.exercises) {
-            ids.push(ex.id);
-            if (ex.pairedId !== undefined) ids.push(ex.pairedId);
-          }
-        }
-      }
-      for (const ex of routine.weeklyExercises) ids.push(ex.id);
-
-      const seen = new Set<string>();
-      const dupes = new Set<string>();
-      for (const id of ids) {
-        if (seen.has(id)) dupes.add(id);
-        seen.add(id);
-      }
-      if (dupes.size === 0) return true;
+      const ids = [
+        ...routine.workoutData.flatMap((day) =>
+          day.groups.flatMap((group) =>
+            group.exercises.flatMap((ex) =>
+              ex.pairedId !== undefined ? [ex.id, ex.pairedId] : [ex.id],
+            ),
+          ),
+        ),
+        ...routine.weeklyExercises.map((ex) => ex.id),
+      ];
+      const dupes = [
+        ...new Set(ids.filter((id, index) => ids.indexOf(id) !== index)),
+      ];
+      if (dupes.length === 0) return true;
       return {
         path: [],
-        message: `hay ids de ejercicio duplicados: ${[...dupes]
+        message: `hay ids de ejercicio duplicados: ${dupes
           .map((d) => `"${d}"`)
           .join(", ")}. Cada ejercicio debe tener un id único en toda la rutina`,
       };
@@ -204,6 +220,7 @@ const Routine = Schema.Struct({
 export const RoutineSchema = Routine;
 
 export type DecodedRoutine = Schema.Schema.Type<typeof Routine>;
+export type DecodedExercise = Schema.Schema.Type<typeof Exercise>;
 
 // ─── DECODING ────────────────────────────────────────────────────────────────
 

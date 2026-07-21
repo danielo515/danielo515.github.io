@@ -21,6 +21,7 @@ import {
   decodeRoutine,
   parseRoutineJson,
   type DecodedRoutine,
+  type DecodedExercise,
 } from "./schema/routine";
 
 const SYNC_PEER =
@@ -806,64 +807,55 @@ const routines: WorkoutRoutine[] = [
 // runtime `WorkoutRoutine` shape used throughout the tracker, normalizing the
 // optional superset fields into the `BaseExercise | SuperSetExercise` union.
 
+// The decoded exercise carries the superset fields as optionals; collapse them
+// into the runtime `BaseExercise | SuperSetExercise` union (all three or none).
+function adaptExercise(e: DecodedExercise): Exercise {
+  return e.pairedWith !== undefined &&
+    e.pairedId !== undefined &&
+    e.repsB !== undefined
+    ? {
+        id: e.id,
+        name: e.name,
+        sets: e.sets,
+        reps: e.reps,
+        pairedWith: e.pairedWith,
+        pairedId: e.pairedId,
+        repsB: e.repsB,
+      }
+    : { id: e.id, name: e.name, sets: e.sets, reps: e.reps };
+}
+
 function adaptRoutine(r: DecodedRoutine): WorkoutRoutine {
   return {
     id: r.id,
     name: r.name,
     workoutData: r.workoutData.map((d) => ({
-      id: d.id,
-      label: d.label,
-      title: d.title,
-      color: d.color,
-      restNote: d.restNote,
-      groups: d.groups.map((g) => ({
-        name: g.name,
-        supersets: g.supersets,
-        exercises: g.exercises.map((e): Exercise =>
-          e.pairedWith !== undefined &&
-          e.pairedId !== undefined &&
-          e.repsB !== undefined
-            ? {
-                id: e.id,
-                name: e.name,
-                sets: e.sets,
-                reps: e.reps,
-                pairedWith: e.pairedWith,
-                pairedId: e.pairedId,
-                repsB: e.repsB,
-              }
-            : { id: e.id, name: e.name, sets: e.sets, reps: e.reps },
-        ),
-      })),
+      ...d,
+      groups: d.groups.map((g) => ({ ...g, exercises: g.exercises.map(adaptExercise) })),
     })),
-    weeklyExercises: r.weeklyExercises.map((e) => ({
-      id: e.id,
-      name: e.name,
-      sets: e.sets,
-      reps: e.reps,
-      timesPerWeek: e.timesPerWeek,
-    })),
+    weeklyExercises: r.weeklyExercises.map((e) => ({ ...e })),
     notes: [...r.notes],
   };
 }
 
-// Decode the JSON object stored in Jazz into ready-to-render routines, skipping
-// any entry that no longer validates (e.g. saved before a schema change).
-function loadCustomRoutines(raw: string | undefined): WorkoutRoutine[] {
-  if (!raw) return [];
-  let map: unknown;
+// Parse the JSON object stored in Jazz (id -> routine) into a plain record.
+function parseRoutinesMap(raw: string | undefined): Record<string, unknown> {
+  if (!raw) return {};
   try {
-    map = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
   } catch {
-    return [];
+    return {};
   }
-  if (!map || typeof map !== "object") return [];
-  const result: WorkoutRoutine[] = [];
-  for (const value of Object.values(map as Record<string, unknown>)) {
+}
+
+// Decode the stored routines into ready-to-render values, skipping any entry
+// that no longer validates (e.g. saved before a schema change).
+function loadCustomRoutines(raw: string | undefined): WorkoutRoutine[] {
+  return Object.values(parseRoutinesMap(raw)).flatMap((value) => {
     const decoded = decodeRoutine(value);
-    if (decoded.ok) result.push(adaptRoutine(decoded.routine));
-  }
-  return result;
+    return decoded.ok ? [adaptRoutine(decoded.routine)] : [];
+  });
 }
 
 const ROUTINE_JSON_EXAMPLE = `{
@@ -1455,15 +1447,6 @@ function WorkoutTracker() {
 
   const isCustomRoutine = customRoutines.some((r) => r.id === activeRoutineId);
 
-  const readCustomRoutines = (): Record<string, unknown> => {
-    try {
-      const parsed = JSON.parse(customRoutinesRaw || "{}");
-      return parsed && typeof parsed === "object" ? parsed : {};
-    } catch {
-      return {};
-    }
-  };
-
   const addRoutineFromJson = () => {
     const result = parseRoutineJson(routineJson);
     if (!result.ok) {
@@ -1479,7 +1462,7 @@ function WorkoutTracker() {
       setRoutineSuccess(null);
       return;
     }
-    const map = readCustomRoutines();
+    const map = parseRoutinesMap(customRoutinesRaw);
     const isUpdate = parsed.id in map;
     map[parsed.id] = parsed;
     appRoot.$jazz.set("customRoutinesJson", JSON.stringify(map));
@@ -1495,12 +1478,13 @@ function WorkoutTracker() {
   };
 
   const deleteCustomRoutine = (id: string) => {
-    const map = readCustomRoutines();
+    const map = parseRoutinesMap(customRoutinesRaw);
     if (!(id in map)) return;
     delete map[id];
     appRoot.$jazz.set("customRoutinesJson", JSON.stringify(map));
-    if (activeRoutineId === id)
-      appRoot.$jazz.set("activeRoutineId", routines[routines.length - 1]!.id);
+    const fallback = routines[routines.length - 1];
+    if (activeRoutineId === id && fallback)
+      appRoot.$jazz.set("activeRoutineId", fallback.id);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
