@@ -1378,6 +1378,8 @@ function WorkoutTracker() {
   const [routineJson, setRoutineJson] = useState("");
   const [routineErrors, setRoutineErrors] = useState<string[]>([]);
   const [routineSuccess, setRoutineSuccess] = useState<string | null>(null);
+  // Inline "delete routine" confirmation for the active custom routine.
+  const [confirmDeleteRoutine, setConfirmDeleteRoutine] = useState(false);
 
   // Re-runs when the active account changes (e.g. after logging in with a
   // recovery phrase), so a freshly switched-to account is seeded too.
@@ -1448,7 +1450,10 @@ function WorkoutTracker() {
       );
     }
     appRoot.$jazz.set("activeRoutineId", newId);
+    setConfirmDeleteRoutine(false);
   };
+
+  const isCustomRoutine = customRoutines.some((r) => r.id === activeRoutineId);
 
   const readCustomRoutines = (): Record<string, unknown> => {
     try {
@@ -1684,22 +1689,93 @@ function WorkoutTracker() {
               <span style={{ color: day.color }}>{day.title}</span>
             </div>
           </div>
-          <button
-            onClick={resetDay}
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 11,
-              letterSpacing: "0.1em",
-              color: "#444",
-              background: "transparent",
-              border: "1px solid #222",
-              borderRadius: 6,
-              padding: "6px 10px",
-              cursor: "pointer",
-            }}
-          >
-            RESET
-          </button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {isCustomRoutine &&
+              (confirmDeleteRoutine ? (
+                <>
+                  <span
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: 11,
+                      letterSpacing: "0.08em",
+                      color: "#FF6B6B",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    ¿Borrar rutina?
+                  </span>
+                  <button
+                    onClick={() => {
+                      deleteCustomRoutine(activeRoutineId);
+                      setConfirmDeleteRoutine(false);
+                    }}
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.1em",
+                      color: "#0a0a0a",
+                      background: "#FF6B6B",
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "6px 10px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    SÍ
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteRoutine(false)}
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: 11,
+                      letterSpacing: "0.1em",
+                      color: "#888",
+                      background: "transparent",
+                      border: "1px solid #333",
+                      borderRadius: 6,
+                      padding: "6px 10px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    NO
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setConfirmDeleteRoutine(true)}
+                  style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 11,
+                    letterSpacing: "0.1em",
+                    color: "#FF6B6B",
+                    background: "transparent",
+                    border: "1px solid #FF6B6B33",
+                    borderRadius: 6,
+                    padding: "6px 10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  BORRAR
+                </button>
+              ))}
+            <button
+              onClick={resetDay}
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 11,
+                letterSpacing: "0.1em",
+                color: "#444",
+                background: "transparent",
+                border: "1px solid #222",
+                borderRadius: 6,
+                padding: "6px 10px",
+                cursor: "pointer",
+              }}
+            >
+              RESET
+            </button>
+          </div>
         </div>
 
         {/* Progress bar */}
@@ -2198,8 +2274,6 @@ function WorkoutTracker() {
           setRoutineErrors([]);
           setRoutineSuccess(null);
         }}
-        customRoutines={customRoutines}
-        onDelete={deleteCustomRoutine}
       />
 
       {/* Sync */}
@@ -2229,8 +2303,6 @@ function AddRoutinePanel({
   success,
   onSubmit,
   onFillExample,
-  customRoutines,
-  onDelete,
 }: {
   color: string;
   open: boolean;
@@ -2241,8 +2313,6 @@ function AddRoutinePanel({
   success: string | null;
   onSubmit: () => void;
   onFillExample: () => void;
-  customRoutines: WorkoutRoutine[];
-  onDelete: (id: string) => void;
 }) {
   const labelStyle: CSSProperties = {
     fontFamily: "'Barlow Condensed', sans-serif",
@@ -2392,61 +2462,6 @@ function AddRoutinePanel({
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
-
-          {customRoutines.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ ...labelStyle, color: "#444", marginBottom: 8 }}>
-                RUTINAS PERSONALIZADAS
-              </div>
-              {customRoutines.map((r) => (
-                <div
-                  key={r.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "8px 12px",
-                    background: "#111",
-                    border: "1px solid #222",
-                    borderRadius: 6,
-                    marginBottom: 6,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: "'Barlow Condensed', sans-serif",
-                      fontSize: 13,
-                      color: "#ccc",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    {r.name}
-                  </span>
-                  <button
-                    onClick={() => {
-                      if (
-                        confirm(`¿Borrar la rutina "${r.name}"? Esta acción no se puede deshacer.`)
-                      )
-                        onDelete(r.id);
-                    }}
-                    style={{
-                      fontFamily: "'Barlow Condensed', sans-serif",
-                      fontSize: 11,
-                      letterSpacing: "0.1em",
-                      color: "#FF6B6B",
-                      background: "transparent",
-                      border: "1px solid #FF6B6B33",
-                      borderRadius: 6,
-                      padding: "4px 10px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    BORRAR
-                  </button>
-                </div>
-              ))}
             </div>
           )}
         </div>
