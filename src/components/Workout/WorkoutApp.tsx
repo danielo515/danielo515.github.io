@@ -1148,6 +1148,81 @@ function useRestTimer() {
   return { secondsLeft, running, duration, start, stop };
 }
 
+// ─── EXERCISE (WORK) TIMER HOOK ──────────────────────────────────────────────
+// Counts down the target duration of a single exercise (12'/15'/10'). Only one
+// exercise timer runs at a time — starting another (or the same one) stops it.
+
+function useExerciseTimer() {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const endTimeRef = useRef(0);
+  const rafRef = useRef(0);
+  const activeIdRef = useRef<string | null>(null);
+
+  const clear = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    endTimeRef.current = 0;
+    activeIdRef.current = null;
+    setActiveId(null);
+    setSecondsLeft(0);
+  }, []);
+
+  const finish = useCallback(() => {
+    clear();
+    navigator.vibrate?.([300, 150, 300, 150, 500]);
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("Ejercicio terminado", {
+        body: "Pasa al siguiente ejercicio",
+        tag: "workout-exercise-timer",
+      });
+    }
+  }, [clear]);
+
+  const tick = useCallback(() => {
+    if (endTimeRef.current === 0) return;
+    const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
+    if (remaining <= 0) {
+      finish();
+      return;
+    }
+    setSecondsLeft(remaining);
+    rafRef.current = requestAnimationFrame(tick);
+  }, [finish]);
+
+  // Catch up after the tab was backgrounded.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && endTimeRef.current > 0) {
+        cancelAnimationFrame(rafRef.current);
+        tick();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [tick]);
+
+  const toggle = useCallback(
+    (id: string, minutes: number) => {
+      if (activeIdRef.current === id) {
+        clear();
+        return;
+      }
+      cancelAnimationFrame(rafRef.current);
+      const secs = Math.round(minutes * 60);
+      endTimeRef.current = Date.now() + secs * 1000;
+      activeIdRef.current = id;
+      setActiveId(id);
+      setSecondsLeft(secs);
+      rafRef.current = requestAnimationFrame(tick);
+    },
+    [clear, tick],
+  );
+
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
+
+  return { activeId, secondsLeft, toggle, stop: clear };
+}
+
 // ─── COMPONENTS ──────────────────────────────────────────────────────────────
 
 function SetDot({
@@ -1201,6 +1276,13 @@ function formatRest(seconds: number): string {
   return `${s}''`;
 }
 
+// Render seconds as a mm:ss stopwatch clock.
+function fmtClock(total: number): string {
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 const exerciseNameStyle: CSSProperties = {
   fontFamily: "'Barlow Condensed', sans-serif",
   fontSize: 15,
@@ -1225,6 +1307,9 @@ function ExerciseRow({
   completedSets,
   restSeconds,
   showRestTimer,
+  timerActive,
+  timerSecondsLeft,
+  onToggleTimer,
 }: {
   exercise: Exercise;
   color: string;
@@ -1232,6 +1317,9 @@ function ExerciseRow({
   completedSets: number;
   restSeconds: number;
   showRestTimer: (seconds: number) => void;
+  timerActive: boolean;
+  timerSecondsLeft: number;
+  onToggleTimer: () => void;
 }) {
   const legs = exerciseLegs(exercise);
   const timed = exercise.durationMin != null;
@@ -1261,21 +1349,31 @@ function ExerciseRow({
   const metaBadges = (
     <>
       {timed && (
-        <span
+        <button
+          onClick={onToggleTimer}
+          title={
+            timerActive
+              ? "Parar el cronómetro del ejercicio"
+              : "Iniciar el cronómetro del ejercicio"
+          }
           style={{
             fontFamily: "'Barlow Condensed', sans-serif",
             fontSize: 11,
-            color: "#aaa",
-            background: "#ffffff10",
-            border: "1px solid #ffffff1a",
-            padding: "1px 6px",
+            fontWeight: 700,
+            color: timerActive ? "#0a0a0a" : "#aaa",
+            background: timerActive ? color : "#ffffff10",
+            border: timerActive ? `1px solid ${color}` : "1px solid #ffffff1a",
+            padding: "1px 7px",
             borderRadius: 3,
             letterSpacing: "0.06em",
-            fontWeight: 600,
+            cursor: "pointer",
+            fontVariantNumeric: "tabular-nums",
           }}
         >
-          {`⏱ ${exercise.durationMin}'`}
-        </span>
+          {timerActive
+            ? `⏱ ${fmtClock(timerSecondsLeft)}`
+            : `⏱ ${exercise.durationMin}'`}
+        </button>
       )}
       {exercise.reduced && (
         <span
@@ -1314,7 +1412,17 @@ function ExerciseRow({
   );
 
   return (
-    <div style={{ padding: "14px 0", borderBottom: "1px solid #1e1e1e" }}>
+    <div
+      style={{
+        padding: timerActive ? "14px 10px" : "14px 0",
+        margin: timerActive ? "0 -10px" : undefined,
+        borderBottom: "1px solid #1e1e1e",
+        borderLeft: timerActive ? `2px solid ${color}` : "2px solid transparent",
+        background: timerActive ? color + "0d" : undefined,
+        borderRadius: timerActive ? 6 : undefined,
+        transition: "background 0.2s",
+      }}
+    >
       {legs ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div style={{ flex: 1 }}>
@@ -1532,6 +1640,7 @@ function WorkoutTracker() {
     },
   });
   const { secondsLeft, running, duration, start, stop } = useRestTimer();
+  const exerciseTimer = useExerciseTimer();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Re-runs when the active account changes (e.g. after logging in with a
@@ -1583,9 +1692,13 @@ function WorkoutTracker() {
     Math.min(routineState.activeDay, workoutData.length - 1),
   );
 
-  const setActiveDay = (i: number) => routineState.$jazz.set("activeDay", i);
+  const setActiveDay = (i: number) => {
+    exerciseTimer.stop();
+    routineState.$jazz.set("activeDay", i);
+  };
 
   const switchRoutine = (newId: string) => {
+    exerciseTimer.stop();
     if (!appRoot.routines.$jazz.has(newId)) {
       appRoot.routines.$jazz.set(
         newId,
@@ -1991,6 +2104,12 @@ function WorkoutTracker() {
                 restSeconds={ex.rest ?? day.restSeconds ?? 60}
                 onSetDone={handleSetDone}
                 showRestTimer={start}
+                timerActive={exerciseTimer.activeId === ex.id}
+                timerSecondsLeft={exerciseTimer.secondsLeft}
+                onToggleTimer={() =>
+                  ex.durationMin != null &&
+                  exerciseTimer.toggle(ex.id, ex.durationMin)
+                }
               />
             ))}
           </div>
