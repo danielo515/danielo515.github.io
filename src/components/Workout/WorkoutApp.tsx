@@ -1498,19 +1498,15 @@ function ExerciseRow({
 
 const REST_PRESETS = [30, 40, 60, 90];
 
-// Fixed bottom bar hosting BOTH timers at once: the long exercise timer (does
-// not reset per set) on top, and the short rest timer (resets every set) below.
-function TimersBar({
+// Fixed bottom bar for the short rest timer (restarts on every completed set).
+// The long exercise timer lives inline in each exercise row (a small badge),
+// so it isn't duplicated here.
+function RestTimerBar({
   secondsLeft,
   running,
   duration,
   onStart,
   onStop,
-  exActive,
-  exSecondsLeft,
-  exTotalSeconds,
-  exName,
-  onStopExercise,
   color,
 }: {
   secondsLeft: number;
@@ -1518,17 +1514,10 @@ function TimersBar({
   duration: number;
   onStart: (seconds: number) => void;
   onStop: () => void;
-  exActive: boolean;
-  exSecondsLeft: number;
-  exTotalSeconds: number;
-  exName?: string;
-  onStopExercise: () => void;
   color: string;
 }) {
   const total = duration || 60;
   const progress = running ? (secondsLeft / total) * 100 : 0;
-  const exProgress =
-    exActive && exTotalSeconds > 0 ? (exSecondsLeft / exTotalSeconds) * 100 : 0;
 
   return (
     <div
@@ -1538,112 +1527,12 @@ function TimersBar({
         left: 0,
         right: 0,
         background: "#0f0f0f",
-        borderTop: `1px solid ${running || exActive ? color : "#1e1e1e"}`,
+        borderTop: `1px solid ${running ? color : "#1e1e1e"}`,
         padding: "12px 20px 20px",
         zIndex: 100,
         transition: "border-color 0.3s",
       }}
     >
-      {/* EXERCISE TIMER — long, runs through the whole exercise */}
-      {exActive && (
-        <div
-          style={{
-            marginBottom: 12,
-            paddingBottom: 12,
-            borderBottom: "1px solid #1e1e1e",
-          }}
-        >
-          <div
-            style={{
-              height: 3,
-              background: "#1e1e1e",
-              borderRadius: 2,
-              marginBottom: 8,
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                height: "100%",
-                width: `${exProgress}%`,
-                background: color,
-                borderRadius: 2,
-                transition: "width 1s linear",
-              }}
-            />
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "baseline", gap: 10, minWidth: 0 }}>
-              <span
-                style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontSize: 11,
-                  color: "#555",
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                }}
-              >
-                EJERCICIO
-              </span>
-              <span
-                style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontSize: 28,
-                  fontWeight: 800,
-                  color,
-                  lineHeight: 1,
-                  letterSpacing: "-0.02em",
-                  fontVariantNumeric: "tabular-nums",
-                }}
-              >
-                {fmtClock(exSecondsLeft)}
-              </span>
-              {exName && (
-                <span
-                  style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 12,
-                    color: "#555",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {exName}
-                </span>
-              )}
-            </div>
-            <button
-              onClick={onStopExercise}
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: 13,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                padding: "6px 12px",
-                background: "#1a1a1a",
-                color: "#555",
-                border: "1px solid #333",
-                borderRadius: 6,
-                cursor: "pointer",
-                flexShrink: 0,
-              }}
-            >
-              X
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* REST TIMER — short, restarts on every completed set */}
       {running && (
         <div
@@ -1814,13 +1703,11 @@ function WorkoutTracker() {
     Math.min(routineState.activeDay, workoutData.length - 1),
   );
 
-  const setActiveDay = (i: number) => {
-    exerciseTimer.stop();
-    routineState.$jazz.set("activeDay", i);
-  };
+  // Note: the exercise timer is intentionally NOT stopped when switching day or
+  // routine — it's global to the session and keeps counting in the background.
+  const setActiveDay = (i: number) => routineState.$jazz.set("activeDay", i);
 
   const switchRoutine = (newId: string) => {
-    exerciseTimer.stop();
     if (!appRoot.routines.$jazz.has(newId)) {
       appRoot.routines.$jazz.set(
         newId,
@@ -1832,11 +1719,6 @@ function WorkoutTracker() {
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const day = workoutData[activeDay]!;
-
-  // The exercise whose work timer is currently running (within the active day).
-  const activeTimerExercise = day.groups
-    .flatMap((g) => g.exercises)
-    .find((e) => e.id === exerciseTimer.activeId);
 
   const handleSetDone = (exerciseId: string, setNum: number) => {
     const current = completed[exerciseId] ?? 0;
@@ -1945,7 +1827,7 @@ function WorkoutTracker() {
         background: "#0a0a0a",
         color: "#fff",
         fontFamily: "'Barlow Condensed', 'Barlow', sans-serif",
-        paddingBottom: 180,
+        paddingBottom: 120,
       }}
     >
       {/* Routine selector */}
@@ -2532,17 +2414,12 @@ function WorkoutTracker() {
       <SyncPanel color={day.color} />
 
       {/* Rest timer */}
-      <TimersBar
+      <RestTimerBar
         secondsLeft={secondsLeft}
         running={running}
         duration={duration}
         onStart={start}
         onStop={stop}
-        exActive={!!activeTimerExercise}
-        exSecondsLeft={exerciseTimer.secondsLeft}
-        exTotalSeconds={(activeTimerExercise?.durationMin ?? 0) * 60}
-        exName={activeTimerExercise?.name}
-        onStopExercise={exerciseTimer.stop}
         color={day.color}
       />
     </div>
