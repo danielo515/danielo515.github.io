@@ -1304,6 +1304,7 @@ function ExerciseRow({
   exercise,
   color,
   onSetDone,
+  onSetCount,
   completedSets,
   restSeconds,
   showRestTimer,
@@ -1314,6 +1315,7 @@ function ExerciseRow({
   exercise: Exercise;
   color: string;
   onSetDone: (exerciseId: string, setNum: number) => void;
+  onSetCount: (exerciseId: string, value: number) => void;
   completedSets: number;
   restSeconds: number;
   showRestTimer: (seconds: number) => void;
@@ -1323,11 +1325,6 @@ function ExerciseRow({
 }) {
   const legs = exerciseLegs(exercise);
   const timed = exercise.durationMin != null;
-  // Time-based exercises are open-ended: keep one empty dot available so you can
-  // log as many sets as fit in the time window, past the nominal target.
-  const dotCount = timed
-    ? Math.max(exercise.sets, completedSets + 1)
-    : exercise.sets;
 
   const repPill = (text: string) => (
     <span
@@ -1346,71 +1343,194 @@ function ExerciseRow({
     </span>
   );
 
-  const metaBadges = (
-    <>
-      {timed && (
-        <button
-          onClick={onToggleTimer}
-          title={
-            timerActive
-              ? "Parar el cronómetro del ejercicio"
-              : "Iniciar el cronómetro del ejercicio"
-          }
-          style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontSize: 11,
-            fontWeight: 700,
-            color: timerActive ? "#0a0a0a" : "#aaa",
-            background: timerActive ? color : "#ffffff10",
-            border: timerActive ? `1px solid ${color}` : "1px solid #ffffff1a",
-            padding: "1px 7px",
-            borderRadius: 3,
-            letterSpacing: "0.06em",
-            cursor: "pointer",
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {timerActive
-            ? `⏱ ${fmtClock(timerSecondsLeft)}`
-            : `⏱ ${exercise.durationMin}'`}
-        </button>
-      )}
-      {exercise.reduced && (
-        <span
-          title="Ejercicio marcado (*): tiempo y descanso reducidos"
-          style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontSize: 11,
-            color: "#FFD23D",
-            background: "#FFD23D22",
-            padding: "1px 6px",
-            borderRadius: 3,
-            letterSpacing: "0.1em",
-            fontWeight: 700,
-          }}
-        >
-          (*)
-        </span>
-      )}
-    </>
+  const reducedBadge = exercise.reduced ? (
+    <span
+      title="Ejercicio marcado (*): tiempo y descanso reducidos"
+      style={{
+        fontFamily: "'Barlow Condensed', sans-serif",
+        fontSize: 11,
+        color: "#FFD23D",
+        background: "#FFD23D22",
+        padding: "1px 6px",
+        borderRadius: 3,
+        letterSpacing: "0.1em",
+        fontWeight: 700,
+      }}
+    >
+      (*)
+    </span>
+  ) : null;
+
+  // The name header (used by all layouts): exercise name(s) + rep pills + (*).
+  const header = legs ? (
+    <div
+      style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+    >
+      {legs.map((leg, li) => (
+        <Fragment key={li}>
+          {li > 0 && (
+            <span style={{ color: "#555", fontSize: 12, fontWeight: 700 }}>+</span>
+          )}
+          <span style={exerciseNameStyle}>{leg.name}</span>
+          {repPill(leg.reps)}
+        </Fragment>
+      ))}
+      {reducedBadge}
+    </div>
+  ) : (
+    <div
+      style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+    >
+      <span style={exerciseNameStyle}>{exercise.name}</span>
+      {reducedBadge}
+    </div>
   );
 
+  const rowStyle: CSSProperties = {
+    padding: timerActive ? "14px 10px" : "14px 0",
+    margin: timerActive ? "0 -10px" : undefined,
+    borderBottom: "1px solid #1e1e1e",
+    borderLeft: timerActive ? `2px solid ${color}` : "2px solid transparent",
+    background: timerActive ? color + "0d" : undefined,
+    borderRadius: timerActive ? 6 : undefined,
+    transition: "background 0.2s",
+  };
+
+  // ── TIME-BASED EXERCISE ────────────────────────────────────────────────
+  // No open-ended checkboxes: a start button for the exercise countdown, plus
+  // a numeric set counter (+1 also fires the rest timer). You just read the
+  // number, no dots to count.
+  if (timed) {
+    return (
+      <div style={rowStyle}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {header}
+          <div style={exerciseMetaStyle}>
+            {legs ? "" : `${exercise.reps} REPS · `}descanso{" "}
+            {formatRest(restSeconds)}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              onClick={onToggleTimer}
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 14,
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                padding: "9px 16px",
+                borderRadius: 8,
+                color: timerActive ? "#0a0a0a" : color,
+                background: timerActive ? color : color + "1a",
+                border: `1px solid ${timerActive ? color : color + "55"}`,
+                cursor: "pointer",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {timerActive
+                ? `⏱ ${fmtClock(timerSecondsLeft)}`
+                : `▶ EMPEZAR · ${exercise.durationMin}'`}
+            </button>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                onClick={() =>
+                  onSetCount(exercise.id, Math.max(0, completedSets - 1))
+                }
+                disabled={completedSets === 0}
+                aria-label="Quitar una serie"
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 8,
+                  background: "#1a1a1a",
+                  color: "#888",
+                  border: "1px solid #333",
+                  cursor: completedSets === 0 ? "default" : "pointer",
+                  opacity: completedSets === 0 ? 0.4 : 1,
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: 22,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                }}
+              >
+                −
+              </button>
+              <div style={{ textAlign: "center", minWidth: 42 }}>
+                <div
+                  style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 30,
+                    fontWeight: 800,
+                    color,
+                    lineHeight: 1,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {completedSets}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 9,
+                    color: "#555",
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    marginTop: 2,
+                  }}
+                >
+                  SERIES
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  onSetCount(exercise.id, completedSets + 1);
+                  showRestTimer(restSeconds);
+                }}
+                aria-label="Añadir una serie e iniciar el descanso"
+                style={{
+                  minWidth: 66,
+                  height: 38,
+                  borderRadius: 8,
+                  background: color,
+                  color: "#0a0a0a",
+                  border: `1px solid ${color}`,
+                  cursor: "pointer",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: 16,
+                  fontWeight: 800,
+                  letterSpacing: "0.04em",
+                  padding: "0 14px",
+                }}
+              >
+                +1
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── FIXED-SET EXERCISE ─────────────────────────────────────────────────
+  // A bounded number of set dots (routines A–D and the fixed 4×20 ab work).
   const dots = (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      {Array.from({ length: dotCount }).map((_, i) => (
+      {Array.from({ length: exercise.sets }).map((_, i) => (
         <SetDot
           key={i}
           done={completedSets > i}
           color={color}
           onClick={() => {
             onSetDone(exercise.id, i + 1);
-            // Completing a new set (not un-checking): restart the rest timer and,
-            // for time-based exercises, kick off the exercise timer if it isn't
-            // already running (so it keeps counting across sets, not resetting).
-            if (completedSets === i) {
-              showRestTimer(restSeconds);
-              if (timed && !timerActive) onToggleTimer();
-            }
+            if (completedSets === i) showRestTimer(restSeconds);
           }}
         />
       ))}
@@ -1418,46 +1538,13 @@ function ExerciseRow({
   );
 
   return (
-    <div
-      style={{
-        padding: timerActive ? "14px 10px" : "14px 0",
-        margin: timerActive ? "0 -10px" : undefined,
-        borderBottom: "1px solid #1e1e1e",
-        borderLeft: timerActive ? `2px solid ${color}` : "2px solid transparent",
-        background: timerActive ? color + "0d" : undefined,
-        borderRadius: timerActive ? 6 : undefined,
-        transition: "background 0.2s",
-      }}
-    >
+    <div style={rowStyle}>
       {legs ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div style={{ flex: 1 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                flexWrap: "wrap",
-              }}
-            >
-              {legs.map((leg, li) => (
-                <Fragment key={li}>
-                  {li > 0 && (
-                    <span
-                      style={{ color: "#555", fontSize: 12, fontWeight: 700 }}
-                    >
-                      +
-                    </span>
-                  )}
-                  <span style={exerciseNameStyle}>{leg.name}</span>
-                  {repPill(leg.reps)}
-                </Fragment>
-              ))}
-              {metaBadges}
-            </div>
+            {header}
             <div style={exerciseMetaStyle}>
-              {exercise.sets}
-              {timed ? "+" : ""} SERIES · descanso {formatRest(restSeconds)}
+              {exercise.sets} SERIES · descanso {formatRest(restSeconds)}
             </div>
           </div>
           <div style={{ marginTop: 4 }}>{dots}</div>
@@ -1472,20 +1559,9 @@ function ExerciseRow({
           }}
         >
           <div style={{ flex: 1 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                flexWrap: "wrap",
-              }}
-            >
-              <span style={exerciseNameStyle}>{exercise.name}</span>
-              {metaBadges}
-            </div>
+            {header}
             <div style={exerciseMetaStyle}>
-              {exercise.sets}
-              {timed ? "+" : ""} x {exercise.reps} · descanso{" "}
+              {exercise.sets} x {exercise.reps} · descanso{" "}
               {formatRest(restSeconds)}
             </div>
           </div>
@@ -1724,6 +1800,14 @@ function WorkoutTracker() {
     const current = completed[exerciseId] ?? 0;
     const newVal = current === setNum ? setNum - 1 : setNum;
     completed.$jazz.set(exerciseId, newVal);
+  };
+
+  // Set the completed-set count of an exercise directly (used by the numeric
+  // counter on time-based exercises). Zero clears the key.
+  const setCount = (exerciseId: string, value: number) => {
+    const v = Math.max(0, Math.floor(value));
+    if (v <= 0) completed.$jazz.delete(exerciseId);
+    else completed.$jazz.set(exerciseId, v);
   };
 
   const getTotalSets = (d: WorkoutDay) =>
@@ -2112,6 +2196,7 @@ function WorkoutTracker() {
                 completedSets={completed[ex.id] ?? 0}
                 restSeconds={ex.rest ?? day.restSeconds ?? 60}
                 onSetDone={handleSetDone}
+                onSetCount={setCount}
                 showRestTimer={start}
                 timerActive={exerciseTimer.activeId === ex.id}
                 timerSecondsLeft={exerciseTimer.secondsLeft}
