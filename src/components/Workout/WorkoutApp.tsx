@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useState,
   useEffect,
   useRef,
@@ -28,6 +29,15 @@ interface BaseExercise {
   name: string;
   sets: number;
   reps: string;
+  // Rest between sets in seconds. Overrides the day default when present and
+  // is what the rest timer auto-starts with after completing a set.
+  rest?: number;
+  // Target work time in minutes. When set, the exercise is time-based: the set
+  // count becomes open-ended (keep doing sets until the time is up) and a
+  // duration badge is shown. `sets` is still used as the completion target.
+  durationMin?: number;
+  // Marked (*) exercise — shorter work time and rest. Shown as a badge.
+  reduced?: boolean;
 }
 
 interface SuperSetExercise extends BaseExercise {
@@ -36,10 +46,37 @@ interface SuperSetExercise extends BaseExercise {
   repsB: string;
 }
 
-type Exercise = BaseExercise | SuperSetExercise;
+interface CircuitLeg {
+  name: string;
+  reps: string;
+}
+
+// A tri-set or larger circuit. The exercise's own `name`/`reps` is the first
+// leg; `legs` holds the remaining legs, all trained back to back as one round.
+interface CircuitExercise extends BaseExercise {
+  legs: CircuitLeg[];
+}
+
+type Exercise = BaseExercise | SuperSetExercise | CircuitExercise;
 
 function isSuperSetExercise(ex: Exercise): ex is SuperSetExercise {
   return "pairedWith" in ex;
+}
+
+function isCircuitExercise(ex: Exercise): ex is CircuitExercise {
+  return "legs" in ex;
+}
+
+// Named legs (with their rep targets) for a superset or circuit, in order.
+function exerciseLegs(ex: Exercise): CircuitLeg[] | null {
+  if (isCircuitExercise(ex))
+    return [{ name: ex.name, reps: ex.reps }, ...ex.legs];
+  if (isSuperSetExercise(ex))
+    return [
+      { name: ex.name, reps: ex.reps },
+      { name: ex.pairedWith, reps: ex.repsB },
+    ];
+  return null;
 }
 
 interface ExerciseGroup {
@@ -54,6 +91,9 @@ interface WorkoutDay {
   title: string;
   color: string;
   restNote: string;
+  // Default rest between sets (seconds) for exercises in this day that don't
+  // set their own `rest`. Falls back to 60 when omitted.
+  restSeconds?: number;
   groups: ExerciseGroup[];
 }
 
@@ -753,6 +793,208 @@ const weeklyExercisesD: WeeklyExercise[] = [
   { id: "wd-3", name: "GEMELO EN PRENSA", sets: 4, reps: "20", timesPerWeek: 2 },
 ];
 
+const workoutDataE: WorkoutDay[] = [
+  {
+    id: 1,
+    label: "DÍA 1",
+    title: "PECHO, HOMBRO Y TRÍCEPS",
+    color: "#FF6B35",
+    restNote: "40'' entre series · 12' por ejercicio",
+    restSeconds: 40,
+    groups: [
+      {
+        name: "PECHO",
+        supersets: false,
+        exercises: [
+          {
+            id: "e1-1",
+            name: "PRESS PLANO MANCUERNAS",
+            sets: 4,
+            reps: "12",
+            durationMin: 12,
+          },
+          { id: "e1-2", name: "CONTRACTOR", sets: 4, reps: "12", durationMin: 12 },
+          {
+            id: "e1-3",
+            name: "PRESS SUPERIOR MULTIPOWER",
+            sets: 4,
+            reps: "12",
+            durationMin: 12,
+          },
+        ],
+      },
+      {
+        name: "HOMBRO",
+        supersets: false,
+        exercises: [
+          {
+            id: "e1-4",
+            name: "ELEVACIONES LATERALES",
+            sets: 4,
+            reps: "12",
+            durationMin: 12,
+          },
+          {
+            id: "e1-5",
+            name: "ELEVACIONES FRONTALES CON CUERDA",
+            sets: 4,
+            reps: "12",
+            durationMin: 12,
+          },
+        ],
+      },
+      {
+        name: "TRÍCEPS",
+        supersets: true,
+        exercises: [
+          {
+            id: "e1-6",
+            name: "FRANCÉS Z",
+            pairedWith: "POLEA CON CUERDA",
+            pairedId: "e1-6b",
+            sets: 4,
+            reps: "12",
+            repsB: "12",
+            durationMin: 12,
+          },
+        ],
+      },
+      {
+        name: "ABDOMEN — TRISERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "e1-7",
+            name: "GEMELO DE PIE",
+            legs: [
+              { name: "ELEVACIÓN DE TRONCO", reps: "20" },
+              { name: "ELEVACIÓN DE PIERNAS", reps: "20" },
+            ],
+            sets: 4,
+            reps: "20",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "DÍA 2",
+    title: "PIERNA",
+    color: "#B8FF3D",
+    restNote: "1' entre series · 15' por ejercicio",
+    restSeconds: 60,
+    groups: [
+      {
+        name: "PIERNA",
+        supersets: false,
+        exercises: [
+          {
+            id: "e2-1",
+            name: "EXTENSIONES DE PIERNAS",
+            sets: 4,
+            reps: "12",
+            durationMin: 15,
+          },
+          {
+            id: "e2-2",
+            name: "PRENSA INCLINADA",
+            sets: 4,
+            reps: "12",
+            durationMin: 15,
+          },
+          {
+            id: "e2-3",
+            name: "ZANCADA LARGA",
+            sets: 4,
+            reps: "12",
+            durationMin: 15,
+          },
+          {
+            id: "e2-4",
+            name: "FEMORAL TUMBADO",
+            sets: 4,
+            reps: "12",
+            durationMin: 15,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 3,
+    label: "DÍA 3",
+    title: "ESPALDA, BÍCEPS Y ABDOMEN",
+    color: "#00E5FF",
+    restNote: "40'' entre series · 12' por ejercicio (* 30'' · 10')",
+    restSeconds: 40,
+    groups: [
+      {
+        name: "ESPALDA",
+        supersets: false,
+        exercises: [
+          {
+            id: "e3-1",
+            name: "POLEA ESTRECHA AL PECHO",
+            sets: 4,
+            reps: "12",
+            durationMin: 12,
+          },
+          {
+            id: "e3-2",
+            name: "REMO GIRONDA ANCHURA DE HOMBROS",
+            sets: 4,
+            reps: "12",
+            durationMin: 12,
+          },
+          { id: "e3-3", name: "REMO HAMMER", sets: 4, reps: "12", durationMin: 12 },
+        ],
+      },
+      {
+        name: "BÍCEPS",
+        supersets: false,
+        exercises: [
+          {
+            id: "e3-4",
+            name: "CURL BARRA RECTA POLEA",
+            sets: 4,
+            reps: "12",
+            durationMin: 10,
+            rest: 30,
+            reduced: true,
+          },
+          {
+            id: "e3-5",
+            name: "MARTILLO EN POLEA",
+            sets: 4,
+            reps: "12",
+            durationMin: 10,
+            rest: 30,
+            reduced: true,
+          },
+        ],
+      },
+      {
+        name: "ABDOMEN — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "e3-6",
+            name: "ELEVACIÓN DE TRONCO",
+            pairedWith: "ELEVACIÓN DE PIERNAS",
+            pairedId: "e3-6b",
+            sets: 4,
+            reps: "20",
+            repsB: "20",
+          },
+        ],
+      },
+    ],
+  },
+];
+
+const weeklyExercisesE: WeeklyExercise[] = [];
+
 const routines: WorkoutRoutine[] = [
   {
     id: "a",
@@ -793,6 +1035,19 @@ const routines: WorkoutRoutine[] = [
       "DOS DÍAS EN SEMANA: ABDOMEN Y GEMELO EN PRENSA (incluido en ejercicios semanales)",
     ],
   },
+  {
+    id: "e",
+    name: "RUTINA E",
+    workoutData: workoutDataE,
+    weeklyExercises: weeklyExercisesE,
+    notes: [
+      "TODAS LAS SERIES A 12 REPS. SI NO LLEGAS A 12, BAJA EL PESO Y CONTINÚA. SIEMPRE QUE LLEGUES, SUBE EL PESO.",
+      "CADA EJERCICIO DURA 12' CON 40'' DE DESCANSO ENTRE SERIES. LOS DE PIERNA 15' POR EJERCICIO.",
+      "EJERCICIOS MARCADOS (*): SOLO 10' Y 30'' DE DESCANSO.",
+      "TRES DÍAS EN SEMANA: 20' DE CARDIO TRAS LAS PESAS (NUNCA EL DÍA DE PIERNA).",
+      "TRAS EL TERCER DÍA, UN DÍA DE DESCANSO CON UN PASEO DE 1H. LUEGO VUELTA AL DÍA 1.",
+    ],
+  },
 ];
 
 // ─── TIMER HOOK ──────────────────────────────────────────────────────────────
@@ -813,6 +1068,7 @@ async function postToSW(msg: Record<string, unknown>) {
 function useRestTimer() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [running, setRunning] = useState(false);
+  const [duration, setDuration] = useState(60);
   const endTimeRef = useRef(0);
   const rafRef = useRef(0);
 
@@ -868,6 +1124,7 @@ function useRestTimer() {
       cancelAnimationFrame(rafRef.current);
       const delayMs = seconds * 1000;
       endTimeRef.current = Date.now() + delayMs;
+      setDuration(seconds);
       setSecondsLeft(seconds);
       setRunning(true);
       rafRef.current = requestAnimationFrame(tick);
@@ -888,7 +1145,82 @@ function useRestTimer() {
     return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
-  return { secondsLeft, running, start, stop };
+  return { secondsLeft, running, duration, start, stop };
+}
+
+// ─── EXERCISE (WORK) TIMER HOOK ──────────────────────────────────────────────
+// Counts down the target duration of a single exercise (12'/15'/10'). Only one
+// exercise timer runs at a time — starting another (or the same one) stops it.
+
+function useExerciseTimer() {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const endTimeRef = useRef(0);
+  const rafRef = useRef(0);
+  const activeIdRef = useRef<string | null>(null);
+
+  const clear = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    endTimeRef.current = 0;
+    activeIdRef.current = null;
+    setActiveId(null);
+    setSecondsLeft(0);
+  }, []);
+
+  const finish = useCallback(() => {
+    clear();
+    navigator.vibrate?.([300, 150, 300, 150, 500]);
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("Ejercicio terminado", {
+        body: "Pasa al siguiente ejercicio",
+        tag: "workout-exercise-timer",
+      });
+    }
+  }, [clear]);
+
+  const tick = useCallback(() => {
+    if (endTimeRef.current === 0) return;
+    const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
+    if (remaining <= 0) {
+      finish();
+      return;
+    }
+    setSecondsLeft(remaining);
+    rafRef.current = requestAnimationFrame(tick);
+  }, [finish]);
+
+  // Catch up after the tab was backgrounded.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && endTimeRef.current > 0) {
+        cancelAnimationFrame(rafRef.current);
+        tick();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [tick]);
+
+  const toggle = useCallback(
+    (id: string, minutes: number) => {
+      if (activeIdRef.current === id) {
+        clear();
+        return;
+      }
+      cancelAnimationFrame(rafRef.current);
+      const secs = Math.round(minutes * 60);
+      endTimeRef.current = Date.now() + secs * 1000;
+      activeIdRef.current = id;
+      setActiveId(id);
+      setSecondsLeft(secs);
+      rafRef.current = requestAnimationFrame(tick);
+    },
+    [clear, tick],
+  );
+
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
+
+  return { activeId, secondsLeft, toggle, stop: clear };
 }
 
 // ─── COMPONENTS ──────────────────────────────────────────────────────────────
@@ -935,132 +1267,287 @@ function SetDot({
   );
 }
 
+// Render seconds as a compact gym-style rest label: 40 → 40'', 60 → 1', 90 → 1'30''.
+function formatRest(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m && s) return `${m}'${String(s).padStart(2, "0")}''`;
+  if (m) return `${m}'`;
+  return `${s}''`;
+}
+
+// Render seconds as a mm:ss stopwatch clock.
+function fmtClock(total: number): string {
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+const exerciseNameStyle: CSSProperties = {
+  fontFamily: "'Barlow Condensed', sans-serif",
+  fontSize: 15,
+  fontWeight: 700,
+  color: "#fff",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+};
+
+const exerciseMetaStyle: CSSProperties = {
+  fontFamily: "'Barlow Condensed', sans-serif",
+  fontSize: 12,
+  color: "#555",
+  letterSpacing: "0.06em",
+  marginTop: 2,
+};
+
 function ExerciseRow({
   exercise,
   color,
   onSetDone,
+  onSetCount,
   completedSets,
-  isSuperSet = false,
+  restSeconds,
   showRestTimer,
+  timerActive,
+  timerSecondsLeft,
+  onToggleTimer,
 }: {
   exercise: Exercise;
   color: string;
   onSetDone: (exerciseId: string, setNum: number) => void;
+  onSetCount: (exerciseId: string, value: number) => void;
   completedSets: number;
-  isSuperSet?: boolean;
-  showRestTimer: () => void;
+  restSeconds: number;
+  showRestTimer: (seconds: number) => void;
+  timerActive: boolean;
+  timerSecondsLeft: number;
+  onToggleTimer: () => void;
 }) {
-  const totalSets = exercise.sets;
+  const legs = exerciseLegs(exercise);
+  const timed = exercise.durationMin != null;
 
-  return (
-    <div
+  const repPill = (text: string) => (
+    <span
       style={{
-        padding: "14px 0",
-        borderBottom: "1px solid #1e1e1e",
+        fontFamily: "'Barlow Condensed', sans-serif",
+        fontSize: 11,
+        color,
+        background: color + "22",
+        padding: "1px 6px",
+        borderRadius: 3,
+        letterSpacing: "0.08em",
+        fontWeight: 600,
       }}
     >
-      {isSuperSet && isSuperSetExercise(exercise) ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {text} REPS
+    </span>
+  );
+
+  const reducedBadge = exercise.reduced ? (
+    <span
+      title="Ejercicio marcado (*): tiempo y descanso reducidos"
+      style={{
+        fontFamily: "'Barlow Condensed', sans-serif",
+        fontSize: 11,
+        color: "#FFD23D",
+        background: "#FFD23D22",
+        padding: "1px 6px",
+        borderRadius: 3,
+        letterSpacing: "0.1em",
+        fontWeight: 700,
+      }}
+    >
+      (*)
+    </span>
+  ) : null;
+
+  // The name header (used by all layouts): exercise name(s) + rep pills + (*).
+  const header = legs ? (
+    <div
+      style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+    >
+      {legs.map((leg, li) => (
+        <Fragment key={li}>
+          {li > 0 && (
+            <span style={{ color: "#555", fontSize: 12, fontWeight: 700 }}>+</span>
+          )}
+          <span style={exerciseNameStyle}>{leg.name}</span>
+          {repPill(leg.reps)}
+        </Fragment>
+      ))}
+      {reducedBadge}
+    </div>
+  ) : (
+    <div
+      style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+    >
+      <span style={exerciseNameStyle}>{exercise.name}</span>
+      {reducedBadge}
+    </div>
+  );
+
+  const rowStyle: CSSProperties = {
+    padding: timerActive ? "14px 10px" : "14px 0",
+    margin: timerActive ? "0 -10px" : undefined,
+    borderBottom: "1px solid #1e1e1e",
+    borderLeft: timerActive ? `2px solid ${color}` : "2px solid transparent",
+    background: timerActive ? color + "0d" : undefined,
+    borderRadius: timerActive ? 6 : undefined,
+    transition: "background 0.2s",
+  };
+
+  // ── TIME-BASED EXERCISE ────────────────────────────────────────────────
+  // No open-ended checkboxes: a start button for the exercise countdown, plus
+  // a numeric set counter (+1 also fires the rest timer). You just read the
+  // number, no dots to count.
+  if (timed) {
+    return (
+      <div style={rowStyle}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {header}
+          <div style={exerciseMetaStyle}>
+            {legs ? "" : `${exercise.reps} REPS · `}descanso{" "}
+            {formatRest(restSeconds)}
+          </div>
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap",
             }}
           >
-            <div style={{ flex: 1 }}>
-              <div
+            <button
+              onClick={onToggleTimer}
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 14,
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                padding: "9px 16px",
+                borderRadius: 8,
+                color: timerActive ? "#0a0a0a" : color,
+                background: timerActive ? color : color + "1a",
+                border: `1px solid ${timerActive ? color : color + "55"}`,
+                cursor: "pointer",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {timerActive
+                ? `⏱ ${fmtClock(timerSecondsLeft)}`
+                : `▶ EMPEZAR · ${exercise.durationMin}'`}
+            </button>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                onClick={() =>
+                  onSetCount(exercise.id, Math.max(0, completedSets - 1))
+                }
+                disabled={completedSets === 0}
+                aria-label="Quitar una serie"
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  flexWrap: "wrap",
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: "#fff",
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {exercise.name}
-                </span>
-                <span
-                  style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 11,
-                    color: color,
-                    background: color + "22",
-                    padding: "1px 6px",
-                    borderRadius: 3,
-                    letterSpacing: "0.08em",
-                    fontWeight: 600,
-                  }}
-                >
-                  {exercise.reps} REPS
-                </span>
-                <span
-                  style={{ color: "#555", fontSize: 12, fontWeight: 700 }}
-                >
-                  +
-                </span>
-                <span
-                  style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: "#fff",
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {exercise.pairedWith}
-                </span>
-                <span
-                  style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 11,
-                    color: color,
-                    background: color + "22",
-                    padding: "1px 6px",
-                    borderRadius: 3,
-                    letterSpacing: "0.08em",
-                    fontWeight: 600,
-                  }}
-                >
-                  {exercise.repsB} REPS
-                </span>
-              </div>
-              <div
-                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 8,
+                  background: "#1a1a1a",
+                  color: "#888",
+                  border: "1px solid #333",
+                  cursor: completedSets === 0 ? "default" : "pointer",
+                  opacity: completedSets === 0 ? 0.4 : 1,
                   fontFamily: "'Barlow Condensed', sans-serif",
-                  fontSize: 12,
-                  color: "#555",
-                  marginTop: 2,
-                  letterSpacing: "0.06em",
+                  fontSize: 22,
+                  fontWeight: 700,
+                  lineHeight: 1,
                 }}
               >
-                {exercise.sets} SERIES
+                −
+              </button>
+              <div style={{ textAlign: "center", minWidth: 42 }}>
+                <div
+                  style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 30,
+                    fontWeight: 800,
+                    color,
+                    lineHeight: 1,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {completedSets}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 9,
+                    color: "#555",
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    marginTop: 2,
+                  }}
+                >
+                  SERIES
+                </div>
               </div>
+              <button
+                onClick={() => {
+                  onSetCount(exercise.id, completedSets + 1);
+                  showRestTimer(restSeconds);
+                }}
+                aria-label="Añadir una serie e iniciar el descanso"
+                style={{
+                  minWidth: 66,
+                  height: 38,
+                  borderRadius: 8,
+                  background: color,
+                  color: "#0a0a0a",
+                  border: `1px solid ${color}`,
+                  cursor: "pointer",
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: 16,
+                  fontWeight: 800,
+                  letterSpacing: "0.04em",
+                  padding: "0 14px",
+                }}
+              >
+                +1
+              </button>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-            {Array.from({ length: totalSets }).map((_, i) => (
-              <SetDot
-                key={i}
-                done={completedSets > i}
-                color={color}
-                onClick={() => {
-                  onSetDone(exercise.id, i + 1);
-                  if (completedSets === i) showRestTimer();
-                }}
-              />
-            ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ── FIXED-SET EXERCISE ─────────────────────────────────────────────────
+  // A bounded number of set dots (routines A–D and the fixed 4×20 ab work).
+  const dots = (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {Array.from({ length: exercise.sets }).map((_, i) => (
+        <SetDot
+          key={i}
+          done={completedSets > i}
+          color={color}
+          onClick={() => {
+            onSetDone(exercise.id, i + 1);
+            if (completedSets === i) showRestTimer(restSeconds);
+          }}
+        />
+      ))}
+    </div>
+  );
+
+  return (
+    <div style={rowStyle}>
+      {legs ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ flex: 1 }}>
+            {header}
+            <div style={exerciseMetaStyle}>
+              {exercise.sets} SERIES · descanso {formatRest(restSeconds)}
+            </div>
           </div>
+          <div style={{ marginTop: 4 }}>{dots}</div>
         </div>
       ) : (
         <div
@@ -1072,63 +1559,40 @@ function ExerciseRow({
           }}
         >
           <div style={{ flex: 1 }}>
-            <div
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: 15,
-                fontWeight: 700,
-                color: "#fff",
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-              }}
-            >
-              {exercise.name}
-            </div>
-            <div
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: 12,
-                color: "#555",
-                letterSpacing: "0.06em",
-                marginTop: 1,
-              }}
-            >
-              {exercise.sets} x {exercise.reps}
+            {header}
+            <div style={exerciseMetaStyle}>
+              {exercise.sets} x {exercise.reps} · descanso{" "}
+              {formatRest(restSeconds)}
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {Array.from({ length: totalSets }).map((_, i) => (
-              <SetDot
-                key={i}
-                done={completedSets > i}
-                color={color}
-                onClick={() => {
-                  onSetDone(exercise.id, i + 1);
-                  if (completedSets === i) showRestTimer();
-                }}
-              />
-            ))}
-          </div>
+          {dots}
         </div>
       )}
     </div>
   );
 }
 
+const REST_PRESETS = [30, 40, 60, 90];
+
+// Fixed bottom bar for the short rest timer (restarts on every completed set).
+// The long exercise timer lives inline in each exercise row (a small badge),
+// so it isn't duplicated here.
 function RestTimerBar({
   secondsLeft,
   running,
+  duration,
   onStart,
   onStop,
   color,
 }: {
   secondsLeft: number;
   running: boolean;
+  duration: number;
   onStart: (seconds: number) => void;
   onStop: () => void;
   color: string;
 }) {
-  const total = 60;
+  const total = duration || 60;
   const progress = running ? (secondsLeft / total) * 100 : 0;
 
   return (
@@ -1145,6 +1609,7 @@ function RestTimerBar({
         transition: "border-color 0.3s",
       }}
     >
+      {/* REST TIMER — short, restarts on every completed set */}
       {running && (
         <div
           style={{
@@ -1194,6 +1659,7 @@ function RestTimerBar({
                 color,
                 lineHeight: 1,
                 letterSpacing: "-0.02em",
+                fontVariantNumeric: "tabular-nums",
               }}
             >
               {String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:
@@ -1201,41 +1667,30 @@ function RestTimerBar({
             </div>
           )}
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button
-            onClick={() => onStart(60)}
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              padding: "8px 16px",
-              background: color + "22",
-              color,
-              border: `1px solid ${color}44`,
-              borderRadius: 6,
-              cursor: "pointer",
-            }}
-          >
-            1:00
-          </button>
-          <button
-            onClick={() => onStart(90)}
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              padding: "8px 16px",
-              background: "#1a1a1a",
-              color: "#888",
-              border: "1px solid #333",
-              borderRadius: 6,
-              cursor: "pointer",
-            }}
-          >
-            1:30
-          </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          {REST_PRESETS.map((preset) => {
+            const active = running && duration === preset;
+            return (
+              <button
+                key={preset}
+                onClick={() => onStart(preset)}
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  padding: "8px 12px",
+                  background: active ? color + "22" : "#1a1a1a",
+                  color: active ? color : "#888",
+                  border: active ? `1px solid ${color}44` : "1px solid #333",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                }}
+              >
+                {formatRest(preset)}
+              </button>
+            );
+          })}
           {running && (
             <button
               onClick={onStop}
@@ -1263,7 +1718,7 @@ function RestTimerBar({
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
-const ROUTINE_IDS = ["a", "b", "c", "d"];
+const ROUTINE_IDS = ["a", "b", "c", "d", "e"];
 
 function WorkoutTracker() {
   const me = useAccount(WorkoutAccount, {
@@ -1271,7 +1726,8 @@ function WorkoutTracker() {
       root: { routines: { $each: { completed: true, weekHistory: true } } },
     },
   });
-  const { secondsLeft, running, start, stop } = useRestTimer();
+  const { secondsLeft, running, duration, start, stop } = useRestTimer();
+  const exerciseTimer = useExerciseTimer();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Re-runs when the active account changes (e.g. after logging in with a
@@ -1323,6 +1779,8 @@ function WorkoutTracker() {
     Math.min(routineState.activeDay, workoutData.length - 1),
   );
 
+  // Note: the exercise timer is intentionally NOT stopped when switching day or
+  // routine — it's global to the session and keeps counting in the background.
   const setActiveDay = (i: number) => routineState.$jazz.set("activeDay", i);
 
   const switchRoutine = (newId: string) => {
@@ -1344,6 +1802,14 @@ function WorkoutTracker() {
     completed.$jazz.set(exerciseId, newVal);
   };
 
+  // Set the completed-set count of an exercise directly (used by the numeric
+  // counter on time-based exercises). Zero clears the key.
+  const setCount = (exerciseId: string, value: number) => {
+    const v = Math.max(0, Math.floor(value));
+    if (v <= 0) completed.$jazz.delete(exerciseId);
+    else completed.$jazz.set(exerciseId, v);
+  };
+
   const getTotalSets = (d: WorkoutDay) =>
     d.groups
       .flatMap((g) => g.exercises)
@@ -1352,7 +1818,9 @@ function WorkoutTracker() {
   const getCompletedSets = (d: WorkoutDay) =>
     d.groups
       .flatMap((g) => g.exercises)
-      .reduce((acc, ex) => acc + (completed[ex.id] ?? 0), 0);
+      // Clamp so extra sets logged on time-based exercises don't overshoot the
+      // day's target (progress bar and week-complete stay well-defined).
+      .reduce((acc, ex) => acc + Math.min(completed[ex.id] ?? 0, ex.sets), 0);
 
   const dayProgress = getCompletedSets(day);
   const dayTotal = getTotalSets(day);
@@ -1674,7 +2142,12 @@ function WorkoutTracker() {
 
       {/* Exercise groups */}
       <div style={{ padding: "16px 20px 0" }}>
-        {day.groups.map((group, gi) => (
+        {day.groups.map((group, gi) => {
+          const circuitEx = group.exercises.find((e) => exerciseLegs(e));
+          const legCount = circuitEx ? exerciseLegs(circuitEx)!.length : 2;
+          const circuitLabel =
+            legCount >= 4 ? "CIRCUITO" : legCount === 3 ? "TRISERIE" : "SUPERSERIE";
+          return (
           <div key={gi} style={{ marginBottom: 24 }}>
             {/* Group header */}
             <div
@@ -1709,7 +2182,7 @@ function WorkoutTracker() {
                     letterSpacing: "0.1em",
                   }}
                 >
-                  SUPERSERIE
+                  {circuitLabel}
                 </span>
               )}
               <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
@@ -1720,14 +2193,22 @@ function WorkoutTracker() {
                 key={ex.id}
                 exercise={ex}
                 color={day.color}
-                isSuperSet={group.supersets}
                 completedSets={completed[ex.id] ?? 0}
+                restSeconds={ex.rest ?? day.restSeconds ?? 60}
                 onSetDone={handleSetDone}
-                showRestTimer={() => start(60)}
+                onSetCount={setCount}
+                showRestTimer={start}
+                timerActive={exerciseTimer.activeId === ex.id}
+                timerSecondsLeft={exerciseTimer.secondsLeft}
+                onToggleTimer={() =>
+                  ex.durationMin != null &&
+                  exerciseTimer.toggle(ex.id, ex.durationMin)
+                }
               />
             ))}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Weekly exercises */}
@@ -2021,6 +2502,7 @@ function WorkoutTracker() {
       <RestTimerBar
         secondsLeft={secondsLeft}
         running={running}
+        duration={duration}
         onStart={start}
         onStop={stop}
         color={day.color}
