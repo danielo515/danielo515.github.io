@@ -59,8 +59,6 @@ Changes to be committed:
 
 The `.git/info/exclude` rule only suppresses files from the **untracked** set. Once a file is staged, it's a plain tracked addition — it shows up in `git status`, it's included by `git commit -a`, and it's included by a bare `git commit -m "..."` if it was staged earlier. An IDE "Commit" button, a `gh` automation, a teammate's pre-commit hook running `git add -A`, all of them will pick it up.
 
-> **The staging area is not a hiding place. It's literally the "about to be committed" set.**
-
 So this approach gives you a binary choice: either the file is untracked and Nix can't see it, or it's tracked and one careless commit away from the client's remote. There's no middle ground. The mechanism that lets Nix find the file is the same mechanism that exposes it to commit.
 
 ## The pattern that actually works
@@ -85,8 +83,6 @@ Layout:
     ├── .git/
     └── ...massive node_modules...
 ```
-
-Why this works, point by point:
 
 - **The flake root is the wrapper, not the client project.** Nix's index enumeration finds `flake.nix` and `flake.lock` and copies just those two files into the store. The client subfolder, including `node_modules`, is invisible to Nix because it's not in the wrapper's index.
 - **The `*` + `!flake.*` inversion makes the wrong commit impossible.** `git add -A`, `git commit -a`, and IDE "Stage all" buttons can only pick up flake files in the wrapper. There's no `git add` you can run in the wrapper that picks up a client file, because the gitignore filters them out before they reach the index. Safety isn't enforced by discipline; it's enforced by `.gitignore`.
@@ -119,7 +115,7 @@ In the client project, the only file you add is an `.envrc`:
 use flake ~/dev-flakes#clientA-projectX
 ```
 
-Then add `.envrc` and `.direnv` to the **client repo's** `.git/info/exclude`. Nix copies from `~/dev-flakes` (small, well-maintained), so the size problem disappears, and your flake lock is versioned in a repo you control and reusable across clients. The trade-off: `.envrc` is still inside the client's working tree, and the same staging caveat applies if you ever `git add -f` it.
+Then add `.envrc` and `.direnv` to the **client repo's** `.git/info/exclude`. Nix copies from `~/dev-flakes` (small, well-maintained), so the size problem disappears, and your flake lock is versioned in a repo you control and reusable across clients. The trade-off: `.envrc` is inside the client's working tree but direnv happily works with a file that is not tracked in git, so it is excluded safely.
 
 ### Zero footprint
 
@@ -155,7 +151,7 @@ For a `shell.nix`, the `.git/info/exclude` trick is actually fine, because `nix-
 ## Takeaways
 
 - **Nix's git flake fetcher only sees the index.** No amount of `.gitignore` or `.git/info/exclude` cleverness changes that.
-- **Tracked means committable.** There is no "tracked but unstageable" state in git, and there shouldn't be.
+- **Tracked means committable.** There is no "tracked but unstageable" state in git.
 - **The right pattern is to relocate the flake**, not to hide it. A wrapper folder with `*` + `!flake.*` makes the right thing easy and the wrong thing impossible.
 - **For zero-touch setups**, direnv global hooks or a manual `nix develop path#shell` give you a Nix dev environment with literally no file in the client's tree.
 
