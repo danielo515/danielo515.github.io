@@ -1201,12 +1201,9 @@ function useExerciseTimer() {
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [tick]);
 
-  const toggle = useCallback(
+  // Starts (or restarts) the countdown for `id`, replacing whatever was running.
+  const start = useCallback(
     (id: string, minutes: number) => {
-      if (activeIdRef.current === id) {
-        clear();
-        return;
-      }
       cancelAnimationFrame(rafRef.current);
       const secs = Math.round(minutes * 60);
       endTimeRef.current = Date.now() + secs * 1000;
@@ -1215,12 +1212,33 @@ function useExerciseTimer() {
       setSecondsLeft(secs);
       rafRef.current = requestAnimationFrame(tick);
     },
-    [clear, tick],
+    [tick],
+  );
+
+  const toggle = useCallback(
+    (id: string, minutes: number) => {
+      if (activeIdRef.current === id) {
+        clear();
+        return;
+      }
+      start(id, minutes);
+    },
+    [clear, start],
+  );
+
+  // Starts the countdown only if this exercise isn't already the running one —
+  // used to auto-start the work timer when the first set is logged.
+  const startIfIdle = useCallback(
+    (id: string, minutes: number) => {
+      if (activeIdRef.current === id) return;
+      start(id, minutes);
+    },
+    [start],
   );
 
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
-  return { activeId, secondsLeft, toggle, stop: clear };
+  return { activeId, secondsLeft, toggle, startIfIdle, stop: clear };
 }
 
 // ─── COMPONENTS ──────────────────────────────────────────────────────────────
@@ -1311,6 +1329,7 @@ function ExerciseRow({
   timerActive,
   timerSecondsLeft,
   onToggleTimer,
+  onStartTimer,
 }: {
   exercise: Exercise;
   color: string;
@@ -1322,6 +1341,7 @@ function ExerciseRow({
   timerActive: boolean;
   timerSecondsLeft: number;
   onToggleTimer: () => void;
+  onStartTimer: () => void;
 }) {
   const legs = exerciseLegs(exercise);
   const timed = exercise.durationMin != null;
@@ -1398,8 +1418,8 @@ function ExerciseRow({
 
   // ── TIME-BASED EXERCISE ────────────────────────────────────────────────
   // No open-ended checkboxes: a start button for the exercise countdown, plus
-  // a numeric set counter (+1 also fires the rest timer). You just read the
-  // number, no dots to count.
+  // a numeric set counter (+1 fires the rest timer, and the first one also
+  // starts the exercise countdown). You just read the number, no dots to count.
   if (timed) {
     return (
       <div style={rowStyle}>
@@ -1491,6 +1511,9 @@ function ExerciseRow({
               </div>
               <button
                 onClick={() => {
+                  // Logging the first set kicks off the exercise countdown too:
+                  // you start working before you ever press EMPEZAR.
+                  if (completedSets === 0) onStartTimer();
                   onSetCount(exercise.id, completedSets + 1);
                   showRestTimer(restSeconds);
                 }}
@@ -2203,6 +2226,10 @@ function WorkoutTracker() {
                 onToggleTimer={() =>
                   ex.durationMin != null &&
                   exerciseTimer.toggle(ex.id, ex.durationMin)
+                }
+                onStartTimer={() =>
+                  ex.durationMin != null &&
+                  exerciseTimer.startIfIdle(ex.id, ex.durationMin)
                 }
               />
             ))}
