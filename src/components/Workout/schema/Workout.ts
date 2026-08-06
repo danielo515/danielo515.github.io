@@ -21,6 +21,10 @@ export const RoutineStates = co.record(z.string(), RoutineState);
 export const WorkoutRoot = co.map({
   activeRoutineId: z.string(),
   routines: RoutineStates,
+  // Custom routines added from the app, serialized as a JSON object keyed by
+  // routine id. Each value is a routine validated with the Effect schema in
+  // `./routine`. Stored as a string to keep the Jazz schema flat and resilient.
+  customRoutinesJson: z.string(),
 });
 
 export const WorkoutAccount = co
@@ -35,6 +39,7 @@ export const WorkoutAccount = co
         WorkoutRoot.create({
           activeRoutineId: "e",
           routines: RoutineStates.create({}),
+          customRoutinesJson: "{}",
         }),
       );
     }

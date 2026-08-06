@@ -18,6 +18,12 @@ import {
   legacyRoutineId,
   loadLegacyRoutine,
 } from "./schema/Workout";
+import {
+  decodeRoutine,
+  parseRoutineJson,
+  type DecodedRoutine,
+  type DecodedExercise,
+} from "./schema/routine";
 
 const SYNC_PEER =
   "wss://cloud.jazz.tools/?key=workout-tracker@danielo515.github.io";
@@ -1050,6 +1056,91 @@ const routines: WorkoutRoutine[] = [
   },
 ];
 
+// ─── CUSTOM ROUTINES ─────────────────────────────────────────────────────────
+// Routines added from the app are validated with the Effect schema and stored
+// (as JSON) in the Jazz root. `adaptRoutine` turns the decoded value into the
+// runtime `WorkoutRoutine` shape used throughout the tracker, normalizing the
+// optional superset fields into the `BaseExercise | SuperSetExercise` union.
+
+// The decoded exercise carries the superset fields as optionals; collapse them
+// into the runtime `BaseExercise | SuperSetExercise` union (all three or none).
+function adaptExercise(e: DecodedExercise): Exercise {
+  return e.pairedWith !== undefined &&
+    e.pairedId !== undefined &&
+    e.repsB !== undefined
+    ? {
+        id: e.id,
+        name: e.name,
+        sets: e.sets,
+        reps: e.reps,
+        pairedWith: e.pairedWith,
+        pairedId: e.pairedId,
+        repsB: e.repsB,
+      }
+    : { id: e.id, name: e.name, sets: e.sets, reps: e.reps };
+}
+
+function adaptRoutine(r: DecodedRoutine): WorkoutRoutine {
+  return {
+    id: r.id,
+    name: r.name,
+    workoutData: r.workoutData.map((d) => ({
+      ...d,
+      groups: d.groups.map((g) => ({ ...g, exercises: g.exercises.map(adaptExercise) })),
+    })),
+    weeklyExercises: r.weeklyExercises.map((e) => ({ ...e })),
+    notes: [...r.notes],
+  };
+}
+
+// Parse the JSON object stored in Jazz (id -> routine) into a plain record.
+function parseRoutinesMap(raw: string | undefined): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+// Decode the stored routines into ready-to-render values, skipping any entry
+// that no longer validates (e.g. saved before a schema change).
+function loadCustomRoutines(raw: string | undefined): WorkoutRoutine[] {
+  return Object.values(parseRoutinesMap(raw)).flatMap((value) => {
+    const decoded = decodeRoutine(value);
+    return decoded.ok ? [adaptRoutine(decoded.routine)] : [];
+  });
+}
+
+const ROUTINE_JSON_EXAMPLE = `{
+  "id": "fuerza-2026",
+  "name": "RUTINA FUERZA",
+  "workoutData": [
+    {
+      "id": 1,
+      "label": "DÍA 1",
+      "title": "EMPUJE",
+      "color": "#00E5FF",
+      "restNote": "90\\" entre series",
+      "groups": [
+        {
+          "name": "PECHO",
+          "supersets": false,
+          "exercises": [
+            { "id": "d1-1", "name": "PRESS BANCA", "sets": 4, "reps": "8" },
+            { "id": "d1-2", "name": "PRESS INCLINADO", "sets": 3, "reps": "10" }
+          ]
+        }
+      ]
+    }
+  ],
+  "weeklyExercises": [
+    { "id": "w-1", "name": "ABDOMINALES", "sets": 3, "reps": "15", "timesPerWeek": 2 }
+  ],
+  "notes": ["Progresa el peso cada semana"]
+}`;
+
 // ─── TIMER HOOK ──────────────────────────────────────────────────────────────
 
 async function postToSW(msg: Record<string, unknown>) {
@@ -1753,6 +1844,14 @@ function WorkoutTracker() {
   const exerciseTimer = useExerciseTimer();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // "Add routine" panel state.
+  const [showAddRoutine, setShowAddRoutine] = useState(false);
+  const [routineJson, setRoutineJson] = useState("");
+  const [routineErrors, setRoutineErrors] = useState<string[]>([]);
+  const [routineSuccess, setRoutineSuccess] = useState<string | null>(null);
+  // Inline "delete routine" confirmation for the active custom routine.
+  const [confirmDeleteRoutine, setConfirmDeleteRoutine] = useState(false);
+
   // Re-runs when the active account changes (e.g. after logging in with a
   // recovery phrase), so a freshly switched-to account is seeded too.
   const accountId = me.$isLoaded ? me.$jazz.id : null;
@@ -1766,6 +1865,10 @@ function WorkoutTracker() {
       if (!root.routines.$jazz.has(rid)) {
         root.routines.$jazz.set(rid, createRoutineState(loadLegacyRoutine(rid)));
       }
+    }
+    // Seed the custom-routines store for accounts created before it existed.
+    if (!root.$jazz.has("customRoutinesJson")) {
+      root.$jazz.set("customRoutinesJson", "{}");
     }
     if (wasEmpty) {
       const legacy = legacyRoutineId();
@@ -1789,8 +1892,14 @@ function WorkoutTracker() {
   const routineState = appRoot.routines[activeRoutineId];
   if (!routineState?.$isLoaded) return <LoadingScreen />;
 
+  const customRoutinesRaw = appRoot.$jazz.has("customRoutinesJson")
+    ? appRoot.customRoutinesJson
+    : "{}";
+  const customRoutines = loadCustomRoutines(customRoutinesRaw);
+  const allRoutines = [...routines, ...customRoutines];
+
   const routine =
-    routines.find((r) => r.id === activeRoutineId) ??
+    allRoutines.find((r) => r.id === activeRoutineId) ??
     routines[routines.length - 1]!;
   const workoutData = routine.workoutData;
   const weeklyExercises = routine.weeklyExercises;
@@ -1814,6 +1923,49 @@ function WorkoutTracker() {
       );
     }
     appRoot.$jazz.set("activeRoutineId", newId);
+    setConfirmDeleteRoutine(false);
+  };
+
+  const isCustomRoutine = customRoutines.some((r) => r.id === activeRoutineId);
+
+  const addRoutineFromJson = () => {
+    const result = parseRoutineJson(routineJson);
+    if (!result.ok) {
+      setRoutineErrors(result.errors);
+      setRoutineSuccess(null);
+      return;
+    }
+    const { routine: parsed } = result;
+    if (routines.some((r) => r.id === parsed.id)) {
+      setRoutineErrors([
+        `Ya existe una rutina integrada con el id "${parsed.id}". Usa un id distinto.`,
+      ]);
+      setRoutineSuccess(null);
+      return;
+    }
+    const map = parseRoutinesMap(customRoutinesRaw);
+    const isUpdate = parsed.id in map;
+    map[parsed.id] = parsed;
+    appRoot.$jazz.set("customRoutinesJson", JSON.stringify(map));
+    switchRoutine(parsed.id);
+    setRoutineErrors([]);
+    setRoutineJson("");
+    setShowAddRoutine(false);
+    setRoutineSuccess(
+      isUpdate
+        ? `Rutina "${parsed.name}" actualizada.`
+        : `Rutina "${parsed.name}" añadida.`,
+    );
+  };
+
+  const deleteCustomRoutine = (id: string) => {
+    const map = parseRoutinesMap(customRoutinesRaw);
+    if (!(id in map)) return;
+    delete map[id];
+    appRoot.$jazz.set("customRoutinesJson", JSON.stringify(map));
+    const fallback = routines[routines.length - 1];
+    if (activeRoutineId === id && fallback)
+      appRoot.$jazz.set("activeRoutineId", fallback.id);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1945,7 +2097,7 @@ function WorkoutTracker() {
           borderBottom: "1px solid #1a1a1a",
         }}
       >
-        {routines.map((r) => (
+        {allRoutines.map((r) => (
           <button
             key={r.id}
             onClick={() => switchRoutine(r.id)}
@@ -2012,22 +2164,93 @@ function WorkoutTracker() {
               <span style={{ color: day.color }}>{day.title}</span>
             </div>
           </div>
-          <button
-            onClick={resetDay}
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 11,
-              letterSpacing: "0.1em",
-              color: "#444",
-              background: "transparent",
-              border: "1px solid #222",
-              borderRadius: 6,
-              padding: "6px 10px",
-              cursor: "pointer",
-            }}
-          >
-            RESET
-          </button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {isCustomRoutine &&
+              (confirmDeleteRoutine ? (
+                <>
+                  <span
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: 11,
+                      letterSpacing: "0.08em",
+                      color: "#FF6B6B",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    ¿Borrar rutina?
+                  </span>
+                  <button
+                    onClick={() => {
+                      deleteCustomRoutine(activeRoutineId);
+                      setConfirmDeleteRoutine(false);
+                    }}
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.1em",
+                      color: "#0a0a0a",
+                      background: "#FF6B6B",
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "6px 10px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    SÍ
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteRoutine(false)}
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: 11,
+                      letterSpacing: "0.1em",
+                      color: "#888",
+                      background: "transparent",
+                      border: "1px solid #333",
+                      borderRadius: 6,
+                      padding: "6px 10px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    NO
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setConfirmDeleteRoutine(true)}
+                  style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 11,
+                    letterSpacing: "0.1em",
+                    color: "#FF6B6B",
+                    background: "transparent",
+                    border: "1px solid #FF6B6B33",
+                    borderRadius: 6,
+                    padding: "6px 10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  BORRAR
+                </button>
+              ))}
+            <button
+              onClick={resetDay}
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: 11,
+                letterSpacing: "0.1em",
+                color: "#444",
+                background: "transparent",
+                border: "1px solid #222",
+                borderRadius: 6,
+                padding: "6px 10px",
+                cursor: "pointer",
+              }}
+            >
+              RESET
+            </button>
+          </div>
         </div>
 
         {/* Progress bar */}
@@ -2522,6 +2745,29 @@ function WorkoutTracker() {
         </button>
       </div>
 
+      {/* Add routine */}
+      <AddRoutinePanel
+        color={day.color}
+        open={showAddRoutine}
+        onToggle={() => {
+          setShowAddRoutine((v) => !v);
+          setRoutineErrors([]);
+        }}
+        json={routineJson}
+        onJsonChange={(value) => {
+          setRoutineJson(value);
+          setRoutineSuccess(null);
+        }}
+        errors={routineErrors}
+        success={routineSuccess}
+        onSubmit={addRoutineFromJson}
+        onFillExample={() => {
+          setRoutineJson(ROUTINE_JSON_EXAMPLE);
+          setRoutineErrors([]);
+          setRoutineSuccess(null);
+        }}
+      />
+
       {/* Sync */}
       <SyncPanel color={day.color} />
 
@@ -2534,6 +2780,185 @@ function WorkoutTracker() {
         onStop={stop}
         color={day.color}
       />
+    </div>
+  );
+}
+
+// ─── ADD ROUTINE PANEL ───────────────────────────────────────────────────────
+
+function AddRoutinePanel({
+  color,
+  open,
+  onToggle,
+  json,
+  onJsonChange,
+  errors,
+  success,
+  onSubmit,
+  onFillExample,
+}: {
+  color: string;
+  open: boolean;
+  onToggle: () => void;
+  json: string;
+  onJsonChange: (value: string) => void;
+  errors: string[];
+  success: string | null;
+  onSubmit: () => void;
+  onFillExample: () => void;
+}) {
+  const labelStyle: CSSProperties = {
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+  };
+
+  return (
+    <div style={{ padding: "16px 20px 0" }}>
+      <button
+        onClick={onToggle}
+        style={{
+          ...labelStyle,
+          width: "100%",
+          padding: "10px 14px",
+          background: open ? "#1a1a1a" : "transparent",
+          color: open ? "#fff" : "#888",
+          border: `1px solid ${open ? color + "55" : "#333"}`,
+          borderRadius: 6,
+          cursor: "pointer",
+        }}
+      >
+        {open ? "× CERRAR" : "+ AÑADIR RUTINA"}
+      </button>
+
+      {success && !open && (
+        <div
+          style={{
+            ...labelStyle,
+            marginTop: 10,
+            padding: "8px 12px",
+            color: "#7CFFB2",
+            background: "#7CFFB211",
+            border: "1px solid #7CFFB233",
+            borderRadius: 6,
+          }}
+        >
+          {success}
+        </div>
+      )}
+
+      {open && (
+        <div style={{ marginTop: 12 }}>
+          <div
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 12,
+              color: "#666",
+              lineHeight: 1.5,
+              marginBottom: 8,
+            }}
+          >
+            Pega el JSON de la rutina y pulsa validar. Si algo está mal, verás
+            exactamente qué campo falla y por qué.
+          </div>
+
+          <textarea
+            value={json}
+            onChange={(e) => onJsonChange(e.target.value)}
+            placeholder="Pega aquí el JSON de la rutina…"
+            spellCheck={false}
+            rows={10}
+            style={{
+              width: "100%",
+              fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 12,
+              lineHeight: 1.5,
+              color: "#ddd",
+              background: "#111",
+              border: `1px solid ${errors.length ? "#FF6B6B55" : "#333"}`,
+              borderRadius: 6,
+              padding: "10px 12px",
+              resize: "vertical",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+
+          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+            <button
+              onClick={onSubmit}
+              style={{
+                ...labelStyle,
+                flex: 1,
+                padding: "10px 14px",
+                background: color,
+                color: "#0a0a0a",
+                border: "none",
+                borderRadius: 6,
+                cursor: "pointer",
+              }}
+            >
+              VALIDAR Y AÑADIR
+            </button>
+            <button
+              onClick={onFillExample}
+              style={{
+                ...labelStyle,
+                padding: "10px 14px",
+                background: "#1a1a1a",
+                color: "#888",
+                border: "1px solid #333",
+                borderRadius: 6,
+                cursor: "pointer",
+              }}
+            >
+              VER EJEMPLO
+            </button>
+          </div>
+
+          {errors.length > 0 && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: "10px 14px",
+                background: "#FF6B6B0d",
+                border: "1px solid #FF6B6B44",
+                borderRadius: 6,
+              }}
+            >
+              <div
+                style={{
+                  ...labelStyle,
+                  color: "#FF6B6B",
+                  marginBottom: 8,
+                }}
+              >
+                {errors.length === 1
+                  ? "1 ERROR ENCONTRADO"
+                  : `${errors.length} ERRORES ENCONTRADOS`}
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {errors.map((err, i) => (
+                  <li
+                    key={i}
+                    style={{
+                      fontFamily: "'Barlow', sans-serif",
+                      fontSize: 12,
+                      color: "#ffb3b3",
+                      lineHeight: 1.5,
+                      marginBottom: 4,
+                    }}
+                  >
+                    {err}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
