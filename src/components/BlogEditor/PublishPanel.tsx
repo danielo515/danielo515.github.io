@@ -3,12 +3,12 @@ import {
   DEFAULT_TARGET,
   GitHubError,
   branchNameFor,
-  prefillFitsInUrl,
+  prefillOverflow,
   prefilledEditorUrl,
   publishViaApi,
 } from "@/lib/github";
 import { AlertTriangle, ExternalLink, GitPullRequest } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { DraftValues } from "./draftValues";
 
 /**
@@ -48,6 +48,14 @@ export function PublishPanel({ draft }: { draft: DraftValues }) {
 
   const built = buildPublishableFiles(draft);
   const canPublish = built.ok;
+  // Binary-searches the real URL, so memoise it rather than redo the search
+  // on every render. Keyed on the built file instead of on `draft`, which is
+  // a fresh object every render and would never hit the cache.
+  const overflow = useMemo(
+    () => prefillOverflow(DEFAULT_TARGET, draft),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [built.ok ? built.post.content : null, built.ok ? built.post.path : null],
+  );
 
   const openPrefilled = () => {
     if (!built.ok) return;
@@ -184,12 +192,16 @@ export function PublishPanel({ draft }: { draft: DraftValues }) {
           Abrir PR en GitHub
         </button>
 
-        {built.ok && !prefillFitsInUrl(DEFAULT_TARGET, built.post) && (
+        {overflow && (
           <p className="flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400">
             <AlertTriangle size={12} className="mt-0.5 shrink-0" />
-            El artículo es largo y puede que no quepa en la URL. Si GitHub lo
-            abre truncado, descarga el <code>.md</code> y súbelo a mano, o usa
-            un token.
+            <span>
+              El artículo se pasa de largo para caber en la URL: sobran{" "}
+              <strong>
+                {overflow.bodyExcess.toLocaleString("es-ES")} caracteres
+              </strong>
+              . Recórtalo, o publica con token y olvídate del límite.
+            </span>
           </p>
         )}
         {built.ok && built.cover && (

@@ -1,4 +1,9 @@
-import type { CoverImage, PostFile } from "@/lib/blogMarkdown";
+import {
+  buildPublishableFiles,
+  type CoverImage,
+  type PostFile,
+  type PublishInput,
+} from "@/lib/blogMarkdown";
 
 /**
  * Client-side publishing to GitHub. Two routes, because they trade off
@@ -52,8 +57,59 @@ export function prefilledEditorUrl(target: RepoTarget, post: PostFile): string {
   return `https://github.com/${target.owner}/${target.repo}/new/${target.baseBranch}?${params}`;
 }
 
-export function prefillFitsInUrl(target: RepoTarget, post: PostFile): boolean {
-  return prefilledEditorUrl(target, post).length <= PREFILL_URL_LIMIT;
+export type PrefillOverflow = {
+  /** Characters to delete from the article for the URL to fit. */
+  bodyExcess: number;
+};
+
+/**
+ * How much of the article has to go for the prefilled URL to fit — `null`
+ * when it already does.
+ *
+ * Answered by rebuilding the real file and measuring the real URL, not by
+ * costing characters: percent-encoding inflates by a different factor per
+ * character, and `buildPostFile` trims the body, so a deleted trailing
+ * newline shrinks the article without shrinking the URL. Modelling that
+ * left the advice a couple of characters short, which is exactly the
+ * "guess again" loop the number is meant to end. Removing more text can
+ * never lengthen the URL, so a binary search over how much to keep finds
+ * the tight answer.
+ */
+export function prefillOverflow(
+  target: RepoTarget,
+  draft: PublishInput,
+): PrefillOverflow | null {
+  const fits = (body: string) => {
+    const built = buildPublishableFiles({ ...draft, body });
+    return (
+      built.ok && prefilledEditorUrl(target, built.post).length <= PREFILL_URL_LIMIT
+    );
+  };
+
+  if (fits(draft.body)) return null;
+
+  const characters = [...draft.body];
+  const keep = (count: number) => characters.slice(0, count).join("");
+
+  // Largest prefix that still fits. Starts at 1 because the schema rejects
+  // an empty body, so a zero-length prefix could never "fit" anyway.
+  let low = 1;
+  let high = characters.length;
+  let best = 0;
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2);
+    if (fits(keep(middle))) {
+      best = middle;
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+
+  // `best === 0` means even a one-character article overflows — only
+  // reachable with an absurdly long title or slug, and cutting prose is
+  // still the direction of travel.
+  return { bodyExcess: characters.length - best };
 }
 
 // ─── TOKEN-BASED PUBLISHING ──────────────────────────────────────────────────

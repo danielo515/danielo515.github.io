@@ -116,7 +116,8 @@ export type BuildResult =
   | { ok: true; post: PostFile; cover: CoverImage | null }
   | { ok: false; errors: string[] };
 
-export function buildPublishableFiles(input: {
+/** A draft as the editor holds it, before validation. */
+export type PublishInput = {
   title: string;
   description: string;
   date: string;
@@ -125,7 +126,9 @@ export function buildPublishableFiles(input: {
   body: string;
   coverName: string;
   coverDataUrl: string;
-}): BuildResult {
+};
+
+export function buildPublishableFiles(input: PublishInput): BuildResult {
   const parsed = blogDraftSchema.safeParse({
     title: input.title,
     description: input.description,
