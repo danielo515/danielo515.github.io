@@ -1,3 +1,4 @@
+import { blogFrontmatterFields } from "@/lib/blogSchema";
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
@@ -68,13 +69,12 @@ export const collections = {
   }),
   blog: defineCollection({
     loader: glob({ pattern: "**/*.md", base: "./src/content/blog" }),
+    // The non-image fields live in `@/lib/blogSchema` so the client-side
+    // editor at /blog/new validates drafts against this exact shape.
     schema: ({ image }) =>
       z.object({
-        title: z.string(),
-        description: z.string(),
+        ...blogFrontmatterFields,
         image: image().optional(),
-        date: z.date(),
-        tags: z.array(z.string()),
       }),
   }),
 };
