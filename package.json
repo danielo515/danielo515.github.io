@@ -25,6 +25,7 @@
     "astro-robots-txt": "1.0.0",
     "jazz-tools": "^0.20.18",
     "lucide-react": "0.559.0",
+    "marked": "^18.0.10",
     "motion": "11.18.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
