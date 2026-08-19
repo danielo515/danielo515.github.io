@@ -88,14 +88,25 @@ export function coverFromDataUrl(
   fileName: string,
   dataUrl: string,
 ): CoverImage | null {
-  const match = /^data:([^;,]+)?(?:;[^,]*)*,(.*)$/s.exec(dataUrl);
-  if (!match) return null;
+  // Parsed by slicing rather than by regex on purpose: the obvious pattern
+  // for a data URL header (`(?:;[^,]*)*`) is ambiguous and backtracks
+  // exponentially on a header full of semicolons. Splitting at the first
+  // comma is linear and, being the actual definition of the format, also
+  // says what it means.
+  if (!dataUrl.startsWith("data:")) return null;
+  const separator = dataUrl.indexOf(",");
+  if (separator < 0) return null;
 
-  const [, mime = "", payload = ""] = match;
-  const extension =
-    /\.([a-z0-9]+)$/i.exec(fileName)?.[1]?.toLowerCase() ??
-    mime.split("/")[1] ??
-    "png";
+  const header = dataUrl.slice("data:".length, separator);
+  const payload = dataUrl.slice(separator + 1);
+  // `image/png;base64` → `image/png`; the parameters after it don't matter.
+  const mime = header.split(";")[0] ?? "";
+
+  const rawExtension =
+    /\.([a-z0-9]+)$/i.exec(fileName)?.[1] ?? mime.split("/")[1] ?? "png";
+  // A subtype is not always a usable extension: `image/svg+xml` would give
+  // `svg+xml`, and that plus sign has no business in a committed filename.
+  const extension = rawExtension.toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
 
   return { name: `${slug}.${extension}`, base64: payload };
 }
