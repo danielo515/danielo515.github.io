@@ -1,0 +1,46 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "warn"
+  },
+  "env": {
+    "browser": true,
+    "es2022": true
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off"
+  },
+  "ignorePatterns": ["dist", ".astro", "node_modules", "public"],
+  "overrides": [
+    {
+      "files": ["src/env.d.ts"],
+      "rules": {
+        "typescript/triple-slash-reference": "off"
+      }
+    },
+    {
+      "files": ["scripts/**", "astro.config.mjs"],
+      "env": {
+        "node": true
+      }
+    },
+    {
+      "files": [
+        "src/components/CVLink.tsx",
+        "src/components/EchoAura.tsx",
+        "src/components/EchoEqualizer.tsx",
+        "src/components/Workout/WorkoutApp.tsx",
+        "src/pages/tools/echo.tsx",
+        "src/pages/tools/image-to-bmp.tsx",
+        "src/pages/tools/token-calculator.tsx"
+      ],
+      "rules": {
+        "react/refs": "off",
+        "react/immutability": "off",
+        "react/set-state-in-effect": "off",
+        "react-hooks/exhaustive-deps": "off"
+      }
+    }
+  ]
+}
