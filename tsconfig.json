@@ -13,6 +13,11 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "exactOptionalPropertyTypes": false,
-    "types": ["@webgpu/types"]
+    "types": ["@webgpu/types"],
+    "plugins": [
+      {
+        "name": "@effect/language-service"
+      }
+    ]
   }
 }

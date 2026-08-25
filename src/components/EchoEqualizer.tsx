@@ -165,7 +165,9 @@ export default function EchoEqualizer({ freqDataRef, hue, active }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hueRef = useRef(hue);
   const activeRef = useRef(active ? 1 : 0);
+  // oxlint-disable-next-line react/refs -- TODO: written during render to keep the rAF draw loop in sync; move to a useEffect/useLayoutEffect.
   hueRef.current = hue;
+  // oxlint-disable-next-line react/refs -- TODO: written during render to keep the rAF draw loop in sync; move to a useEffect/useLayoutEffect.
   activeRef.current = active ? 1 : 0;
 
   useEffect(() => {

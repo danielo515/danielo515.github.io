@@ -21,6 +21,8 @@ pnpm run dev          # Start development server
 pnpm run build        # Build with TypeScript check
 pnpm run check        # Run TypeScript check only
 pnpm run preview      # Build and preview production
+pnpm run lint         # Run oxlint (warnings fail the run)
+pnpm run lint:effect  # Run Effect language service diagnostics
 ```
 
 ### Adding Dependencies
@@ -126,9 +128,10 @@ Configured in `tsconfig.json`:
 Before considering any task complete, you **MUST** run the following checks:
 
 1. **Type Check**: Run `pnpm run check` to verify there are no TypeScript errors
-2. **Build**: Run `pnpm run build` to ensure the project builds successfully
+2. **Lint**: Run `pnpm run lint` (oxlint) and `pnpm run lint:effect` (Effect language service diagnostics)
+3. **Build**: Run `pnpm run build` to ensure the project builds successfully
 
-Both commands must pass without errors before committing or marking a task as done. If either fails, fix the issues before proceeding.
+All commands must pass without errors before committing or marking a task as done. If any fails, fix the issues before proceeding. The lint checks also run in CI on every pull request (`.github/workflows/ci.yaml`).
 
 ## Git Commit Messages
 

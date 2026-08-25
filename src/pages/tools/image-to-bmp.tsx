@@ -458,6 +458,7 @@ function DitherThumb({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pendingRef = useRef(false);
   const lastArgsRef = useRef({ mode, crop, dither });
+  // oxlint-disable-next-line react/refs -- TODO: written during render to keep the render-effect in sync; move to a useEffect/useLayoutEffect.
   lastArgsRef.current = { mode, crop, dither };
 
   useEffect(() => {
@@ -513,6 +514,7 @@ function DitherMainPreview({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pendingRef = useRef(false);
   const lastArgsRef = useRef({ mode, crop, dither });
+  // oxlint-disable-next-line react/refs -- TODO: written during render to keep the render-effect in sync; move to a useEffect/useLayoutEffect.
   lastArgsRef.current = { mode, crop, dither };
 
   useEffect(() => {

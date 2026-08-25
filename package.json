@@ -9,6 +9,8 @@
     "check": "astro check",
     "preview": "astro build && astro preview",
     "astro": "astro",
+    "lint": "oxlint --deny-warnings",
+    "lint:effect": "effect-language-service diagnostics --project tsconfig.json --strict",
     "generate-pdf": "node scripts/generate-cv-pdf.mjs",
     "build:with-pdf": "astro check && astro build && node scripts/generate-cv-pdf.mjs"
   },
@@ -34,9 +36,11 @@
     "typescript": "5.9.3"
   },
   "devDependencies": {
+    "@effect/language-service": "^0.87.2",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^24.0.7",
     "@webgpu/types": "^0.1.70",
+    "oxlint": "^1.79.0",
     "playwright": "^1.55.1"
   },
   "pnpm": {
