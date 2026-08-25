@@ -24,23 +24,6 @@
       "env": {
         "node": true
       }
-    },
-    {
-      "files": [
-        "src/components/CVLink.tsx",
-        "src/components/EchoAura.tsx",
-        "src/components/EchoEqualizer.tsx",
-        "src/components/Workout/WorkoutApp.tsx",
-        "src/pages/tools/echo.tsx",
-        "src/pages/tools/image-to-bmp.tsx",
-        "src/pages/tools/token-calculator.tsx"
-      ],
-      "rules": {
-        "react/refs": "off",
-        "react/immutability": "off",
-        "react/set-state-in-effect": "off",
-        "react-hooks/exhaustive-deps": "off"
-      }
     }
   ]
 }
