@@ -327,13 +327,17 @@ export default function EchoSimulator() {
   const character = CHARACTERS[characterIdx]!;
 
   const stateRef = useRef<EchoState>("idle");
+  // oxlint-disable-next-line react/refs -- TODO: written during render to keep callbacks in sync; move to a useEffect/useLayoutEffect.
   stateRef.current = state;
   const silenceSecondsRef = useRef<number>(silenceSeconds);
+  // oxlint-disable-next-line react/refs -- TODO: written during render to keep callbacks in sync; move to a useEffect/useLayoutEffect.
   silenceSecondsRef.current = silenceSeconds;
   const noiseGateRef = useRef<number>(NOISE_GATE_LEVELS[noiseGate]!);
+  // oxlint-disable-next-line react/refs -- TODO: written during render to keep callbacks in sync; move to a useEffect/useLayoutEffect.
   noiseGateRef.current =
     NOISE_GATE_LEVELS[noiseGate] ?? NOISE_GATE_LEVELS[DEFAULT_NOISE_GATE_INDEX]!;
   const characterRef = useRef<CharacterDef>(character);
+  // oxlint-disable-next-line react/refs -- TODO: written during render to keep callbacks in sync; move to a useEffect/useLayoutEffect.
   characterRef.current = character;
 
   const streamRef = useRef<MediaStream | null>(null);
@@ -518,6 +522,7 @@ export default function EchoSimulator() {
     const analyser = analyserRef.current;
     const buf = bufferRef.current;
     if (!analyser || !buf) {
+      // oxlint-disable-next-line react/immutability -- TODO: `tick` is read while still initializing; use a named function expression instead of self-referencing the const.
       rafRef.current = requestAnimationFrame(tick);
       return;
     }

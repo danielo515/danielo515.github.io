@@ -73,7 +73,7 @@ export default function TokenCostCalculator() {
       // Ctrl/Cmd + N to add model
       if ((e.ctrlKey || e.metaKey) && e.key === "n") {
         e.preventDefault();
-        addPricing();
+        addPricing(); // oxlint-disable-line react/immutability -- TODO: `addPricing` is read while still initializing (declared below via useCallback); reorder declarations or use a ref.
       }
       // Ctrl/Cmd + D to toggle delete mode
       if ((e.ctrlKey || e.metaKey) && e.key === "d") {
@@ -89,6 +89,7 @@ export default function TokenCostCalculator() {
         const index = e.key.toLowerCase().charCodeAt(0) - 97;
         const visiblePricings = pricings.filter((p) => !p.deleted);
         if (index < visiblePricings.length && visiblePricings.length > 1) {
+          // oxlint-disable-next-line react/immutability -- TODO: `markAsDeleted` is read while still initializing (declared below via useCallback); reorder declarations or use a ref.
           markAsDeleted(visiblePricings[index]?.id ?? null);
           setDeleteMode(false);
         }
@@ -97,6 +98,7 @@ export default function TokenCostCalculator() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- TODO: closes over `addPricing`/`markAsDeleted`, declared below via useCallback, so they can't be listed as deps yet; reorder declarations or use refs.
   }, [deleteMode, pricings]);
 
   const addPricing = () => {

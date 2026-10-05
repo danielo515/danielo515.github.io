@@ -1104,6 +1104,7 @@ function useRestTimer() {
       return;
     }
     setSecondsLeft(remaining);
+    // oxlint-disable-next-line react/immutability -- TODO: `tick` is read while still initializing; use a named function expression instead of self-referencing the const.
     rafRef.current = requestAnimationFrame(tick);
   }, [finish]);
 
@@ -1186,6 +1187,7 @@ function useExerciseTimer() {
       return;
     }
     setSecondsLeft(remaining);
+    // oxlint-disable-next-line react/immutability -- TODO: `tick` is read while still initializing; use a named function expression instead of self-referencing the const.
     rafRef.current = requestAnimationFrame(tick);
   }, [finish]);
 
