@@ -995,6 +995,179 @@ const workoutDataE: WorkoutDay[] = [
 
 const weeklyExercisesE: WeeklyExercise[] = [];
 
+// Return-from-holidays routine: 3 full-body days built from exercises already
+// used in routines A–E, with reduced volume (3 sets) so each session fits in
+// ~75' of weights plus optional cardio, under 1h30 in total.
+const workoutDataF: WorkoutDay[] = [
+  {
+    id: 1,
+    label: "DÍA 1",
+    title: "FULL BODY — PRENSA Y PRESS PLANO",
+    color: "#FF6B35",
+    restNote: "1'30'' en básicos · 1' en el resto · ≈75'",
+    restSeconds: 90,
+    groups: [
+      {
+        name: "BÁSICOS",
+        supersets: false,
+        exercises: [
+          { id: "f1-1", name: "PRENSA", sets: 3, reps: "12" },
+          { id: "f1-2", name: "PRESS PLANO CONVERGENTE", sets: 3, reps: "10" },
+          { id: "f1-3", name: "JALÓN ANCHO AL PECHO", sets: 3, reps: "12" },
+        ],
+      },
+      {
+        name: "ACCESORIOS",
+        supersets: false,
+        exercises: [
+          { id: "f1-4", name: "PRESS HAMMER", sets: 3, reps: "12", rest: 60 },
+          { id: "f1-5", name: "FEMORAL TUMBADO", sets: 3, reps: "12", rest: 60 },
+        ],
+      },
+      {
+        name: "BRAZO — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "f1-6",
+            name: "POLEA CON CUERDA",
+            pairedWith: "MARTILLO EN POLEA",
+            pairedId: "f1-6b",
+            sets: 3,
+            reps: "12",
+            repsB: "12",
+            rest: 60,
+          },
+        ],
+      },
+      {
+        name: "ABDOMEN — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "f1-7",
+            name: "ELEVACIÓN DE TRONCO",
+            pairedWith: "ELEVACIÓN DE PIERNAS",
+            pairedId: "f1-7b",
+            sets: 3,
+            reps: "15",
+            repsB: "15",
+            rest: 40,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "DÍA 2",
+    title: "FULL BODY — BISAGRA Y REMO",
+    color: "#00E5FF",
+    restNote: "1'30'' en básicos · 1' en el resto · ≈75'",
+    restSeconds: 90,
+    groups: [
+      {
+        name: "BÁSICOS",
+        supersets: false,
+        exercises: [
+          { id: "f2-1", name: "PESO MUERTO MANC", sets: 3, reps: "10" },
+          { id: "f2-2", name: "REMO GIRONDA", sets: 3, reps: "12" },
+          { id: "f2-3", name: "PRESS SUPERIOR MANCUERNAS", sets: 3, reps: "10" },
+        ],
+      },
+      {
+        name: "ACCESORIOS",
+        supersets: false,
+        exercises: [
+          { id: "f2-4", name: "EXTENSIONES", sets: 3, reps: "15", rest: 60 },
+          { id: "f2-5", name: "PÁJAROS MÁQUINA", sets: 3, reps: "15", rest: 60 },
+        ],
+      },
+      {
+        name: "BRAZO — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "f2-6",
+            name: "CURL BARRA Z",
+            pairedWith: "FRANCÉS Z",
+            pairedId: "f2-6b",
+            sets: 3,
+            reps: "12",
+            repsB: "12",
+            rest: 60,
+          },
+        ],
+      },
+      {
+        name: "LUMBAR",
+        supersets: false,
+        exercises: [
+          {
+            id: "f2-7",
+            name: "HIPEREXTENSIONES",
+            sets: 3,
+            reps: "15 (SIN PESO Y LENTAS)",
+            rest: 40,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 3,
+    label: "DÍA 3",
+    title: "FULL BODY — HACK Y HOMBRO",
+    color: "#B8FF3D",
+    restNote: "1'30'' en básicos · 1' en el resto · ≈75'",
+    restSeconds: 90,
+    groups: [
+      {
+        name: "BÁSICOS",
+        supersets: false,
+        exercises: [
+          { id: "f3-1", name: "HACK", sets: 3, reps: "12" },
+          { id: "f3-2", name: "REMO HAMMER", sets: 3, reps: "12" },
+          { id: "f3-3", name: "PRESS PLANO MANCUERNAS", sets: 3, reps: "10" },
+        ],
+      },
+      {
+        name: "ACCESORIOS",
+        supersets: false,
+        exercises: [
+          {
+            id: "f3-4",
+            name: "ELEVACIONES LATERALES",
+            sets: 3,
+            reps: "15",
+            rest: 60,
+          },
+          { id: "f3-5", name: "FEMORAL SENTADO", sets: 3, reps: "12", rest: 60 },
+          { id: "f3-6", name: "GEMELO EN PRENSA", sets: 3, reps: "20", rest: 40 },
+        ],
+      },
+      {
+        name: "ABDOMEN — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "f3-7",
+            name: "ENCOGIMIENTOS EN POLEA",
+            pairedWith: "ELEVACIÓN DE PIERNAS",
+            pairedId: "f3-7b",
+            sets: 3,
+            reps: "15",
+            repsB: "15",
+            rest: 40,
+          },
+        ],
+      },
+    ],
+  },
+];
+
+const weeklyExercisesF: WeeklyExercise[] = [];
+
 const routines: WorkoutRoutine[] = [
   {
     id: "a",
@@ -1046,6 +1219,20 @@ const routines: WorkoutRoutine[] = [
       "EJERCICIOS MARCADOS (*): SOLO 10' Y 30'' DE DESCANSO.",
       "TRES DÍAS EN SEMANA: 20' DE CARDIO TRAS LAS PESAS (NUNCA EL DÍA DE PIERNA).",
       "TRAS EL TERCER DÍA, UN DÍA DE DESCANSO CON UN PASEO DE 1H. LUEGO VUELTA AL DÍA 1.",
+    ],
+  },
+  {
+    id: "f",
+    name: "RUTINA F",
+    workoutData: workoutDataF,
+    weeklyExercises: weeklyExercisesF,
+    notes: [
+      "VUELTA DE VACACIONES: 2-3 SEMANAS DE READAPTACIÓN, 3 DÍAS NO CONSECUTIVOS (P. EJ. L-X-V). CADA SESIÓN ≤ 1H30.",
+      "CALENTAMIENTO 10': 5' DE BICI O ELÍPTICA + 2 SERIES DE APROXIMACIÓN LIGERAS EN EL PRIMER BÁSICO.",
+      "SEMANA 1: EMPIEZA CON ~70% DEL PESO QUE MOVÍAS ANTES DE VACACIONES, DEJANDO 3-4 REPS EN RECÁMARA. NADA AL FALLO NI DESCENDENTES.",
+      "SEMANA 2: SUBE AL ~85%, DEJANDO 2 REPS EN RECÁMARA. SEMANA 3: VUELVE A TUS PESOS SI LAS SERIES SALEN LIMPIAS.",
+      "TRAS LAS PESAS: 15' DE CARDIO LISS OPCIONAL (SIN HIT HASTA LA SEMANA 2).",
+      "SI TERMINAS LA SEMANA 3 SIN AGUJETAS FUERTES, VUELVE A TU RUTINA HABITUAL (RUTINA E).",
     ],
   },
 ];
@@ -1743,7 +1930,7 @@ function RestTimerBar({
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
-const ROUTINE_IDS = ["a", "b", "c", "d", "e"];
+const ROUTINE_IDS = ["a", "b", "c", "d", "e", "f"];
 
 function WorkoutTracker() {
   const me = useAccount(WorkoutAccount, {
@@ -1961,7 +2148,7 @@ function WorkoutTracker() {
               background: r.id === activeRoutineId ? "#1a1a1a" : "transparent",
               border: "none",
               borderBottom: `2px solid ${r.id === activeRoutineId ? day.color : "transparent"}`,
-              padding: "12px 16px",
+              padding: "12px 6px",
               cursor: "pointer",
               textTransform: "uppercase",
               transition: "all 0.15s",
