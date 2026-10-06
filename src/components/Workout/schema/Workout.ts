@@ -18,9 +18,46 @@ export const RoutineState = co.map({
 // Keyed by routine id ("a" | "b" | "c").
 export const RoutineStates = co.record(z.string(), RoutineState);
 
+// ─── FREE TRAIN ──────────────────────────────────────────────────────────────
+// Improvised session with no predefined routine: exercises are added on the
+// fly, each with its own rest and an open-ended set count. Finishing the
+// session archives a summary into `history` and clears the exercise list.
+
+export const FreeExercise = co.map({
+  name: z.string(),
+  // Rest between sets in seconds; what the rest timer starts with on +1.
+  rest: z.number(),
+  sets: z.number(),
+});
+export const FreeExercises = co.list(FreeExercise);
+
+export const FreeSessionLog = z.object({
+  finishedAt: z.number(),
+  exercises: z.array(z.object({ name: z.string(), sets: z.number() })),
+});
+export type FreeSessionLog = z.infer<typeof FreeSessionLog>;
+export const FreeHistory = co.list(FreeSessionLog);
+
+export const FreeTrain = co.map({
+  exercises: FreeExercises,
+  history: FreeHistory,
+});
+
+export function createFreeTrain() {
+  return FreeTrain.create({
+    exercises: FreeExercises.create([]),
+    history: FreeHistory.create([]),
+  });
+}
+
+export const FREE_TRAIN_ID = "free";
+
 export const WorkoutRoot = co.map({
   activeRoutineId: z.string(),
   routines: RoutineStates,
+  // Optional because accounts created before free train don't have it; it's
+  // seeded lazily by the app on load.
+  freeTrain: FreeTrain.optional(),
 });
 
 export const WorkoutAccount = co

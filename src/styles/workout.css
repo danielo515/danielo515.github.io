@@ -1,0 +1,32 @@
+/* Tailwind entry point for the standalone /workout app (it doesn't use
+   BaseLayout, so it doesn't get global.css). Design tokens for the tracker's
+   dark gym UI live here.
+   Preflight is left out on purpose: its base line-height would shift the
+   inline-styled routine view. The page's own <style> reset covers the rest. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --font-condensed: "Barlow Condensed", "Barlow", sans-serif;
+
+  /* Surfaces, darkest to lightest */
+  --color-wk-bg: #0a0a0a;
+  --color-wk-card: #111;
+  --color-wk-raised: #1a1a1a;
+  --color-wk-line: #1e1e1e;
+  --color-wk-edge: #222;
+  --color-wk-border: #333;
+
+  /* Text, dimmest to brightest */
+  --color-wk-dim: #444;
+  --color-wk-muted: #555;
+  --color-wk-faint: #666;
+  --color-wk-subtle: #888;
+
+  --color-wk-done: #22c55e;
+
+  /* Free train accent. Keep in sync with FREE_TRAIN_COLOR in FreeTrain.tsx,
+     which the inline-styled shared components (rest timer, tabs) still use. */
+  --color-free: #ff3d8b;
+}

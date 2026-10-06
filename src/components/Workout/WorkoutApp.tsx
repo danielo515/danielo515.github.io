@@ -14,10 +14,14 @@ import {
 import { wordlist } from "@scure/bip39/wordlists/spanish.js";
 import {
   WorkoutAccount,
+  FREE_TRAIN_ID,
+  createFreeTrain,
   createRoutineState,
   legacyRoutineId,
   loadLegacyRoutine,
 } from "./schema/Workout";
+import { formatRest, fmtClock } from "./format";
+import { FREE_TRAIN_COLOR, FreeTrainView } from "./FreeTrain";
 
 const SYNC_PEER =
   "wss://cloud.jazz.tools/?key=workout-tracker@danielo515.github.io";
@@ -1287,22 +1291,6 @@ function SetDot({
   );
 }
 
-// Render seconds as a compact gym-style rest label: 40 → 40'', 60 → 1', 90 → 1'30''.
-function formatRest(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  if (m && s) return `${m}'${String(s).padStart(2, "0")}''`;
-  if (m) return `${m}'`;
-  return `${s}''`;
-}
-
-// Render seconds as a mm:ss stopwatch clock.
-function fmtClock(total: number): string {
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
 const exerciseNameStyle: CSSProperties = {
   fontFamily: "'Barlow Condensed', sans-serif",
   fontSize: 15,
@@ -1741,14 +1729,79 @@ function RestTimerBar({
   );
 }
 
+// Top tab bar: one tab per routine plus the free-train mode.
+function RoutineSelector({
+  activeRoutineId,
+  color,
+  onSelect,
+}: {
+  activeRoutineId: string;
+  color: string;
+  onSelect: (id: string) => void;
+}) {
+  const tabs = [
+    ...routines.map((r) => ({ id: r.id, name: r.name })),
+    { id: FREE_TRAIN_ID, name: "LIBRE" },
+  ];
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 0,
+        borderBottom: "1px solid #1a1a1a",
+        overflowX: "auto",
+      }}
+    >
+      {tabs.map((r) => {
+        const active = r.id === activeRoutineId;
+        return (
+          <button
+            key={r.id}
+            onClick={() => onSelect(r.id)}
+            style={{
+              flex: 1,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 13,
+              fontWeight: active ? 700 : 500,
+              letterSpacing: "0.1em",
+              color: active ? "#fff" : "#555",
+              background: active ? "#1a1a1a" : "transparent",
+              border: "none",
+              borderBottom: `2px solid ${active ? color : "transparent"}`,
+              padding: "12px 16px",
+              cursor: "pointer",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+              transition: "all 0.15s",
+            }}
+          >
+            {r.name}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 const ROUTINE_IDS = ["a", "b", "c", "d", "e"];
 
+const pageStyle: CSSProperties = {
+  minHeight: "100vh",
+  background: "#0a0a0a",
+  color: "#fff",
+  fontFamily: "'Barlow Condensed', 'Barlow', sans-serif",
+  paddingBottom: 120,
+};
+
 function WorkoutTracker() {
   const me = useAccount(WorkoutAccount, {
     resolve: {
-      root: { routines: { $each: { completed: true, weekHistory: true } } },
+      root: {
+        routines: { $each: { completed: true, weekHistory: true } },
+        freeTrain: { exercises: { $each: true }, history: true },
+      },
     },
   });
   const { secondsLeft, running, duration, start, stop } = useRestTimer();
@@ -1769,6 +1822,9 @@ function WorkoutTracker() {
         root.routines.$jazz.set(rid, createRoutineState(loadLegacyRoutine(rid)));
       }
     }
+    if (!root.$jazz.has("freeTrain")) {
+      root.$jazz.set("freeTrain", createFreeTrain());
+    }
     if (wasEmpty) {
       const legacy = legacyRoutineId();
       if (legacy && ROUTINE_IDS.includes(legacy)) {
@@ -1788,6 +1844,46 @@ function WorkoutTracker() {
 
   const appRoot = me.root;
   const activeRoutineId = appRoot.activeRoutineId;
+
+  const switchRoutine = (newId: string) => {
+    if (newId !== FREE_TRAIN_ID && !appRoot.routines.$jazz.has(newId)) {
+      appRoot.routines.$jazz.set(
+        newId,
+        createRoutineState({ activeDay: 0, completed: {}, weekHistory: [] }),
+      );
+    }
+    appRoot.$jazz.set("activeRoutineId", newId);
+  };
+
+  const restTimerBar = (color: string) => (
+    <RestTimerBar
+      secondsLeft={secondsLeft}
+      running={running}
+      duration={duration}
+      onStart={start}
+      onStop={stop}
+      color={color}
+    />
+  );
+
+  if (activeRoutineId === FREE_TRAIN_ID) {
+    const freeTrain = appRoot.freeTrain;
+    // Seeded by the effect above on first load of an older account.
+    if (!freeTrain) return <LoadingScreen />;
+    return (
+      <div style={pageStyle}>
+        <RoutineSelector
+          activeRoutineId={activeRoutineId}
+          color={FREE_TRAIN_COLOR}
+          onSelect={switchRoutine}
+        />
+        <FreeTrainView freeTrain={freeTrain} onStartRest={start} />
+        <SyncPanel color={FREE_TRAIN_COLOR} />
+        {restTimerBar(FREE_TRAIN_COLOR)}
+      </div>
+    );
+  }
+
   const routineState = appRoot.routines[activeRoutineId];
   if (!routineState?.$isLoaded) return <LoadingScreen />;
 
@@ -1807,16 +1903,6 @@ function WorkoutTracker() {
   // Note: the exercise timer is intentionally NOT stopped when switching day or
   // routine — it's global to the session and keeps counting in the background.
   const setActiveDay = (i: number) => routineState.$jazz.set("activeDay", i);
-
-  const switchRoutine = (newId: string) => {
-    if (!appRoot.routines.$jazz.has(newId)) {
-      appRoot.routines.$jazz.set(
-        newId,
-        createRoutineState({ activeDay: 0, completed: {}, weekHistory: [] }),
-      );
-    }
-    appRoot.$jazz.set("activeRoutineId", newId);
-  };
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const day = workoutData[activeDay]!;
@@ -1930,47 +2016,12 @@ function WorkoutTracker() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0a0a0a",
-        color: "#fff",
-        fontFamily: "'Barlow Condensed', 'Barlow', sans-serif",
-        paddingBottom: 120,
-      }}
-    >
-      {/* Routine selector */}
-      <div
-        style={{
-          display: "flex",
-          gap: 0,
-          borderBottom: "1px solid #1a1a1a",
-        }}
-      >
-        {routines.map((r) => (
-          <button
-            key={r.id}
-            onClick={() => switchRoutine(r.id)}
-            style={{
-              flex: 1,
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 13,
-              fontWeight: r.id === activeRoutineId ? 700 : 500,
-              letterSpacing: "0.1em",
-              color: r.id === activeRoutineId ? "#fff" : "#555",
-              background: r.id === activeRoutineId ? "#1a1a1a" : "transparent",
-              border: "none",
-              borderBottom: `2px solid ${r.id === activeRoutineId ? day.color : "transparent"}`,
-              padding: "12px 16px",
-              cursor: "pointer",
-              textTransform: "uppercase",
-              transition: "all 0.15s",
-            }}
-          >
-            {r.name}
-          </button>
-        ))}
-      </div>
+    <div style={pageStyle}>
+      <RoutineSelector
+        activeRoutineId={activeRoutineId}
+        color={day.color}
+        onSelect={switchRoutine}
+      />
 
       {/* Header */}
       <div
@@ -2528,14 +2579,7 @@ function WorkoutTracker() {
       <SyncPanel color={day.color} />
 
       {/* Rest timer */}
-      <RestTimerBar
-        secondsLeft={secondsLeft}
-        running={running}
-        duration={duration}
-        onStart={start}
-        onStop={stop}
-        color={day.color}
-      />
+      {restTimerBar(day.color)}
     </div>
   );
 }
