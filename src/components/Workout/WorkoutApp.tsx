@@ -6,6 +6,7 @@ import {
   useCallback,
   type CSSProperties,
 } from "react";
+import { Check, ChevronDown, X } from "lucide-react";
 import {
   JazzReactProvider,
   useAccount,
@@ -108,6 +109,9 @@ interface WeeklyExercise {
 interface WorkoutRoutine {
   id: string;
   name: string;
+  // Short description shown in the routine picker, e.g. "Full body · vuelta
+  // de vacaciones". The day count is derived, so don't repeat it here.
+  subtitle: string;
   workoutData: WorkoutDay[];
   weeklyExercises: WeeklyExercise[];
   notes: string[];
@@ -1172,6 +1176,7 @@ const routines: WorkoutRoutine[] = [
   {
     id: "a",
     name: "RUTINA A",
+    subtitle: "Split clásico",
     workoutData: workoutDataA,
     weeklyExercises: weeklyExercisesA,
     notes: [
@@ -1181,6 +1186,7 @@ const routines: WorkoutRoutine[] = [
   {
     id: "b",
     name: "RUTINA B",
+    subtitle: "Pesado con descendentes",
     workoutData: workoutDataB,
     weeklyExercises: weeklyExercisesB,
     notes: [
@@ -1191,6 +1197,7 @@ const routines: WorkoutRoutine[] = [
   {
     id: "c",
     name: "RUTINA C",
+    subtitle: "Split por grupos",
     workoutData: workoutDataC,
     weeklyExercises: weeklyExercisesC,
     notes: [
@@ -1201,6 +1208,7 @@ const routines: WorkoutRoutine[] = [
   {
     id: "d",
     name: "RUTINA D",
+    subtitle: "Split con superseries",
     workoutData: workoutDataD,
     weeklyExercises: weeklyExercisesD,
     notes: [
@@ -1211,6 +1219,7 @@ const routines: WorkoutRoutine[] = [
   {
     id: "e",
     name: "RUTINA E",
+    subtitle: "Por tiempo · 12'/15' por ejercicio",
     workoutData: workoutDataE,
     weeklyExercises: weeklyExercisesE,
     notes: [
@@ -1224,6 +1233,7 @@ const routines: WorkoutRoutine[] = [
   {
     id: "f",
     name: "RUTINA F",
+    subtitle: "Full body · vuelta de vacaciones",
     workoutData: workoutDataF,
     weeklyExercises: weeklyExercisesF,
     notes: [
@@ -1930,7 +1940,251 @@ function RestTimerBar({
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
-const ROUTINE_IDS = ["a", "b", "c", "d", "e", "f"];
+// ─── ROUTINE PICKER ──────────────────────────────────────────────────────────
+// A single bar showing the active routine; tapping it opens a bottom sheet with
+// every routine (newest first). Scales to any number of routines, unlike tabs.
+
+function RoutinePicker({
+  activeRoutine,
+  color,
+  weeksDone,
+  onSelect,
+}: {
+  activeRoutine: WorkoutRoutine;
+  color: string;
+  weeksDone: (routineId: string) => number;
+  onSelect: (routineId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, close]);
+
+  const newestFirst = [...routines].reverse();
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          fontFamily: "'Barlow Condensed', sans-serif",
+          background: "#111",
+          color: "#fff",
+          border: "none",
+          borderBottom: `2px solid ${color}`,
+          padding: "12px 20px",
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <span style={{ minWidth: 0 }}>
+          <span
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+            }}
+          >
+            {activeRoutine.name}
+          </span>
+          <span
+            style={{
+              display: "block",
+              fontSize: 12,
+              color: "#666",
+              letterSpacing: "0.04em",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {activeRoutine.subtitle} · {activeRoutine.workoutData.length} días
+          </span>
+        </span>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            flexShrink: 0,
+            fontSize: 11,
+            letterSpacing: "0.1em",
+            color: "#888",
+          }}
+        >
+          CAMBIAR
+          <ChevronDown size={16} aria-hidden />
+        </span>
+      </button>
+
+      {open && (
+        <div
+          onClick={close}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "rgba(0,0,0,0.7)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Elegir rutina"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 560,
+              maxHeight: "80vh",
+              overflowY: "auto",
+              background: "#111",
+              borderTop: "1px solid #222",
+              borderRadius: "14px 14px 0 0",
+              padding: "16px 16px calc(16px + env(safe-area-inset-bottom))",
+              fontFamily: "'Barlow Condensed', sans-serif",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 12,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "#666",
+                  letterSpacing: "0.14em",
+                }}
+              >
+                ELEGIR RUTINA
+              </span>
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Cerrar"
+                style={{
+                  display: "flex",
+                  background: "transparent",
+                  border: "none",
+                  color: "#888",
+                  padding: 4,
+                  cursor: "pointer",
+                }}
+              >
+                <X size={18} aria-hidden />
+              </button>
+            </div>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {newestFirst.map((r) => {
+                const active = r.id === activeRoutine.id;
+                const weeks = weeksDone(r.id);
+                return (
+                  <li key={r.id} style={{ marginBottom: 8 }}>
+                    <button
+                      type="button"
+                      aria-current={active ? "true" : undefined}
+                      onClick={() => {
+                        onSelect(r.id);
+                        close();
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        textAlign: "left",
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        color: "#fff",
+                        background: active ? "#1a1a1a" : "transparent",
+                        border: `1px solid ${active ? color : "#222"}`,
+                        borderRadius: 10,
+                        padding: "12px 14px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span
+                          style={{
+                            display: "block",
+                            fontSize: 16,
+                            fontWeight: 700,
+                            letterSpacing: "0.08em",
+                          }}
+                        >
+                          {r.name}
+                        </span>
+                        <span
+                          style={{
+                            display: "block",
+                            fontSize: 13,
+                            color: "#999",
+                          }}
+                        >
+                          {r.subtitle}
+                        </span>
+                        <span
+                          style={{
+                            display: "block",
+                            marginTop: 4,
+                            fontSize: 11,
+                            color: "#555",
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {r.workoutData.length} días
+                          {weeks > 0 &&
+                            ` · ${weeks} ${weeks === 1 ? "semana" : "semanas"} completada${weeks === 1 ? "" : "s"}`}
+                        </span>
+                      </span>
+                      {active && (
+                        <Check
+                          size={18}
+                          color={color}
+                          aria-hidden
+                          style={{ flexShrink: 0 }}
+                        />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+const ROUTINE_IDS = routines.map((r) => r.id);
 
 function WorkoutTracker() {
   const me = useAccount(WorkoutAccount, {
@@ -2127,37 +2381,15 @@ function WorkoutTracker() {
       }}
     >
       {/* Routine selector */}
-      <div
-        style={{
-          display: "flex",
-          gap: 0,
-          borderBottom: "1px solid #1a1a1a",
+      <RoutinePicker
+        activeRoutine={routine}
+        color={day.color}
+        weeksDone={(id) => {
+          const state = appRoot.routines[id];
+          return state?.$isLoaded ? state.weekHistory.length : 0;
         }}
-      >
-        {routines.map((r) => (
-          <button
-            key={r.id}
-            onClick={() => switchRoutine(r.id)}
-            style={{
-              flex: 1,
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 13,
-              fontWeight: r.id === activeRoutineId ? 700 : 500,
-              letterSpacing: "0.1em",
-              color: r.id === activeRoutineId ? "#fff" : "#555",
-              background: r.id === activeRoutineId ? "#1a1a1a" : "transparent",
-              border: "none",
-              borderBottom: `2px solid ${r.id === activeRoutineId ? day.color : "transparent"}`,
-              padding: "12px 6px",
-              cursor: "pointer",
-              textTransform: "uppercase",
-              transition: "all 0.15s",
-            }}
-          >
-            {r.name}
-          </button>
-        ))}
-      </div>
+        onSelect={switchRoutine}
+      />
 
       {/* Header */}
       <div
