@@ -25,6 +25,46 @@ const SYNC_PEER =
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
+// Primary muscle an exercise targets. Exercise names alone can be ambiguous
+// ("PRESS SUPERIOR" is incline chest press, not overhead shoulder press), so
+// exercises can declare it explicitly and it's shown as a chip next to the name.
+type Muscle =
+  | "pecho"
+  | "pecho-superior"
+  | "espalda"
+  | "hombro-anterior"
+  | "hombro-lateral"
+  | "hombro-posterior"
+  | "trapecio"
+  | "biceps"
+  | "triceps"
+  | "antebrazo"
+  | "cuadriceps"
+  | "femoral"
+  | "gluteo"
+  | "gemelo"
+  | "lumbar"
+  | "abdomen";
+
+const MUSCLE_LABELS: Record<Muscle, string> = {
+  pecho: "PECHO",
+  "pecho-superior": "PECHO SUP.",
+  espalda: "ESPALDA",
+  "hombro-anterior": "HOMBRO ANT.",
+  "hombro-lateral": "HOMBRO LAT.",
+  "hombro-posterior": "HOMBRO POST.",
+  trapecio: "TRAPECIO",
+  biceps: "BÍCEPS",
+  triceps: "TRÍCEPS",
+  antebrazo: "ANTEBRAZO",
+  cuadriceps: "CUÁDRICEPS",
+  femoral: "FEMORAL",
+  gluteo: "GLÚTEO",
+  gemelo: "GEMELO",
+  lumbar: "LUMBAR",
+  abdomen: "ABDOMEN",
+};
+
 interface BaseExercise {
   id: string;
   name: string;
@@ -39,17 +79,22 @@ interface BaseExercise {
   durationMin?: number;
   // Marked (*) exercise — shorter work time and rest. Shown as a badge.
   reduced?: boolean;
+  // Target muscle of the exercise (the first leg for supersets/circuits).
+  muscle?: Muscle;
 }
 
 interface SuperSetExercise extends BaseExercise {
   pairedWith: string;
   pairedId: string;
   repsB: string;
+  // Target muscle of the paired (second) exercise.
+  pairedMuscle?: Muscle;
 }
 
 interface CircuitLeg {
   name: string;
   reps: string;
+  muscle?: Muscle;
 }
 
 // A tri-set or larger circuit. The exercise's own `name`/`reps` is the first
@@ -68,14 +113,20 @@ function isCircuitExercise(ex: Exercise): ex is CircuitExercise {
   return "legs" in ex;
 }
 
+// Attach a muscle only when defined (exactOptionalPropertyTypes forbids an
+// explicit `muscle: undefined`).
+function withMuscle(leg: CircuitLeg, muscle: Muscle | undefined): CircuitLeg {
+  return muscle === undefined ? leg : { ...leg, muscle };
+}
+
 // Named legs (with their rep targets) for a superset or circuit, in order.
 function exerciseLegs(ex: Exercise): CircuitLeg[] | null {
   if (isCircuitExercise(ex))
-    return [{ name: ex.name, reps: ex.reps }, ...ex.legs];
+    return [withMuscle({ name: ex.name, reps: ex.reps }, ex.muscle), ...ex.legs];
   if (isSuperSetExercise(ex))
     return [
-      { name: ex.name, reps: ex.reps },
-      { name: ex.pairedWith, reps: ex.repsB },
+      withMuscle({ name: ex.name, reps: ex.reps }, ex.muscle),
+      withMuscle({ name: ex.pairedWith, reps: ex.repsB }, ex.pairedMuscle),
     ];
   return null;
 }
@@ -160,7 +211,7 @@ const workoutDataA: WorkoutDay[] = [
           { id: "2-1", name: "PRESS PLANO CONVERGENTE", sets: 4, reps: "12" },
           { id: "2-2", name: "APERTURAS MÁQUINA", sets: 4, reps: "12" },
           { id: "2-3", name: "FONDOS EN PARALELAS", sets: 4, reps: "FALLO" },
-          { id: "2-4", name: "PRESS SUPERIOR MULTIPOLO", sets: 4, reps: "12" },
+          { id: "2-4", name: "PRESS SUPERIOR MULTIPOLO", sets: 4, reps: "12", muscle: "pecho-superior" },
         ],
       },
       {
@@ -267,8 +318,8 @@ const workoutDataB: WorkoutDay[] = [
         name: "PECHO",
         supersets: false,
         exercises: [
-          { id: "b1-1", name: "PRESS SUPERIOR MANC", sets: 6, reps: "8 (+2 DESC)" },
-          { id: "b1-2", name: "APERTURAS SUPERIORES", sets: 4, reps: "10" },
+          { id: "b1-1", name: "PRESS SUPERIOR MANC", sets: 6, reps: "8 (+2 DESC)", muscle: "pecho-superior" },
+          { id: "b1-2", name: "APERTURAS SUPERIORES", sets: 4, reps: "10", muscle: "pecho-superior" },
           { id: "b1-3", name: "FONDOS PESADOS", sets: 4, reps: "8" },
           { id: "b1-4", name: "PRESS PLANO CONVERGENTE", sets: 4, reps: "15" },
         ],
@@ -439,8 +490,8 @@ const workoutDataC: WorkoutDay[] = [
         name: "PECHO",
         supersets: false,
         exercises: [
-          { id: "c2-1", name: "SUPERIOR MANCUERNAS", sets: 4, reps: "8 (+2 DESC)" },
-          { id: "c2-2", name: "APERTURAS SUPERIORES", sets: 4, reps: "12" },
+          { id: "c2-1", name: "SUPERIOR MANCUERNAS", sets: 4, reps: "8 (+2 DESC)", muscle: "pecho-superior" },
+          { id: "c2-2", name: "APERTURAS SUPERIORES", sets: 4, reps: "12", muscle: "pecho-superior" },
           { id: "c2-3", name: "PRESS PLANO MULTIPOWER", sets: 4, reps: "8" },
           { id: "c2-4", name: "CRUCES", sets: 4, reps: "12" },
         ],
@@ -713,6 +764,8 @@ const workoutDataD: WorkoutDay[] = [
         exercises: [
           {
             id: "d4-2",
+            muscle: "pecho-superior",
+            pairedMuscle: "pecho-superior",
             name: "APERTURAS SUPERIORES",
             pairedWith: "PRESS SUPERIOR",
             pairedId: "d4-2b",
@@ -820,6 +873,7 @@ const workoutDataE: WorkoutDay[] = [
           { id: "e1-2", name: "CONTRACTOR", sets: 4, reps: "12", durationMin: 12 },
           {
             id: "e1-3",
+            muscle: "pecho-superior",
             name: "PRESS SUPERIOR MULTIPOWER",
             sets: 4,
             reps: "12",
@@ -1015,17 +1069,17 @@ const workoutDataF: WorkoutDay[] = [
         name: "BÁSICOS",
         supersets: false,
         exercises: [
-          { id: "f1-1", name: "PRENSA", sets: 3, reps: "12" },
-          { id: "f1-2", name: "PRESS PLANO CONVERGENTE", sets: 3, reps: "10" },
-          { id: "f1-3", name: "JALÓN ANCHO AL PECHO", sets: 3, reps: "12" },
+          { id: "f1-1", name: "PRENSA", sets: 3, reps: "12", muscle: "cuadriceps" },
+          { id: "f1-2", name: "PRESS PLANO CONVERGENTE", sets: 3, reps: "10", muscle: "pecho" },
+          { id: "f1-3", name: "JALÓN ANCHO AL PECHO", sets: 3, reps: "12", muscle: "espalda" },
         ],
       },
       {
         name: "ACCESORIOS",
         supersets: false,
         exercises: [
-          { id: "f1-4", name: "PRESS HAMMER", sets: 3, reps: "12", rest: 60 },
-          { id: "f1-5", name: "FEMORAL TUMBADO", sets: 3, reps: "12", rest: 60 },
+          { id: "f1-4", name: "PRESS HAMMER", sets: 3, reps: "12", rest: 60, muscle: "hombro-anterior" },
+          { id: "f1-5", name: "FEMORAL TUMBADO", sets: 3, reps: "12", rest: 60, muscle: "femoral" },
         ],
       },
       {
@@ -1034,6 +1088,8 @@ const workoutDataF: WorkoutDay[] = [
         exercises: [
           {
             id: "f1-6",
+            muscle: "triceps",
+            pairedMuscle: "biceps",
             name: "POLEA CON CUERDA",
             pairedWith: "MARTILLO EN POLEA",
             pairedId: "f1-6b",
@@ -1050,6 +1106,8 @@ const workoutDataF: WorkoutDay[] = [
         exercises: [
           {
             id: "f1-7",
+            muscle: "abdomen",
+            pairedMuscle: "abdomen",
             name: "ELEVACIÓN DE TRONCO",
             pairedWith: "ELEVACIÓN DE PIERNAS",
             pairedId: "f1-7b",
@@ -1074,17 +1132,17 @@ const workoutDataF: WorkoutDay[] = [
         name: "BÁSICOS",
         supersets: false,
         exercises: [
-          { id: "f2-1", name: "PESO MUERTO MANC", sets: 3, reps: "10" },
-          { id: "f2-2", name: "REMO GIRONDA", sets: 3, reps: "12" },
-          { id: "f2-3", name: "PRESS SUPERIOR MANCUERNAS", sets: 3, reps: "10" },
+          { id: "f2-1", name: "PESO MUERTO MANC", sets: 3, reps: "10", muscle: "femoral" },
+          { id: "f2-2", name: "REMO GIRONDA", sets: 3, reps: "12", muscle: "espalda" },
+          { id: "f2-3", name: "PRESS SUPERIOR MANCUERNAS", sets: 3, reps: "10", muscle: "pecho-superior" },
         ],
       },
       {
         name: "ACCESORIOS",
         supersets: false,
         exercises: [
-          { id: "f2-4", name: "EXTENSIONES", sets: 3, reps: "15", rest: 60 },
-          { id: "f2-5", name: "PÁJAROS MÁQUINA", sets: 3, reps: "15", rest: 60 },
+          { id: "f2-4", name: "EXTENSIONES", sets: 3, reps: "15", rest: 60, muscle: "cuadriceps" },
+          { id: "f2-5", name: "PÁJAROS MÁQUINA", sets: 3, reps: "15", rest: 60, muscle: "hombro-posterior" },
         ],
       },
       {
@@ -1093,6 +1151,8 @@ const workoutDataF: WorkoutDay[] = [
         exercises: [
           {
             id: "f2-6",
+            muscle: "biceps",
+            pairedMuscle: "triceps",
             name: "CURL BARRA Z",
             pairedWith: "FRANCÉS Z",
             pairedId: "f2-6b",
@@ -1109,6 +1169,7 @@ const workoutDataF: WorkoutDay[] = [
         exercises: [
           {
             id: "f2-7",
+            muscle: "lumbar",
             name: "HIPEREXTENSIONES",
             sets: 3,
             reps: "15 (SIN PESO Y LENTAS)",
@@ -1130,9 +1191,9 @@ const workoutDataF: WorkoutDay[] = [
         name: "BÁSICOS",
         supersets: false,
         exercises: [
-          { id: "f3-1", name: "HACK", sets: 3, reps: "12" },
-          { id: "f3-2", name: "REMO HAMMER", sets: 3, reps: "12" },
-          { id: "f3-3", name: "PRESS PLANO MANCUERNAS", sets: 3, reps: "10" },
+          { id: "f3-1", name: "HACK", sets: 3, reps: "12", muscle: "cuadriceps" },
+          { id: "f3-2", name: "REMO HAMMER", sets: 3, reps: "12", muscle: "espalda" },
+          { id: "f3-3", name: "PRESS PLANO MANCUERNAS", sets: 3, reps: "10", muscle: "pecho" },
         ],
       },
       {
@@ -1141,13 +1202,14 @@ const workoutDataF: WorkoutDay[] = [
         exercises: [
           {
             id: "f3-4",
+            muscle: "hombro-lateral",
             name: "ELEVACIONES LATERALES",
             sets: 3,
             reps: "15",
             rest: 60,
           },
-          { id: "f3-5", name: "FEMORAL SENTADO", sets: 3, reps: "12", rest: 60 },
-          { id: "f3-6", name: "GEMELO EN PRENSA", sets: 3, reps: "20", rest: 40 },
+          { id: "f3-5", name: "FEMORAL SENTADO", sets: 3, reps: "12", rest: 60, muscle: "femoral" },
+          { id: "f3-6", name: "GEMELO EN PRENSA", sets: 3, reps: "20", rest: 40, muscle: "gemelo" },
         ],
       },
       {
@@ -1156,6 +1218,8 @@ const workoutDataF: WorkoutDay[] = [
         exercises: [
           {
             id: "f3-7",
+            muscle: "trapecio",
+            pairedMuscle: "abdomen",
             name: "ENCOGIMIENTOS EN POLEA",
             pairedWith: "ELEVACIÓN DE PIERNAS",
             pairedId: "f3-7b",
@@ -1580,7 +1644,28 @@ function ExerciseRow({
     </span>
   ) : null;
 
-  // The name header (used by all layouts): exercise name(s) + rep pills + (*).
+  const muscleChip = (muscle: Muscle | undefined) =>
+    muscle === undefined ? null : (
+      <span
+        title="Músculo principal"
+        style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 10,
+          color: "#aaa",
+          border: "1px solid #3a3a3a",
+          padding: "0 6px",
+          borderRadius: 999,
+          letterSpacing: "0.1em",
+          fontWeight: 600,
+          lineHeight: "16px",
+        }}
+      >
+        {MUSCLE_LABELS[muscle]}
+      </span>
+    );
+
+  // The name header (used by all layouts): exercise name(s) + muscle chips +
+  // rep pills + (*).
   const header = legs ? (
     <div
       style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
@@ -1591,6 +1676,7 @@ function ExerciseRow({
             <span style={{ color: "#555", fontSize: 12, fontWeight: 700 }}>+</span>
           )}
           <span style={exerciseNameStyle}>{leg.name}</span>
+          {muscleChip(leg.muscle)}
           {repPill(leg.reps)}
         </Fragment>
       ))}
@@ -1601,6 +1687,7 @@ function ExerciseRow({
       style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
     >
       <span style={exerciseNameStyle}>{exercise.name}</span>
+      {muscleChip(exercise.muscle)}
       {reducedBadge}
     </div>
   );
