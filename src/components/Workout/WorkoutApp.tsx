@@ -8,7 +8,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from "react";
-import { Check, ChevronDown, Menu, X } from "lucide-react";
+import { Check, ChevronDown, Menu, NotebookText, X } from "lucide-react";
 import {
   JazzReactProvider,
   useAccount,
@@ -2351,10 +2351,154 @@ function RoutinePicker({
   );
 }
 
+// ─── ROUTINE NOTES ───────────────────────────────────────────────────────────
+// The routine's notes get their own sheet, opened from a top-bar shortcut that
+// shows how many there are as a notification-style badge.
+
+// Square icon button for the top bar, next to the routine picker.
+const topBarIconBtn: CSSProperties = {
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  width: 52,
+  background: "transparent",
+  color: "#888",
+  border: "none",
+  borderLeft: "1px solid #222",
+  cursor: "pointer",
+};
+
+function RoutineNotes({
+  routine,
+  color,
+}: {
+  routine: WorkoutRoutine;
+  color: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+
+  const { notes } = routine;
+  if (notes.length === 0) return null;
+  const label = `Notas de la rutina (${notes.length})`;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={label}
+        title={label}
+        style={topBarIconBtn}
+      >
+        <NotebookText size={20} aria-hidden />
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 7,
+            minWidth: 16,
+            height: 16,
+            padding: "0 4px",
+            borderRadius: 999,
+            background: color,
+            color: "#0a0a0a",
+            boxShadow: "0 0 0 2px #111",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: 11,
+            fontWeight: 800,
+            lineHeight: "16px",
+            textAlign: "center",
+          }}
+        >
+          {notes.length}
+        </span>
+      </button>
+
+      <BottomSheet open={open} title="Notas de la rutina" onClose={close}>
+        <div
+          style={{
+            fontSize: 16,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            color: "#fff",
+          }}
+        >
+          {routine.name}
+        </div>
+        <div
+          style={{
+            fontSize: 13,
+            color: "#999",
+            marginBottom: 14,
+          }}
+        >
+          {routine.subtitle}
+        </div>
+        <ol
+          style={{
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          {notes.map((note, i) => (
+            <li
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 12,
+                padding: "12px 14px",
+                background: "#0a0a0a",
+                borderRadius: 8,
+                borderLeft: `3px solid ${color}`,
+              }}
+            >
+              <span
+                style={{
+                  flexShrink: 0,
+                  minWidth: 14,
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color,
+                  lineHeight: 1.45,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {i + 1}
+              </span>
+              <span
+                style={{
+                  fontSize: 14,
+                  color: "#ccc",
+                  letterSpacing: "0.05em",
+                  lineHeight: 1.45,
+                  textTransform: "uppercase",
+                }}
+              >
+                {note}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </BottomSheet>
+    </>
+  );
+}
+
 // ─── MENU PANEL ──────────────────────────────────────────────────────────────
-// Everything that isn't needed while logging a session (past weeks, routine
-// notes, backup and sync) lives behind a menu button next to the routine
-// picker, so the main screen stays focused on the current day.
+// Everything that isn't needed while logging a session (past weeks, backup and
+// sync) lives behind a menu button in the top bar, so the main screen stays
+// focused on the current day.
 
 const panelLabelStyle: CSSProperties = {
   fontFamily: "'Barlow Condensed', sans-serif",
@@ -2390,13 +2534,11 @@ function PanelSection({
 
 function MenuPanel({
   color,
-  notes,
   weekHistory,
   onExport,
   onImport,
 }: {
   color: string;
-  notes: string[];
   weekHistory: readonly number[];
   onExport: () => void;
   onImport: (file: File) => void;
@@ -2429,18 +2571,7 @@ function MenuPanel({
         aria-expanded={open}
         aria-label="Historial y ajustes"
         title="Historial y ajustes"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          width: 52,
-          background: "transparent",
-          color: "#888",
-          border: "none",
-          borderLeft: "1px solid #222",
-          cursor: "pointer",
-        }}
+        style={topBarIconBtn}
       >
         <Menu size={20} aria-hidden />
       </button>
@@ -2501,34 +2632,6 @@ function MenuPanel({
               </div>
             )}
           </PanelSection>
-
-          {notes.length > 0 && (
-            <PanelSection title="Notas de la rutina">
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 8 }}
-              >
-                {notes.map((note, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: "10px 14px",
-                      background: "#0a0a0a",
-                      borderRadius: 8,
-                      borderLeft: `3px solid ${color}44`,
-                      fontFamily: "'Barlow Condensed', sans-serif",
-                      fontSize: 12,
-                      color: "#888",
-                      letterSpacing: "0.08em",
-                      lineHeight: 1.5,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {note}
-                  </div>
-                ))}
-              </div>
-            </PanelSection>
-          )}
 
           <PanelSection title="Copia de seguridad">
             <div style={{ display: "flex", gap: 10 }}>
@@ -2760,7 +2863,7 @@ function WorkoutTracker() {
         paddingBottom: 120,
       }}
     >
-      {/* Top bar: routine selector + menu (history, notes, backup, sync) */}
+      {/* Top bar: routine selector + notes shortcut + menu (history, backup, sync) */}
       <div
         style={{
           display: "flex",
@@ -2778,9 +2881,9 @@ function WorkoutTracker() {
           }}
           onSelect={switchRoutine}
         />
+        <RoutineNotes routine={routine} color={day.color} />
         <MenuPanel
           color={day.color}
-          notes={routine.notes}
           weekHistory={weekHistory}
           onExport={exportData}
           onImport={importData}
