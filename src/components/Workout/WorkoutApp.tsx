@@ -5,6 +5,7 @@ import {
   useRef,
   useCallback,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from "react";
 import { Check, ChevronDown, Menu, X } from "lucide-react";
@@ -2026,53 +2027,111 @@ function RestTimerBar({
   );
 }
 
-// ─── MAIN APP ────────────────────────────────────────────────────────────────
-
 // ─── BOTTOM SHEET ────────────────────────────────────────────────────────────
 // Modal panel anchored to the bottom of the screen, shared by the routine
-// picker and the menu. Closes on backdrop tap, the X button or Escape, and
-// locks page scroll while open. Render it only while open.
+// picker and the menu. Closes on backdrop tap, the X button or Escape. While
+// open it locks page scroll and keeps keyboard focus inside, handing focus back
+// to the trigger on close. Its content stays mounted while closed, so state
+// such as a half-typed recovery phrase survives dismissing the sheet.
+
+// Page scroll lock shared by every open sheet: the first lock saves the body
+// overflow and only the last unlock restores it, whatever order they close in.
+let scrollLocks = 0;
+let savedOverflow = "";
+
+function lockScroll() {
+  if (scrollLocks++ === 0) {
+    savedOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  }
+}
+
+function unlockScroll() {
+  if (--scrollLocks === 0) document.body.style.overflow = savedOverflow;
+}
+
+const FOCUSABLE =
+  "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex='-1'])";
 
 function BottomSheet({
+  open,
   title,
   onClose,
   children,
 }: {
+  open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Only a press that both starts and ends on the backdrop closes the sheet, so
+  // a text selection dragged out of the sheet doesn't dismiss it.
+  const pressOnBackdrop = useRef(false);
+
   useEffect(() => {
+    if (!open) return;
+    const trigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockScroll();
+    dialogRef.current?.focus();
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      unlockScroll();
       window.removeEventListener("keydown", onKey);
+      trigger?.focus();
     };
-  }, [onClose]);
+  }, [open, onClose]);
+
+  // Wrap Tab / Shift+Tab around the sheet's controls.
+  const trapFocus = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab" || !dialogRef.current) return;
+    const focusable = [
+      ...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
+    ].filter((el) => el.getClientRects().length > 0);
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) return;
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === dialogRef.current)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
 
   return (
     <div
-      onClick={onClose}
+      onPointerDown={(e) => {
+        pressOnBackdrop.current = e.target === e.currentTarget;
+      }}
+      onClick={(e) => {
+        if (pressOnBackdrop.current && e.target === e.currentTarget) onClose();
+      }}
       style={{
         position: "fixed",
         inset: 0,
         zIndex: 200,
         background: "rgba(0,0,0,0.7)",
-        display: "flex",
+        display: open ? "flex" : "none",
         alignItems: "flex-end",
         justifyContent: "center",
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        onClick={(e) => e.stopPropagation()}
+        tabIndex={-1}
+        onKeyDown={trapFocus}
         style={{
           width: "100%",
           maxWidth: 560,
@@ -2083,6 +2142,7 @@ function BottomSheet({
           borderRadius: "14px 14px 0 0",
           padding: "16px 16px calc(16px + env(safe-area-inset-bottom))",
           fontFamily: "'Barlow Condensed', sans-serif",
+          outline: "none",
         }}
       >
         <div
@@ -2126,7 +2186,7 @@ function BottomSheet({
 }
 
 // ─── ROUTINE PICKER ──────────────────────────────────────────────────────────
-// A single bar showing the active routine; tapping it opens a bottom sheet with
+// The active routine, shown in the top bar; tapping it opens a bottom sheet with
 // every routine (newest first). Scales to any number of routines, unlike tabs.
 
 function RoutinePicker({
@@ -2209,86 +2269,84 @@ function RoutinePicker({
         </span>
       </button>
 
-      {open && (
-        <BottomSheet title="Elegir rutina" onClose={close}>
-          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {newestFirst.map((r) => {
-              const active = r.id === activeRoutine.id;
-              const weeks = weeksDone(r.id);
-              return (
-                <li key={r.id} style={{ marginBottom: 8 }}>
-                  <button
-                    type="button"
-                    aria-current={active ? "true" : undefined}
-                    onClick={() => {
-                      onSelect(r.id);
-                      close();
-                    }}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      textAlign: "left",
-                      fontFamily: "'Barlow Condensed', sans-serif",
-                      color: "#fff",
-                      background: active ? "#1a1a1a" : "transparent",
-                      border: `1px solid ${active ? color : "#222"}`,
-                      borderRadius: 10,
-                      padding: "12px 14px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <span
-                        style={{
-                          display: "block",
-                          fontSize: 16,
-                          fontWeight: 700,
-                          letterSpacing: "0.08em",
-                        }}
-                      >
-                        {r.name}
-                      </span>
-                      <span
-                        style={{
-                          display: "block",
-                          fontSize: 13,
-                          color: "#999",
-                        }}
-                      >
-                        {r.subtitle}
-                      </span>
-                      <span
-                        style={{
-                          display: "block",
-                          marginTop: 4,
-                          fontSize: 11,
-                          color: "#555",
-                          letterSpacing: "0.06em",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {r.workoutData.length} días
-                        {weeks > 0 &&
-                          ` · ${weeks} ${weeks === 1 ? "semana" : "semanas"} completada${weeks === 1 ? "" : "s"}`}
-                      </span>
+      <BottomSheet open={open} title="Elegir rutina" onClose={close}>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {newestFirst.map((r) => {
+            const active = r.id === activeRoutine.id;
+            const weeks = weeksDone(r.id);
+            return (
+              <li key={r.id} style={{ marginBottom: 8 }}>
+                <button
+                  type="button"
+                  aria-current={active ? "true" : undefined}
+                  onClick={() => {
+                    onSelect(r.id);
+                    close();
+                  }}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    textAlign: "left",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    color: "#fff",
+                    background: active ? "#1a1a1a" : "transparent",
+                    border: `1px solid ${active ? color : "#222"}`,
+                    borderRadius: 10,
+                    padding: "12px 14px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span
+                      style={{
+                        display: "block",
+                        fontSize: 16,
+                        fontWeight: 700,
+                        letterSpacing: "0.08em",
+                      }}
+                    >
+                      {r.name}
                     </span>
-                    {active && (
-                      <Check
-                        size={18}
-                        color={color}
-                        aria-hidden
-                        style={{ flexShrink: 0 }}
-                      />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </BottomSheet>
-      )}
+                    <span
+                      style={{
+                        display: "block",
+                        fontSize: 13,
+                        color: "#999",
+                      }}
+                    >
+                      {r.subtitle}
+                    </span>
+                    <span
+                      style={{
+                        display: "block",
+                        marginTop: 4,
+                        fontSize: 11,
+                        color: "#555",
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {r.workoutData.length} días
+                      {weeks > 0 &&
+                        ` · ${weeks} ${weeks === 1 ? "semana" : "semanas"} completada${weeks === 1 ? "" : "s"}`}
+                    </span>
+                  </span>
+                  {active && (
+                    <Check
+                      size={18}
+                      color={color}
+                      aria-hidden
+                      style={{ flexShrink: 0 }}
+                    />
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </BottomSheet>
     </>
   );
 }
@@ -2387,125 +2445,125 @@ function MenuPanel({
         <Menu size={20} aria-hidden />
       </button>
 
-      {open && (
-        <BottomSheet title="Historial y ajustes" onClose={close}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <PanelSection
-              title={`Semanas completadas${weekHistory.length > 0 ? ` — ${weekHistory.length}` : ""}`}
-            >
-              {weekHistory.length === 0 ? (
-                <div style={panelBodyText}>
-                  Aún no has completado ninguna semana con esta rutina.
-                </div>
-              ) : (
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 6 }}
-                >
-                  {weekHistory.map((ts, i) => (
-                    <div
-                      key={ts}
+      <BottomSheet open={open} title="Historial y ajustes" onClose={close}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <PanelSection
+            title={`Semanas completadas${weekHistory.length > 0 ? ` — ${weekHistory.length}` : ""}`}
+          >
+            {weekHistory.length === 0 ? (
+              <div style={panelBodyText}>
+                Aún no has completado ninguna semana con esta rutina.
+              </div>
+            ) : (
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 6 }}
+              >
+                {weekHistory.map((ts, i) => (
+                  <div
+                    key={ts}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "8px 12px",
+                      background: "#0a0a0a",
+                      borderRadius: 6,
+                      borderLeft: "3px solid #22c55e",
+                    }}
+                  >
+                    <span
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        padding: "8px 12px",
-                        background: "#0a0a0a",
-                        borderRadius: 6,
-                        borderLeft: "3px solid #22c55e",
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "#22c55e",
+                        letterSpacing: "0.06em",
                       }}
                     >
-                      <span
-                        style={{
-                          fontFamily: "'Barlow Condensed', sans-serif",
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: "#22c55e",
-                          letterSpacing: "0.06em",
-                        }}
-                      >
-                        SEMANA {i + 1}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: "'Barlow Condensed', sans-serif",
-                          fontSize: 12,
-                          color: "#666",
-                          letterSpacing: "0.04em",
-                        }}
-                      >
-                        {new Date(ts).toLocaleDateString("es-ES", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </PanelSection>
-
-            {notes.length > 0 && (
-              <PanelSection title="Notas de la rutina">
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
-                >
-                  {notes.map((note, i) => (
-                    <div
-                      key={i}
+                      SEMANA {i + 1}
+                    </span>
+                    <span
                       style={{
-                        padding: "10px 14px",
-                        background: "#0a0a0a",
-                        borderRadius: 8,
-                        borderLeft: `3px solid ${color}44`,
                         fontFamily: "'Barlow Condensed', sans-serif",
                         fontSize: 12,
-                        color: "#888",
-                        letterSpacing: "0.08em",
-                        lineHeight: 1.5,
-                        textTransform: "uppercase",
+                        color: "#666",
+                        letterSpacing: "0.04em",
                       }}
                     >
-                      {note}
-                    </div>
-                  ))}
-                </div>
-              </PanelSection>
+                      {new Date(ts).toLocaleDateString("es-ES", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
             )}
+          </PanelSection>
 
-            <PanelSection title="Copia de seguridad">
-              <div style={{ display: "flex", gap: 10 }}>
-                <button type="button" onClick={onExport} style={backupBtn}>
-                  EXPORTAR DATOS
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) onImport(file);
-                    e.target.value = "";
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  style={backupBtn}
-                >
-                  IMPORTAR DATOS
-                </button>
+          {notes.length > 0 && (
+            <PanelSection title="Notas de la rutina">
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 8 }}
+              >
+                {notes.map((note, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "10px 14px",
+                      background: "#0a0a0a",
+                      borderRadius: 8,
+                      borderLeft: `3px solid ${color}44`,
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontSize: 12,
+                      color: "#888",
+                      letterSpacing: "0.08em",
+                      lineHeight: 1.5,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {note}
+                  </div>
+                ))}
               </div>
             </PanelSection>
+          )}
 
-            <SyncPanel color={color} />
-          </div>
-        </BottomSheet>
-      )}
+          <PanelSection title="Copia de seguridad">
+            <div style={{ display: "flex", gap: 10 }}>
+              <button type="button" onClick={onExport} style={backupBtn}>
+                EXPORTAR DATOS
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onImport(file);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                style={backupBtn}
+              >
+                IMPORTAR DATOS
+              </button>
+            </div>
+          </PanelSection>
+
+          <SyncPanel color={color} />
+        </div>
+      </BottomSheet>
     </>
   );
 }
+
+// ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 const ROUTINE_IDS = routines.map((r) => r.id);
 
@@ -3211,7 +3269,6 @@ function SyncPanel({ color }: { color: string }) {
     }
   };
 
-  const bodyText = panelBodyText;
   const primaryBtn: CSSProperties = {
     fontFamily: "'Barlow Condensed', sans-serif",
     fontSize: 12,
@@ -3268,7 +3325,7 @@ function SyncPanel({ color }: { color: string }) {
             >
               ✓ Sincronización activa
             </div>
-            <div style={bodyText}>
+            <div style={panelBodyText}>
               Tu progreso se sincroniza entre tus dispositivos.
             </div>
             <button
@@ -3295,7 +3352,7 @@ function SyncPanel({ color }: { color: string }) {
           </>
         ) : (
           <>
-            <div style={bodyText}>
+            <div style={panelBodyText}>
               Tus datos se guardan solo en este dispositivo. Activa la
               sincronización para acceder a tu progreso desde otros
               dispositivos.
@@ -3325,7 +3382,7 @@ function SyncPanel({ color }: { color: string }) {
         {showLogin && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {signedIn && (
-              <div style={{ ...bodyText, color: "#666", fontSize: 11 }}>
+              <div style={{ ...panelBodyText, color: "#666", fontSize: 11 }}>
                 Entrarás con la cuenta de esa frase. El progreso guardado solo
                 en este dispositivo dejará de mostrarse.
               </div>
@@ -3381,7 +3438,7 @@ function SyncPanel({ color }: { color: string }) {
             <button type="button" style={primaryBtn} onClick={copyPhrase}>
               {copied ? "✓ Copiada" : "Copiar frase"}
             </button>
-            <div style={{ ...bodyText, color: "#666", fontSize: 11 }}>
+            <div style={{ ...panelBodyText, color: "#666", fontSize: 11 }}>
               Guárdala en un lugar seguro. La necesitarás para acceder a tu
               progreso desde otro dispositivo.
             </div>
