@@ -2357,7 +2357,6 @@ function RoutinePicker({
 
 // Square icon button for the top bar, next to the routine picker.
 const topBarIconBtn: CSSProperties = {
-  position: "relative",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -2395,28 +2394,34 @@ function RoutineNotes({
         title={label}
         style={topBarIconBtn}
       >
-        <NotebookText size={20} aria-hidden />
-        <span
-          aria-hidden
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 7,
-            minWidth: 16,
-            height: 16,
-            padding: "0 4px",
-            borderRadius: 999,
-            background: color,
-            color: "#0a0a0a",
-            boxShadow: "0 0 0 2px #111",
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontSize: 11,
-            fontWeight: 800,
-            lineHeight: "16px",
-            textAlign: "center",
-          }}
-        >
-          {notes.length}
+        {/* The badge hangs off the icon's top-right corner. */}
+        <span style={{ position: "relative", display: "flex" }}>
+          <NotebookText size={20} aria-hidden />
+          <span
+            aria-hidden
+            style={{
+              position: "absolute",
+              top: -7,
+              right: -9,
+              // The page's border-box reset is scoped to the .astro template,
+              // so set it here to keep a single digit a 16px circle.
+              boxSizing: "border-box",
+              minWidth: 16,
+              height: 16,
+              padding: "0 4px",
+              borderRadius: 999,
+              background: color,
+              color: "#0a0a0a",
+              boxShadow: "0 0 0 2px #111",
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 11,
+              fontWeight: 800,
+              lineHeight: "16px",
+              textAlign: "center",
+            }}
+          >
+            {notes.length}
+          </span>
         </span>
       </button>
 
