@@ -5,8 +5,10 @@ import {
   useRef,
   useCallback,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
 } from "react";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, Menu, NotebookText, X } from "lucide-react";
 import {
   JazzReactProvider,
   useAccount,
@@ -2025,10 +2027,166 @@ function RestTimerBar({
   );
 }
 
-// ─── MAIN APP ────────────────────────────────────────────────────────────────
+// ─── BOTTOM SHEET ────────────────────────────────────────────────────────────
+// Modal panel anchored to the bottom of the screen, shared by the routine
+// picker and the menu. Closes on backdrop tap, the X button or Escape. While
+// open it locks page scroll and keeps keyboard focus inside, handing focus back
+// to the trigger on close. Its content stays mounted while closed, so state
+// such as a half-typed recovery phrase survives dismissing the sheet.
+
+// Page scroll lock shared by every open sheet: the first lock saves the body
+// overflow and only the last unlock restores it, whatever order they close in.
+let scrollLocks = 0;
+let savedOverflow = "";
+
+function lockScroll() {
+  if (scrollLocks++ === 0) {
+    savedOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  }
+}
+
+function unlockScroll() {
+  if (--scrollLocks === 0) document.body.style.overflow = savedOverflow;
+}
+
+const FOCUSABLE =
+  "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex='-1'])";
+
+function BottomSheet({
+  open,
+  title,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Only a press that both starts and ends on the backdrop closes the sheet, so
+  // a text selection dragged out of the sheet doesn't dismiss it.
+  const pressOnBackdrop = useRef(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const trigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    lockScroll();
+    dialogRef.current?.focus();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      unlockScroll();
+      window.removeEventListener("keydown", onKey);
+      trigger?.focus();
+    };
+  }, [open, onClose]);
+
+  // Wrap Tab / Shift+Tab around the sheet's controls.
+  const trapFocus = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab" || !dialogRef.current) return;
+    const focusable = [
+      ...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
+    ].filter((el) => el.getClientRects().length > 0);
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) return;
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === dialogRef.current)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  return (
+    <div
+      onPointerDown={(e) => {
+        pressOnBackdrop.current = e.target === e.currentTarget;
+      }}
+      onClick={(e) => {
+        if (pressOnBackdrop.current && e.target === e.currentTarget) onClose();
+      }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 200,
+        background: "rgba(0,0,0,0.7)",
+        display: open ? "flex" : "none",
+        alignItems: "flex-end",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
+        onKeyDown={trapFocus}
+        style={{
+          width: "100%",
+          maxWidth: 560,
+          maxHeight: "80vh",
+          overflowY: "auto",
+          background: "#111",
+          borderTop: "1px solid #222",
+          borderRadius: "14px 14px 0 0",
+          padding: "16px 16px calc(16px + env(safe-area-inset-bottom))",
+          fontFamily: "'Barlow Condensed', sans-serif",
+          outline: "none",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 12,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              color: "#666",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+            }}
+          >
+            {title}
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            style={{
+              display: "flex",
+              background: "transparent",
+              border: "none",
+              color: "#888",
+              padding: 4,
+              cursor: "pointer",
+            }}
+          >
+            <X size={18} aria-hidden />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 // ─── ROUTINE PICKER ──────────────────────────────────────────────────────────
-// A single bar showing the active routine; tapping it opens a bottom sheet with
+// The active routine, shown in the top bar; tapping it opens a bottom sheet with
 // every routine (newest first). Scales to any number of routines, unlike tabs.
 
 function RoutinePicker({
@@ -2045,20 +2203,6 @@ function RoutinePicker({
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, close]);
-
   const newestFirst = [...routines].reverse();
 
   return (
@@ -2069,17 +2213,17 @@ function RoutinePicker({
         aria-haspopup="dialog"
         aria-expanded={open}
         style={{
-          width: "100%",
+          flex: 1,
+          minWidth: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 12,
           fontFamily: "'Barlow Condensed', sans-serif",
-          background: "#111",
+          background: "transparent",
           color: "#fff",
           border: "none",
-          borderBottom: `2px solid ${color}`,
-          padding: "12px 20px",
+          padding: "10px 16px 10px 20px",
           cursor: "pointer",
           textAlign: "left",
         }}
@@ -2125,151 +2269,409 @@ function RoutinePicker({
         </span>
       </button>
 
-      {open && (
-        <div
-          onClick={close}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 200,
-            background: "rgba(0,0,0,0.7)",
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Elegir rutina"
-            onClick={(e) => e.stopPropagation()}
+      <BottomSheet open={open} title="Elegir rutina" onClose={close}>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {newestFirst.map((r) => {
+            const active = r.id === activeRoutine.id;
+            const weeks = weeksDone(r.id);
+            return (
+              <li key={r.id} style={{ marginBottom: 8 }}>
+                <button
+                  type="button"
+                  aria-current={active ? "true" : undefined}
+                  onClick={() => {
+                    onSelect(r.id);
+                    close();
+                  }}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    textAlign: "left",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    color: "#fff",
+                    background: active ? "#1a1a1a" : "transparent",
+                    border: `1px solid ${active ? color : "#222"}`,
+                    borderRadius: 10,
+                    padding: "12px 14px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span
+                      style={{
+                        display: "block",
+                        fontSize: 16,
+                        fontWeight: 700,
+                        letterSpacing: "0.08em",
+                      }}
+                    >
+                      {r.name}
+                    </span>
+                    <span
+                      style={{
+                        display: "block",
+                        fontSize: 13,
+                        color: "#999",
+                      }}
+                    >
+                      {r.subtitle}
+                    </span>
+                    <span
+                      style={{
+                        display: "block",
+                        marginTop: 4,
+                        fontSize: 11,
+                        color: "#555",
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {r.workoutData.length} días
+                      {weeks > 0 &&
+                        ` · ${weeks} ${weeks === 1 ? "semana" : "semanas"} completada${weeks === 1 ? "" : "s"}`}
+                    </span>
+                  </span>
+                  {active && (
+                    <Check
+                      size={18}
+                      color={color}
+                      aria-hidden
+                      style={{ flexShrink: 0 }}
+                    />
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </BottomSheet>
+    </>
+  );
+}
+
+// ─── ROUTINE NOTES ───────────────────────────────────────────────────────────
+// The routine's notes get their own sheet, opened from a top-bar shortcut that
+// shows how many there are as a notification-style badge.
+
+// Square icon button for the top bar, next to the routine picker.
+const topBarIconBtn: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  width: 52,
+  background: "transparent",
+  color: "#888",
+  border: "none",
+  borderLeft: "1px solid #222",
+  cursor: "pointer",
+};
+
+function RoutineNotes({
+  routine,
+  color,
+}: {
+  routine: WorkoutRoutine;
+  color: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+
+  const { notes } = routine;
+  if (notes.length === 0) return null;
+  const label = `Notas de la rutina (${notes.length})`;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={label}
+        title={label}
+        style={topBarIconBtn}
+      >
+        {/* The badge hangs off the icon's top-right corner. */}
+        <span style={{ position: "relative", display: "flex" }}>
+          <NotebookText size={20} aria-hidden />
+          <span
+            aria-hidden
             style={{
-              width: "100%",
-              maxWidth: 560,
-              maxHeight: "80vh",
-              overflowY: "auto",
-              background: "#111",
-              borderTop: "1px solid #222",
-              borderRadius: "14px 14px 0 0",
-              padding: "16px 16px calc(16px + env(safe-area-inset-bottom))",
+              position: "absolute",
+              top: -7,
+              right: -9,
+              // The page's border-box reset is scoped to the .astro template,
+              // so set it here to keep a single digit a 16px circle.
+              boxSizing: "border-box",
+              minWidth: 16,
+              height: 16,
+              padding: "0 4px",
+              borderRadius: 999,
+              background: color,
+              color: "#0a0a0a",
+              boxShadow: "0 0 0 2px #111",
               fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 11,
+              fontWeight: 800,
+              lineHeight: "16px",
+              textAlign: "center",
             }}
           >
-            <div
+            {notes.length}
+          </span>
+        </span>
+      </button>
+
+      <BottomSheet open={open} title="Notas de la rutina" onClose={close}>
+        <div
+          style={{
+            fontSize: 16,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            color: "#fff",
+          }}
+        >
+          {routine.name}
+        </div>
+        <div
+          style={{
+            fontSize: 13,
+            color: "#999",
+            marginBottom: 14,
+          }}
+        >
+          {routine.subtitle}
+        </div>
+        <ol
+          style={{
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          {notes.map((note, i) => (
+            <li
+              key={i}
               style={{
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 12,
+                alignItems: "flex-start",
+                gap: 12,
+                padding: "12px 14px",
+                background: "#0a0a0a",
+                borderRadius: 8,
+                borderLeft: `3px solid ${color}`,
               }}
             >
               <span
                 style={{
-                  fontSize: 11,
-                  color: "#666",
-                  letterSpacing: "0.14em",
+                  flexShrink: 0,
+                  minWidth: 14,
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color,
+                  lineHeight: 1.45,
+                  fontVariantNumeric: "tabular-nums",
                 }}
               >
-                ELEGIR RUTINA
+                {i + 1}
               </span>
-              <button
-                type="button"
-                onClick={close}
-                aria-label="Cerrar"
+              <span
                 style={{
-                  display: "flex",
-                  background: "transparent",
-                  border: "none",
-                  color: "#888",
-                  padding: 4,
-                  cursor: "pointer",
+                  fontSize: 14,
+                  color: "#ccc",
+                  letterSpacing: "0.05em",
+                  lineHeight: 1.45,
+                  textTransform: "uppercase",
                 }}
               >
-                <X size={18} aria-hidden />
-              </button>
-            </div>
-            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {newestFirst.map((r) => {
-                const active = r.id === activeRoutine.id;
-                const weeks = weeksDone(r.id);
-                return (
-                  <li key={r.id} style={{ marginBottom: 8 }}>
-                    <button
-                      type="button"
-                      aria-current={active ? "true" : undefined}
-                      onClick={() => {
-                        onSelect(r.id);
-                        close();
-                      }}
-                      style={{
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                        textAlign: "left",
-                        fontFamily: "'Barlow Condensed', sans-serif",
-                        color: "#fff",
-                        background: active ? "#1a1a1a" : "transparent",
-                        border: `1px solid ${active ? color : "#222"}`,
-                        borderRadius: 10,
-                        padding: "12px 14px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span style={{ flex: 1, minWidth: 0 }}>
-                        <span
-                          style={{
-                            display: "block",
-                            fontSize: 16,
-                            fontWeight: 700,
-                            letterSpacing: "0.08em",
-                          }}
-                        >
-                          {r.name}
-                        </span>
-                        <span
-                          style={{
-                            display: "block",
-                            fontSize: 13,
-                            color: "#999",
-                          }}
-                        >
-                          {r.subtitle}
-                        </span>
-                        <span
-                          style={{
-                            display: "block",
-                            marginTop: 4,
-                            fontSize: 11,
-                            color: "#555",
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {r.workoutData.length} días
-                          {weeks > 0 &&
-                            ` · ${weeks} ${weeks === 1 ? "semana" : "semanas"} completada${weeks === 1 ? "" : "s"}`}
-                        </span>
-                      </span>
-                      {active && (
-                        <Check
-                          size={18}
-                          color={color}
-                          aria-hidden
-                          style={{ flexShrink: 0 }}
-                        />
-                      )}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
-      )}
+                {note}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </BottomSheet>
     </>
   );
 }
+
+// ─── MENU PANEL ──────────────────────────────────────────────────────────────
+// Everything that isn't needed while logging a session (past weeks, backup and
+// sync) lives behind a menu button in the top bar, so the main screen stays
+// focused on the current day.
+
+const panelLabelStyle: CSSProperties = {
+  fontFamily: "'Barlow Condensed', sans-serif",
+  fontSize: 10,
+  fontWeight: 700,
+  color: "#555",
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  marginBottom: 8,
+};
+
+const panelBodyText: CSSProperties = {
+  fontFamily: "'Barlow', sans-serif",
+  fontSize: 12,
+  color: "#888",
+  lineHeight: 1.5,
+};
+
+function PanelSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section>
+      <div style={panelLabelStyle}>{title}</div>
+      {children}
+    </section>
+  );
+}
+
+function MenuPanel({
+  color,
+  weekHistory,
+  onExport,
+  onImport,
+}: {
+  color: string;
+  weekHistory: readonly number[];
+  onExport: () => void;
+  onImport: (file: File) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const backupBtn: CSSProperties = {
+    flex: 1,
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    padding: "10px 14px",
+    background: "#1a1a1a",
+    color: "#888",
+    border: "1px solid #333",
+    borderRadius: 6,
+    cursor: "pointer",
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label="Historial y ajustes"
+        title="Historial y ajustes"
+        style={topBarIconBtn}
+      >
+        <Menu size={20} aria-hidden />
+      </button>
+
+      <BottomSheet open={open} title="Historial y ajustes" onClose={close}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <PanelSection
+            title={`Semanas completadas${weekHistory.length > 0 ? ` — ${weekHistory.length}` : ""}`}
+          >
+            {weekHistory.length === 0 ? (
+              <div style={panelBodyText}>
+                Aún no has completado ninguna semana con esta rutina.
+              </div>
+            ) : (
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 6 }}
+              >
+                {weekHistory.map((ts, i) => (
+                  <div
+                    key={ts}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "8px 12px",
+                      background: "#0a0a0a",
+                      borderRadius: 6,
+                      borderLeft: "3px solid #22c55e",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "#22c55e",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      SEMANA {i + 1}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontSize: 12,
+                        color: "#666",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      {new Date(ts).toLocaleDateString("es-ES", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </PanelSection>
+
+          <PanelSection title="Copia de seguridad">
+            <div style={{ display: "flex", gap: 10 }}>
+              <button type="button" onClick={onExport} style={backupBtn}>
+                EXPORTAR DATOS
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onImport(file);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                style={backupBtn}
+              >
+                IMPORTAR DATOS
+              </button>
+            </div>
+          </PanelSection>
+
+          <SyncPanel color={color} />
+        </div>
+      </BottomSheet>
+    </>
+  );
+}
+
+// ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 const ROUTINE_IDS = routines.map((r) => r.id);
 
@@ -2281,7 +2683,6 @@ function WorkoutTracker() {
   });
   const { secondsLeft, running, duration, start, stop } = useRestTimer();
   const exerciseTimer = useExerciseTimer();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Re-runs when the active account changes (e.g. after logging in with a
   // recovery phrase), so a freshly switched-to account is seeded too.
@@ -2467,21 +2868,37 @@ function WorkoutTracker() {
         paddingBottom: 120,
       }}
     >
-      {/* Routine selector */}
-      <RoutinePicker
-        activeRoutine={routine}
-        color={day.color}
-        weeksDone={(id) => {
-          const state = appRoot.routines[id];
-          return state?.$isLoaded ? state.weekHistory.length : 0;
+      {/* Top bar: routine selector + notes shortcut + menu (history, backup, sync) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "stretch",
+          background: "#111",
+          borderBottom: `2px solid ${day.color}`,
         }}
-        onSelect={switchRoutine}
-      />
+      >
+        <RoutinePicker
+          activeRoutine={routine}
+          color={day.color}
+          weeksDone={(id) => {
+            const state = appRoot.routines[id];
+            return state?.$isLoaded ? state.weekHistory.length : 0;
+          }}
+          onSelect={switchRoutine}
+        />
+        <RoutineNotes routine={routine} color={day.color} />
+        <MenuPanel
+          color={day.color}
+          weekHistory={weekHistory}
+          onExport={exportData}
+          onImport={importData}
+        />
+      </div>
 
       {/* Header */}
       <div
         style={{
-          padding: "24px 20px 0",
+          padding: "16px 20px 0",
           borderBottom: "1px solid #1a1a1a",
         }}
       >
@@ -2490,35 +2907,22 @@ function WorkoutTracker() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            marginBottom: 20,
+            gap: 12,
+            marginBottom: 12,
           }}
         >
-          <div>
-            <div
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: 11,
-                color: "#444",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                marginBottom: 2,
-              }}
-            >
-              PROGRAMA DE ENTRENAMIENTO
-            </div>
-            <div
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: 32,
-                fontWeight: 900,
-                letterSpacing: "-0.01em",
-                lineHeight: 1,
-                color: "#fff",
-              }}
-            >
-              {day.label}:{" "}
-              <span style={{ color: day.color }}>{day.title}</span>
-            </div>
+          <div
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 26,
+              fontWeight: 900,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.05,
+              color: "#fff",
+            }}
+          >
+            {day.label}:{" "}
+            <span style={{ color: day.color }}>{day.title}</span>
           </div>
           <button
             onClick={resetDay}
@@ -2532,6 +2936,7 @@ function WorkoutTracker() {
               borderRadius: 6,
               padding: "6px 10px",
               cursor: "pointer",
+              flexShrink: 0,
             }}
           >
             RESET
@@ -2539,37 +2944,22 @@ function WorkoutTracker() {
         </div>
 
         {/* Progress bar */}
-        <div style={{ marginBottom: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 4,
+          }}
+        >
           <div
+            role="progressbar"
+            aria-label="Progreso del día"
+            aria-valuemin={0}
+            aria-valuemax={dayTotal}
+            aria-valuenow={dayProgress}
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: 6,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: 11,
-                color: "#444",
-                letterSpacing: "0.1em",
-              }}
-            >
-              PROGRESO
-            </span>
-            <span
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontSize: 11,
-                color: day.color,
-                letterSpacing: "0.06em",
-              }}
-            >
-              {dayProgress}/{dayTotal} SERIES
-            </span>
-          </div>
-          <div
-            style={{
+              flex: 1,
               height: 3,
               background: "#1a1a1a",
               borderRadius: 2,
@@ -2586,6 +2976,17 @@ function WorkoutTracker() {
               }}
             />
           </div>
+          <span
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: 11,
+              color: day.color,
+              letterSpacing: "0.06em",
+              flexShrink: 0,
+            }}
+          >
+            {dayProgress}/{dayTotal} SERIES
+          </span>
         </div>
 
         {/* Day tabs */}
@@ -2883,156 +3284,6 @@ function WorkoutTracker() {
         </button>
       </div>
 
-      {/* Week history */}
-      {weekHistory.length > 0 && (
-        <div style={{ padding: "16px 20px 0" }}>
-          <div
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 10,
-              fontWeight: 700,
-              color: "#444",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              marginBottom: 8,
-            }}
-          >
-            SEMANAS COMPLETADAS — {weekHistory.length}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {weekHistory.map((ts, i) => (
-              <div
-                key={ts}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "8px 12px",
-                  background: "#111",
-                  borderRadius: 6,
-                  borderLeft: "3px solid #22c55e",
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "#22c55e",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  SEMANA {i + 1}
-                </span>
-                <span
-                  style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 12,
-                    color: "#555",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {new Date(ts).toLocaleDateString("es-ES", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Routine notes */}
-      {routine.notes.map((note, i) => (
-        <div
-          key={i}
-          style={{
-            margin: `${i === 0 ? 16 : 8}px 20px 0`,
-            padding: "10px 14px",
-            background: "#111",
-            borderRadius: 8,
-            borderLeft: `3px solid ${day.color}44`,
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 11,
-              color: "#444",
-              letterSpacing: "0.08em",
-              lineHeight: 1.5,
-              textTransform: "uppercase",
-            }}
-          >
-            {note}
-          </div>
-        </div>
-      ))}
-
-      {/* Export / Import */}
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          padding: "16px 20px 0",
-        }}
-      >
-        <button
-          onClick={exportData}
-          style={{
-            flex: 1,
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            padding: "10px 14px",
-            background: "#1a1a1a",
-            color: "#888",
-            border: "1px solid #333",
-            borderRadius: 6,
-            cursor: "pointer",
-          }}
-        >
-          EXPORTAR DATOS
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          style={{ display: "none" }}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) importData(file);
-            e.target.value = "";
-          }}
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          style={{
-            flex: 1,
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            padding: "10px 14px",
-            background: "#1a1a1a",
-            color: "#888",
-            border: "1px solid #333",
-            borderRadius: 6,
-            cursor: "pointer",
-          }}
-        >
-          IMPORTAR DATOS
-        </button>
-      </div>
-
-      {/* Sync */}
-      <SyncPanel color={day.color} />
-
       {/* Rest timer */}
       <RestTimerBar
         secondsLeft={secondsLeft}
@@ -3126,21 +3377,6 @@ function SyncPanel({ color }: { color: string }) {
     }
   };
 
-  const sectionLabel: CSSProperties = {
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 10,
-    fontWeight: 700,
-    color: "#444",
-    letterSpacing: "0.14em",
-    textTransform: "uppercase",
-    marginBottom: 8,
-  };
-  const bodyText: CSSProperties = {
-    fontFamily: "'Barlow', sans-serif",
-    fontSize: 12,
-    color: "#888",
-    lineHeight: 1.5,
-  };
   const primaryBtn: CSSProperties = {
     fontFamily: "'Barlow Condensed', sans-serif",
     fontSize: 12,
@@ -3171,12 +3407,11 @@ function SyncPanel({ color }: { color: string }) {
   };
 
   return (
-    <div style={{ padding: "16px 20px 0" }}>
-      <div style={sectionLabel}>Sincronización</div>
+    <PanelSection title="Sincronización">
       <div
         style={{
-          background: "#111",
-          border: "1px solid #1a1a1a",
+          background: "#0a0a0a",
+          border: "1px solid #1e1e1e",
           borderRadius: 8,
           padding: 14,
           display: "flex",
@@ -3198,7 +3433,7 @@ function SyncPanel({ color }: { color: string }) {
             >
               ✓ Sincronización activa
             </div>
-            <div style={bodyText}>
+            <div style={panelBodyText}>
               Tu progreso se sincroniza entre tus dispositivos.
             </div>
             <button
@@ -3225,7 +3460,7 @@ function SyncPanel({ color }: { color: string }) {
           </>
         ) : (
           <>
-            <div style={bodyText}>
+            <div style={panelBodyText}>
               Tus datos se guardan solo en este dispositivo. Activa la
               sincronización para acceder a tu progreso desde otros
               dispositivos.
@@ -3255,7 +3490,7 @@ function SyncPanel({ color }: { color: string }) {
         {showLogin && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {signedIn && (
-              <div style={{ ...bodyText, color: "#666", fontSize: 11 }}>
+              <div style={{ ...panelBodyText, color: "#666", fontSize: 11 }}>
                 Entrarás con la cuenta de esa frase. El progreso guardado solo
                 en este dispositivo dejará de mostrarse.
               </div>
@@ -3311,7 +3546,7 @@ function SyncPanel({ color }: { color: string }) {
             <button type="button" style={primaryBtn} onClick={copyPhrase}>
               {copied ? "✓ Copiada" : "Copiar frase"}
             </button>
-            <div style={{ ...bodyText, color: "#666", fontSize: 11 }}>
+            <div style={{ ...panelBodyText, color: "#666", fontSize: 11 }}>
               Guárdala en un lugar seguro. La necesitarás para acceder a tu
               progreso desde otro dispositivo.
             </div>
@@ -3330,7 +3565,7 @@ function SyncPanel({ color }: { color: string }) {
           </div>
         )}
       </div>
-    </div>
+    </PanelSection>
   );
 }
 
