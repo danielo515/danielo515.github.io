@@ -1,0 +1,37 @@
+---
+import BlogEditorApp from "@/components/BlogEditor/BlogEditorApp";
+import SectionContainer from "@/components/SectionContainer.astro";
+import Layout from "@/layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import { config } from "./config";
+
+// Tags already in use across the blog, offered as suggestions so the new
+// entry reuses the existing vocabulary instead of inventing synonyms.
+const posts = await getCollection("blog");
+const tagSuggestions = [
+  ...new Set(posts.flatMap((post) => post.data.tags)),
+].sort();
+---
+
+<Layout
+  title="Nueva entrada del blog"
+  description="Editor de entradas del blog"
+  footerLinks={config.footerLinks}
+  navItems={config.navItems}
+>
+  <main class="px-4">
+    <SectionContainer class="py-12 md:py-20">
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+          Nueva entrada
+        </h1>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Editor 100% en el navegador. Los borradores se guardan solos y, al
+          publicar, se abre una pull request contra el repositorio.
+        </p>
+      </header>
+
+      <BlogEditorApp tagSuggestions={tagSuggestions} client:only="react" />
+    </SectionContainer>
+  </main>
+</Layout>
