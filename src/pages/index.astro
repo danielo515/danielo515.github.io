@@ -7,6 +7,7 @@ import ArrowRightIcon from "@/components/icons/ArrowRightIcon.astro";
 import Briefcase from "@/components/icons/Briefcase.astro";
 import CodeIcon from "@/components/icons/Code.astro";
 import ProfileCheck from "@/components/icons/ProfileCheck.astro";
+import Wrench from "@/components/icons/Wrench.astro";
 import Projects from "@/components/Projects.astro";
 import SectionContainer from "@/components/SectionContainer.astro";
 import TitleSection from "@/components/TitleSection.astro";
@@ -71,6 +72,25 @@ const info = about.data;
           Projects
         </TitleSection>
         <Projects {projects} />
+      </SectionContainer>
+
+      <SectionContainer id="tools">
+        <TitleSection>
+          <Wrench class="size-7" />
+          Tools
+        </TitleSection>
+        <p class="text-gray-700 dark:text-gray-300 mb-6">
+          Small tools I build for myself and share in case someone else finds them useful.
+        </p>
+        <a
+          href="/tools"
+          class="group flex gap-2 items-center justify-center text-orange-500 dark:text-orange-200 transition"
+        >
+          Check them out
+          <ArrowRightIcon
+            class="size-4 transition group-hover:animate-bounce-right"
+          />
+        </a>
       </SectionContainer>
 
       <SectionContainer id="about-me">
