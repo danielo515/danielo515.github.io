@@ -1238,6 +1238,226 @@ const workoutDataF: WorkoutDay[] = [
 
 const weeklyExercisesF: WeeklyExercise[] = [];
 
+// Follow-up to the return-from-holidays block: a 4-day torso/leg split built
+// from exercises already used in routines A–F. Each half is trained twice a
+// week, once heavy (low reps, long rests) and once for volume (higher reps,
+// supersets, short rests).
+const workoutDataG: WorkoutDay[] = [
+  {
+    id: 1,
+    label: "DÍA 1",
+    title: "TORSO — FUERZA",
+    color: "#FF6B35",
+    restNote: "2' en básicos · 1' en el resto",
+    restSeconds: 120,
+    groups: [
+      {
+        name: "BÁSICOS",
+        supersets: false,
+        exercises: [
+          { id: "g1-1", name: "PLANO MULTIPOWER", sets: 4, reps: "6-8", muscle: "pecho" },
+          { id: "g1-2", name: "JALÓN ANCHO AL PECHO", sets: 4, reps: "6-8", muscle: "espalda" },
+          { id: "g1-3", name: "PRESS HAMMER", sets: 3, reps: "8-10", muscle: "hombro-anterior" },
+          { id: "g1-4", name: "REMO EN PUNTA", sets: 3, reps: "8-10", muscle: "espalda" },
+        ],
+      },
+      {
+        name: "BRAZO — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "g1-5",
+            muscle: "biceps",
+            pairedMuscle: "triceps",
+            name: "CURL BARRA RECTA",
+            pairedWith: "FRANCÉS Z",
+            pairedId: "g1-5b",
+            sets: 3,
+            reps: "8-10",
+            repsB: "8-10",
+            rest: 60,
+          },
+        ],
+      },
+      {
+        name: "ABDOMEN — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "g1-6",
+            muscle: "abdomen",
+            pairedMuscle: "abdomen",
+            name: "ELEVACIÓN DE TRONCO",
+            pairedWith: "ELEVACIÓN DE PIERNAS",
+            pairedId: "g1-6b",
+            sets: 4,
+            reps: "20",
+            repsB: "FALLO",
+            rest: 40,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "DÍA 2",
+    title: "PIERNA — FUERZA",
+    color: "#B8FF3D",
+    restNote: "2' en básicos · 1' en el resto",
+    restSeconds: 120,
+    groups: [
+      {
+        name: "BÁSICOS",
+        supersets: false,
+        exercises: [
+          { id: "g2-1", name: "HACK", sets: 4, reps: "6-8", muscle: "cuadriceps" },
+          { id: "g2-2", name: "PESO MUERTO MANC", sets: 4, reps: "8", muscle: "femoral" },
+          { id: "g2-3", name: "PRENSA", sets: 3, reps: "10", muscle: "cuadriceps" },
+        ],
+      },
+      {
+        name: "ACCESORIOS",
+        supersets: false,
+        exercises: [
+          { id: "g2-4", name: "FEMORAL TUMBADO", sets: 3, reps: "10", rest: 60, muscle: "femoral" },
+          { id: "g2-5", name: "GEMELO EN PRENSA", sets: 4, reps: "15", rest: 40, muscle: "gemelo" },
+          {
+            id: "g2-6",
+            muscle: "lumbar",
+            name: "HIPEREXTENSIONES",
+            sets: 3,
+            reps: "15 (SIN PESO Y LENTAS)",
+            rest: 40,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 3,
+    label: "DÍA 3",
+    title: "TORSO — VOLUMEN",
+    color: "#00E5FF",
+    restNote: "1' entre series",
+    restSeconds: 60,
+    groups: [
+      {
+        name: "BÁSICOS",
+        supersets: false,
+        exercises: [
+          {
+            id: "g3-1",
+            muscle: "pecho-superior",
+            name: "PRESS SUPERIOR MANCUERNAS",
+            sets: 4,
+            reps: "10-12",
+            rest: 90,
+          },
+          { id: "g3-2", name: "REMO GIRONDA", sets: 4, reps: "10-12", rest: 90, muscle: "espalda" },
+        ],
+      },
+      {
+        name: "PECHO Y ESPALDA — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "g3-3",
+            muscle: "pecho",
+            pairedMuscle: "espalda",
+            name: "CONTRACTOR",
+            pairedWith: "PULLOVER CUERDA",
+            pairedId: "g3-3b",
+            sets: 3,
+            reps: "12-15",
+            repsB: "12-15",
+          },
+        ],
+      },
+      {
+        name: "HOMBRO",
+        supersets: false,
+        exercises: [
+          {
+            id: "g3-4",
+            muscle: "hombro-lateral",
+            name: "ELEVACIONES LATERALES",
+            sets: 4,
+            reps: "12-15 (+1 DESC)",
+          },
+          { id: "g3-5", name: "PÁJAROS MÁQUINA", sets: 3, reps: "15", muscle: "hombro-posterior" },
+        ],
+      },
+      {
+        name: "BRAZO — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "g3-6",
+            muscle: "biceps",
+            pairedMuscle: "triceps",
+            name: "MARTILLO EN POLEA",
+            pairedWith: "POLEA CON CUERDA",
+            pairedId: "g3-6b",
+            sets: 3,
+            reps: "12-15",
+            repsB: "12-15",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 4,
+    label: "DÍA 4",
+    title: "PIERNA — VOLUMEN",
+    color: "#FFD23D",
+    restNote: "1' entre series",
+    restSeconds: 60,
+    groups: [
+      {
+        name: "PIERNA",
+        supersets: false,
+        exercises: [
+          {
+            id: "g4-1",
+            muscle: "cuadriceps",
+            name: "PRENSA INCLINADA",
+            sets: 4,
+            reps: "12-15",
+            rest: 90,
+          },
+          { id: "g4-2", name: "ZANCADA LARGA", sets: 3, reps: "12", rest: 90, muscle: "gluteo" },
+          { id: "g4-3", name: "FEMORAL SENTADO", sets: 4, reps: "12", muscle: "femoral" },
+          { id: "g4-4", name: "EXTENSIONES", sets: 3, reps: "15 (+1 DESC)", muscle: "cuadriceps" },
+          { id: "g4-5", name: "ABDUCTOR", sets: 3, reps: "15", muscle: "gluteo" },
+          { id: "g4-6", name: "GEMELO DE PIE", sets: 4, reps: "20", rest: 40, muscle: "gemelo" },
+        ],
+      },
+      {
+        name: "ABDOMEN — SUPERSERIE",
+        supersets: true,
+        exercises: [
+          {
+            id: "g4-7",
+            muscle: "trapecio",
+            pairedMuscle: "abdomen",
+            name: "ENCOGIMIENTOS EN POLEA",
+            pairedWith: "ELEVACIÓN DE PIERNAS",
+            pairedId: "g4-7b",
+            sets: 4,
+            reps: "20",
+            repsB: "FALLO",
+            rest: 40,
+          },
+        ],
+      },
+    ],
+  },
+];
+
+const weeklyExercisesG: WeeklyExercise[] = [];
+
 const routines: WorkoutRoutine[] = [
   {
     id: "a",
@@ -1309,6 +1529,20 @@ const routines: WorkoutRoutine[] = [
       "SEMANA 2: SUBE AL ~85%, DEJANDO 2 REPS EN RECÁMARA. SEMANA 3: VUELVE A TUS PESOS SI LAS SERIES SALEN LIMPIAS.",
       "TRAS LAS PESAS: 15' DE CARDIO LISS OPCIONAL (SIN HIT HASTA LA SEMANA 2).",
       "SI TERMINAS LA SEMANA 3 SIN AGUJETAS FUERTES, VUELVE A TU RUTINA HABITUAL (RUTINA E).",
+    ],
+  },
+  {
+    id: "g",
+    name: "RUTINA G",
+    subtitle: "Torso/pierna · fuerza + volumen",
+    workoutData: workoutDataG,
+    weeklyExercises: weeklyExercisesG,
+    notes: [
+      "4 DÍAS POR SEMANA: TORSO, PIERNA, DESCANSO, TORSO, PIERNA (P. EJ. L-M-J-V). MANTENLA 5-6 SEMANAS.",
+      "DÍAS DE FUERZA: PESO ALTO, 2' DE DESCANSO EN BÁSICOS Y 1-2 REPS EN RECÁMARA. HAZ 2 SERIES DE APROXIMACIÓN EN EL PRIMER BÁSICO.",
+      "DÍAS DE VOLUMEN: PESO MODERADO, 1' DE DESCANSO Y ÚLTIMA SERIE CERCA DEL FALLO. (+1 DESC) = UNA DESCENDENTE TRAS LA ÚLTIMA SERIE.",
+      "PROGRESIÓN: CUANDO COMPLETES TODAS LAS SERIES EN EL TOPE DEL RANGO DE REPS, SUBE EL PESO LA SEMANA SIGUIENTE.",
+      "TRAS LAS PESAS: 10' DE CARDIO HIT + 10' DE LISS (EN LOS DÍAS DE PIERNA, SOLO 15' DE LISS).",
     ],
   },
 ];
